@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/assets/logo.png" alt="req-to-design logo" width="640">
+</p>
+
 # req-to-design
 
 English | [日本語](README.ja.md)
