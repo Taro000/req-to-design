@@ -8,15 +8,15 @@ English | [日本語](README.ja.md)
 
 Agent skills that turn a system's requirements into its design: first the drivers that should shape the architecture, then the architecture, the high-level design and the detailed design, with a review after each design stage. They start from the artifacts of [cuj-to-slo](https://github.com/Taro000/cuj-to-slo) (users, CUJs, functional requirements, quality requirements, NFRs and SLOs), so every design decision can be followed back to the requirement and the user it serves.
 
-> **Status: experimental (0.1.0).** The skills have not been run end to end yet. Check their first results closely.
+> **Status: experimental (0.2.0).** The skills have been used once on a real demo project. Version 0.2.0 changes how they ask questions, record assumptions and keep history, and takes over the design decisions that the requirements no longer make (platforms, mechanisms, where SLI events come from); it has not been run end to end yet, so check its first results closely.
 
 ## The stages
 
 | Stage | Skill | Input | Output |
 |---|---|---|---|
-| 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`); design inputs that never come from users (technology constraints; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
+| 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`), including the design decisions it found in its inputs; the design context, which never comes from users (technology constraints; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
 | 2 | `architecture-drivers-to-architecture` | Stage 1 output | Design decisions with their options and rationale, elements, five views, a threat model |
-| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces with OpenAPI and AsyncAPI documents, end-to-end flows with latency budgets, data entities, shared conventions |
+| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces with OpenAPI and AsyncAPI documents, end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
 | 4 | `high-level-design-to-detailed-design` | Stage 3 output, one component per run | Modules with contracts, states, decision tables, physical data and a verification approach |
 | Review | `design-review` | The output of stage 2, 3 or 4 | Findings addressed to the stage that must decide |
 
@@ -47,9 +47,11 @@ Run each step in a fresh request:
 4. "Write the high-level design." Review it in a new session, and resolve its findings the same way.
 5. "Write the detailed design of ELM-02." Repeat for every component listed in `docs/design/4-detailed-design.md`, and review each one.
 
-Each stage drafts everything first, then asks you about every point it was unsure of. Every judgment is marked `stated`, `inferred` or `confirmed`, so you can see what came from you and what the agent decided.
+Each stage drafts everything first. It then rates every point it was unsure of by breadth (how much depends on it) and severity (the harm if the draft is wrong), and asks you only about the points where either is high. The ranking and the decisions that accept a risk, a cost or a debt are rated the same way; when they are asked, your answer is the decision. Every other point is kept as drafted and recorded as an assumption, which the skill lists at the end for you to skim and correct if you want. Every judgment is marked `stated`, `inferred`, `assumed` or `confirmed`, so you can see what came from you, what the agent decided, and what nobody has checked yet.
 
-Each stage is a long task. The detailed design runs once per component and, for a mid-sized system, produces more documents than the requirements did. Plan time to review them, and to agree on the ranking, the decisions and the design parameters.
+Each stage is a long task. The detailed design runs once per component and, for a mid-sized system, produces more documents than the requirements did. Plan time to review them and to answer the questions that matter most.
+
+Reports and items show only the current state; git keeps the history. Each skill ends its run by committing the files it wrote, with the reasons in the commit message, and the next run reads what changed since then.
 
 Questions and artifacts follow your language and your project's documentation language. The skills themselves are written in English.
 
@@ -59,9 +61,10 @@ Questions and artifacts follow your language and your project's documentation la
 docs/design/
 ├── 1-architecture-drivers.md … 3-high-level-design.md   one report per stage
 ├── 4-detailed-design.md, 4-detailed-design/              an index, and one report per component
-├── reviews/                                              one report per review
-├── design-context.yaml                                   design inputs, stakeholders, current structure
+├── reviews/                                              the latest review of each stage
+├── design-context.yaml                                   the design context: constraints, teams, changes, stakeholders, current structure
 ├── drv/  dec/  elm/  ifc/  dat/  mod/  fnd/             one YAML file per item
+├── das/                                                  one YAML file per assumption made without asking
 └── ifc/specs/                                            OpenAPI and AsyncAPI documents
 ```
 
@@ -72,7 +75,7 @@ YAML keys and IDs are fixed in English, so every stage can read every other stag
 - Write to the quality chain. Changes to the requirements that the design calls for are written in the reports as issues; you decide what to do with them.
 - Invent business numbers. Targets, deadlines, volumes and budgets come from you or from the quality chain; missing ones stay named placeholders. Design parameters such as timeouts are proposed as provisional values, with what they are based on.
 - Write code. The detailed design stops where coding starts, and uses a language-neutral notation.
-- Decide business priorities for you. The driver ranking, accepted risks and debts, deferrals and design parameters are marked "needs agreement".
+- Decide business priorities for you. The driver ranking, accepted risks and debts, deferrals and design parameters are business decisions: the ones with high breadth or severity are asked, and the rest are adopted provisionally and recorded as assumptions, never presented as decided.
 - Write runbooks, business procedures or training. The design of the infrastructure is in scope; operating it is not.
 
 ## Maintaining

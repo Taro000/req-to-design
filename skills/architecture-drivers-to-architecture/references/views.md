@@ -14,15 +14,15 @@ Draw each view as a Mermaid diagram in the report, with a short table under it w
 
 ### Context
 
-The system as one box; users by kind (from `context.yaml`); external systems and data producers; the main flows between them. It answers: what is inside, what is outside, and what crosses the line.
+The system as one box; users by kind (USR in `context.yaml`); the external systems, which are the EXT entries in `context.yaml` that the design deals with, plus any that a decision adds; data producers; the main flows between them. Label each external system with its element ID and the EXT whose role it plays. It answers: what is inside, what is outside, and what crosses the line.
 
 ```mermaid
 flowchart LR
   buyer([USR-01 Buyer])
   store[Online store]
-  pa[[ELM-05 Payment provider A]]
-  pb[[ELM-06 Payment provider B]]
-  wh[[ELM-07 Warehouse system]]
+  pa[[ELM-05 Payment provider A - EXT-01]]
+  pb[[ELM-06 Payment provider B - EXT-01]]
+  wh[[ELM-07 Warehouse system - EXT-02]]
   buyer -- browse, check out --> store
   store -- charge --> pa
   store -- charge when A is down --> pb
@@ -43,7 +43,7 @@ The main data, the element that owns each piece (the only one that writes it), a
 
 ### Code structure
 
-How the code is organized into repositories, packages or modules; which may depend on which; which team owns which. It answers: what a developer must change for a given change scenario, and who must agree to it.
+How the code is organized into repositories, packages or modules; which may depend on which; which team owns which. It answers: what a developer must change for a given change scenario, and which teams that involves.
 
 ## Consistency rules
 
@@ -65,16 +65,16 @@ A driver walkthrough, one row per primary driver:
 
 | DRV | Where the stimulus enters | Decisions that shape the response | Meets the measure? | Remaining risk |
 |---|---|---|---|---|
-| DRV-02 | ELM-02's call to ELM-05 | DEC-02, DEC-05 | Yes, if failover starts within the threshold | Failover adds time to checkout (DRV-01) |
+| DRV-02 | ELM-02's call to ELM-05 | DEC-02, DEC-05 | Yes, once failover ships, if it starts within the threshold | Until failover ships right after the spring sale, an outage of the provider stops checkout (DEC-02's debt); failover adds time to checkout (DRV-01) |
 
-A step or a driver that cannot be walked through is a gap: fix the design, or record it as an open question or an issue for the quality chain.
+A step or a driver that cannot be walked through is a gap: fix the design, or record it under "Open gaps" or as an issue for the quality chain.
 
 ## Threat model
 
 1. Draw the data flows from the runtime and information views, with the trust boundaries: the user's device, the public internet, the system's own network, each external system.
 2. Mark the assets that the security drivers name (card data, personal data, accounts, payment results).
 3. For each flow that crosses a boundary, walk six kinds of threat: someone pretending to be someone else; data changed in transit or at rest; an action later denied by whoever did it; data leaking to someone who should not see it; service stopped or slowed on purpose; someone gaining rights they should not have.
-4. For each threat that applies, write the decision that counters it, or a question when the inputs do not say whether it matters.
+4. For each threat that applies, write the decision that counters it. When the inputs do not say whether a threat matters, rate it as an uncertain point ("Draft first, ask afterwards" in `conventions.md`); a threat to money or personal data has high severity, so it is asked.
 
 | Flow | Crosses | Threat | Countered by |
 |---|---|---|---|

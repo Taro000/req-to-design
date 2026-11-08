@@ -16,12 +16,12 @@
 
 | Kind | It says | Example |
 |---|---|---|
-| quality | How the system must respond to a stimulus, measurably | 99% of checkouts respond within 1.5 s at sale peak |
+| quality | How the system must respond to a stimulus, measurably | At sale peak (OPF-03), checkout confirms orders within NFR-02's SLO, counted by SLI-02 |
 | change | What must be cheap to change, and how cheap | A second payment provider can be added without changing checkout |
 | constraint | What the design must or must not use or do | Card numbers never reach our servers |
 | function | A function whose demands shape the structure | Driver locations reach waiting passengers continuously |
-| observability | What the system must make visible, and where | Every request carries one ID from the browser to the database |
-| security | An asset to protect and the threats against it | Payment results cannot be forged from the browser |
+| observability | What the system must make visible, and where | An engineer can follow any one checkout from the buyer's device to the stored order |
+| security | An asset to protect and the threats against it | Payment results cannot be forged from the buyer's device |
 | principle | A rule for the whole system that follows from several drivers | Every operation that moves money can be repeated without moving it twice |
 
 ## Quality scenarios
@@ -33,24 +33,26 @@ Write every quality driver as a scenario with six parts. A design can be checked
 | Source | Who or what causes the stimulus | The QIU's user; an external system; a fault; an operator |
 | Stimulus | What happens | The QR's failure scenario, turned into the event that triggers it |
 | Artifact | Which part of the system it hits | The FR now; the element, once stage 2 has one |
-| Environment | Under which conditions | The QIU's context of use; the NFR's conditions (workload, users, transactions); normal, peak, degraded, during a deployment |
+| Environment | Under which conditions | The QIU's context of use; the NFR's conditions (workload, users, transactions), with the shared facts they name by ID; normal, peak, degraded, during a deployment |
 | Response | What the system does | The QR's statement, as observable behaviour |
-| Measure | How the response is judged | The NFR (SLO, gate, audit, monitor); a stated number; a named placeholder |
+| Measure | How the response is judged | The NFR's measure, named by ID and never copied ("NFR-02's SLO, counted by SLI-02"); a QR's stated number or placeholder, with the QR's ID; a new named placeholder |
 
 | Weak | Better |
 |---|---|
-| The system is highly available | When the payment provider stops responding (stimulus) during normal operation (environment), checkout (artifact) keeps confirming orders through a second route (response); the share that succeeds during an outage is at least A_failover (measure, placeholder) |
-| Stock is up to date | When the warehouse changes a stock count (stimulus) at any time (environment), the stock shown in the cart (artifact) reflects the change (response) within T_stock for 99% of changes (measure, from the QR's placeholder) |
-| Checkout is fast | When buyers on smartphones submit the checkout (source, stimulus) at sale peak, up to 300 requests/s (environment), the order is confirmed (artifact, response), and 99% of valid checkouts respond within 1.5 s over 28 days (measure, NFR-01) |
+| The system is highly available | When the payment provider stops responding (stimulus) during normal operation (environment), checkout (artifact) keeps confirming orders (response); the share that succeeds during an outage is at least A_failover (measure, placeholder) |
+| Stock is up to date | When the warehouse changes a stock count (stimulus) at any time (environment), the stock shown in the cart (artifact) reflects the change (response) within T_stock_lag (measure, the QR's placeholder) |
+| Checkout is fast | When buyers on smartphones submit the checkout (source, stimulus) at sale peak (environment, OPF-03), the order is confirmed (artifact, response) within NFR-02's SLO, counted by SLI-02 (measure, named by ID; the NFR holds the share, the threshold and the window) |
 
 Write separate scenarios for separate environments when the response or the measure differs (normal load and sale peak; one zone down; during a deployment).
+
+Name volumes, peaks and other shared facts by ID, and list them in the driver's `premises`. A copied "up to 300 requests/s" stays in the scenario after the fact changes, and nobody finds it.
 
 ## Change scenarios
 
 A change scenario is a scenario whose stimulus is a change request. Sources:
 
 - anticipated changes and the roadmap (a second payment provider, a new market, a native app);
-- variants the product must support (tenants with their own settings, languages, currencies, devices);
+- variants the product must support (tenants with their own settings, languages, currencies, kinds of device);
 - QRs of maintainability (modularity, modifiability, testability) and portability;
 - excluded QRs that are expensive to add later.
 
@@ -63,13 +65,21 @@ The measure is effort or reach: "touches only the payment module", "no change to
 
 ## Constraints
 
-A constraint is a decision made outside the design. Write it as what must or must not be true, with its source, and mark it:
+A constraint is a decision made outside the design. Write it as what must or must not be true, with its source. Constraints come from:
+
+- the technology constraints in `design-context.yaml`: what the user gave, every design input (DIN) of the quality chain taken in (`source: context.yaml DIN-01`), and every CON that binds what the design may use or do (`source: context.yaml CON-01`);
+- the requirements that entered the quality chain through an entry point (law, standard, security risk analysis, development policy);
+- the budget, the deadline, the team, the team structure and the current structure, when they bind a choice.
+
+A DIN is a decision someone made before the design started ("no native app this year", "payments go through <vendor>"). Take it in, or set it aside with a reason, as `reading-the-quality-chain.md` describes ("Design inputs"). Platforms and device support are a constraint only when an input fixes them; otherwise they are stage 2's decision ("Platforms and device support" there).
+
+Mark each constraint:
 
 - `negotiable: false`: a law, a contract, a standard the business committed to, a platform the company mandates.
 - `negotiable: true`: a preference that could change if the cost of keeping it is shown ("we would like to keep our existing database").
-- When the input does not say, ask.
+- When the input does not say, draft it from the kind of source and rate the point. Whether a technology constraint or a deadline can change has high breadth, because it decides which options stage 2 may consider, so it is asked. Ask about several constraints in one multi-select question ("which of these could change if keeping them proves costly?").
 
-The budget, the deadline and the team are constraints too. Write them as drivers when they bind a choice: "the first release ships before the spring sale" rules out designs the team cannot build by then.
+The budget, the deadline and the team are constraints too. Write them as drivers when they bind a choice: "the first release ships before the spring sale" rules out designs the team cannot build by then. A missing budget or deadline usually has high breadth, because it can move the line between the primary drivers and the rest, so it is asked. When the user cannot give it, the feasibility check names it as missing.
 
 ## Functional drivers
 
@@ -86,15 +96,26 @@ Most functions are met inside one module and do not shape the architecture. A fu
 | Strict ordering or consistency across parts | Seat allocation; stock reservation |
 | Work bound to a clock | Nightly settlement; reminders; expiry |
 
-Name the FRs and the demand. Write a scenario when the demand has a measure.
+Name the FRs and the demand. Write a scenario when the demand has a measure. Write the demand as behaviour, as the FRs do; the mechanism that meets it (a key, a queue, a lock) is decided from stage 2 on.
 
 ## Observability drivers
 
-From each SLI: the events the system must emit, at which measurement point, with which fields; whether timings from the client are needed; what must be counted that the system does not see yet. From the people who maintain the system: one request ID carried through every hop, structured logs, traces, health endpoints. Write each as a scenario: "when a checkout fails (stimulus), the engineer on call (source) can find the failing hop from the request ID alone (response), for at least P_trace of failed requests (measure: the analysability QR's number, or a placeholder)".
+The quality chain defines each SLI by its unit event, its vantage and its counting rules; stage 3 decides where the events come from. Write what the system must make visible so that each SLI can be counted from its vantage:
+
+| Vantage | What the system must make visible |
+|---|---|
+| `system-boundary` | Every unit event where it crosses the boundary, with what the counting rules need (the outcome, the time taken, whether it repeats an earlier event) |
+| `user-side` | Timings and outcomes on the user's side, reported back from the kinds of device in the contexts of use |
+| `synthetic` | A way for synthetic users to go through the CUJ, kept apart from real data and from the counts of other SLIs |
+| `data` | The timestamps and attributes the counting rules read in the data (when a stock count changed at the warehouse, when the store showed it) |
+
+An SLI whose `existing_source` names telemetry that already exists (an OPF) needs nothing new where that telemetry covers its vantage. Keep the OPF in the driver's `premises`, so that stage 3 binds the SLI to it, and write a demand only for what it does not cover. A blind spot that hides a failure a primary driver cares about becomes a driver, or an open gap when no vantage can see it. One driver may serve several SLIs with the same vantage.
+
+From the people who maintain the system: a way to follow one request end to end, from the user's side to the stored data, and to find where it failed. Write what must be visible, never how: logs, traces, fields, IDs and tools are decided from stage 2 on. Write each as a scenario: "when a checkout fails (stimulus), the engineer on call (source) can follow that one checkout end to end and find the step that failed (response), for at least P_trace of failed checkouts (measure: the analysability QR's number, or a placeholder)".
 
 ## Security drivers
 
-From security QRs and the security risk analysis: the asset (card data, personal data, payment results, accounts), the threat the input names (account takeover with leaked passwords, forged payment results, scraping), and the response required. Do not invent threats the inputs do not raise. List the kinds of threat you suspect and ask. Stage 2 draws the threat model.
+From security QRs and the security risk analysis: the asset (card data, personal data, payment results, accounts), the threat the input names (account takeover with leaked passwords, forged payment results, scraping), and the response required. Do not invent threats the inputs do not raise. A kind of threat you suspect but no input raises is an uncertain point: rate it. A threat to money or personal data has high severity, so it is asked, and the answer decides whether it becomes a driver. Stage 2 draws the threat model.
 
 ## Principles
 
@@ -132,4 +153,6 @@ Primary drivers are the ones stage 2 designs for first. Mark as primary:
 - every high-priority driver with medium difficulty;
 - every non-negotiable constraint.
 
-A mid-sized system usually ends with five to twelve primary drivers. More than twelve usually means the scenarios are too fine (merge the ones with the same stimulus and response) or the business has not chosen; ask. Fewer than three usually means the difficulty was underestimated: check the excluded QRs and the change scenarios again.
+A mid-sized system usually ends with five to twelve primary drivers. More than twelve usually means the scenarios are too fine (merge the ones with the same stimulus and response) or the business has not chosen. Fewer than three usually means the difficulty was underestimated: check the excluded QRs and the change scenarios again.
+
+The ranking is a business decision ("Decisions" in `conventions.md`). The order of the primary drivers and where the line falls have high breadth, so ask about them in one question: the primary drivers in order, with the drafted ranking as the first option, and the drivers just below the line named. When the business has not chosen, the question asks it to. The answer is the decision: record it under "Decisions" and cite the question in the `basis_note` of every ranked driver. A judgment inside the ranking that moves no driver across the line (the difficulty of a driver far below it) is rated like any other point.

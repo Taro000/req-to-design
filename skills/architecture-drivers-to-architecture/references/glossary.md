@@ -9,19 +9,26 @@ Use these terms for the working language. For a language not listed, or a term m
 | quality chain (the skills that write docs/quality/) | 品質チェーン |
 | issues for the quality chain | 品質チェーンへの課題 |
 | design stage | 設計の段 |
-| design context | 設計の前提 |
+| design context | 設計の与件 |
 | finding | 指摘 |
 | severity: critical / major / minor | 重さ: 重大 / 中 / 軽微 |
 | finding status: open / accepted / rejected | 指摘の状態: 未解決 / 受け入れ / 退ける |
 | fresh context (for a review) | 別の文脈 |
 | review | レビュー |
 | risk / non-risk | リスク / リスクでないもの |
-| basis: stated / inferred / confirmed | 根拠: 入力 / 推定 / 確認済み |
-| status: draft / agreed / retired | 状態: 下書き / 合意済み / 廃止 |
+| basis: stated / inferred / assumed / confirmed | 根拠: 入力 / 推定 / 仮定 / 確認済み |
+| status: active / retired | 状態: 有効 / 廃止 |
 | report status: draft / answers applied | 報告書の状態: 下書き / 回答反映済み |
+| inputs as of (the commit the inputs were read at) | 入力の基準 |
 | detailed design status: not started / draft / answers applied | 詳細設計の状態: 未着手 / 下書き / 回答反映済み |
-| needs agreement | 要合意 |
-| approver candidates | 承認者の候補 |
+| business decision | 事業の判断 |
+| decisions (the questions asked and the answers in effect) | 決めたこと |
+| assumption (a judgment made without asking) | 仮定 |
+| assumption kind: judgment / decision | 仮定の種類: 判断 / 暫定の決定 |
+| assumption status: open / confirmed / overturned / retired | 仮定の状態: 未確認 / 確認済み / 覆った / 廃止 |
+| breadth / severity of a point: high / medium / low | 影響の広さ / 重大さ: 高 / 中 / 低 |
+| premises (what an item depends on) | 前提 |
+| design input (a design decision the quality chain found in its input and passed on: DIN) | 設計への申し送り |
 | open gaps | 未解決の点 |
 | out of scope | 範囲外 |
 | placeholder (for a number not yet decided) | 未定の値 |
@@ -60,11 +67,11 @@ Use these terms for the working language. For a language not listed, or a term m
 | design decision | 設計の決定 |
 | question (that a decision answers) | 問い |
 | option / chosen option / rejected option | 案 / 選んだ案 / 退けた案 |
-| rationale | 根拠 |
+| rationale | 決めた理由 |
 | gains / costs | 得るもの / 失うもの |
 | sensitive point | 応答を左右する点 |
 | trade-off | 引き換え |
-| assumption | 前提 |
+| assumption (what a decision takes as given, in DEC `assumptions`) | 想定 |
 | design mechanism | 設計の手立て |
 | design parameter | 設計上の値 |
 | technical debt | 技術的負債 |
@@ -79,7 +86,7 @@ Use these terms for the working language. For a language not listed, or a term m
 | integration and interoperability | 統合と相互運用 |
 | assurance, security and safety | 保証・セキュリティ・安全 |
 | variability | 可変性 |
-| element: component / data store / external system / node | 要素: コンポーネント / データの置き場所 / 外部システム / 実行環境 |
+| element: component / data store / external system / node | 要素: コンポーネント / データの置き場所 / 外部のシステム / 実行環境 |
 | responsibility | 責務 |
 | view | ビュー |
 | views: context / runtime / deployment / information / code structure | ビュー: 外部との関係 / 実行時の構成 / 配置 / 情報 / コードの分け方 |
@@ -140,4 +147,12 @@ Use these terms for the working language. For a language not listed, or a term m
 | conflict (between quality requirements) | 競合 |
 | non-functional requirement | 非機能要件 |
 | SLI / SLO / error budget | SLI / SLO / エラーバジェット |
-| measurement point | 測定点 |
+| vantage (where an SLI's events are observed): user-side / system-boundary / synthetic / data | 見る位置: 利用者の側 / システムの境界 / 模擬の利用 / データ |
+| SLI binding (where an SLI's events come from) | SLI の出どころ |
+| unit event (of an SLI) | 数える単位の出来事 |
+| counting rule | 数え方の規則 |
+| existing source (telemetry that already exists) | 既存の出どころ |
+| blind spot | 見えないもの（測定の制約） |
+| platforms and device support | プラットフォームと対応する端末 |
+| shared facts (of the quality chain: CON, EXT, OPF) | 共有する事実 |
+| operational facts | 運用の事実 |

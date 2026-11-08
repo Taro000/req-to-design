@@ -11,6 +11,7 @@
 - DAT: data entity (stage 3)
 - MOD: module (stage 4)
 - FND: finding (stages 2 to 4 and the review)
+- DAS: assumption (every stage and the review)
 - The detailed design index (stage 4)
 
 ## Layout
@@ -24,8 +25,8 @@ docs/design/
 ├── 3-high-level-design.md             stage 3 report, flows included
 ├── 4-detailed-design.md               stage 4 index: every component and its status
 ├── 4-detailed-design/ELM-02.md        stage 4 report, one per component
-├── reviews/2026-11-10-architecture.md review report, one per review
-├── design-context.yaml                stage 1: design inputs, stakeholders, current structure
+├── reviews/3-high-level-design.md     review report, one per reviewed stage (stage 4: per component, reviews/4-detailed-design-ELM-02.md): the latest review
+├── design-context.yaml                the design context: constraints, teams, changes, stakeholders, current structure
 ├── drv/DRV-01.yaml …                  stage 1: architecture drivers
 ├── dec/DEC-01.yaml …                  stages 2–4: design decisions
 ├── elm/ELM-01.yaml …                  stage 2: elements
@@ -33,33 +34,33 @@ docs/design/
 ├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
-└── fnd/FND-01.yaml …                  stages 2–4 and the review: findings
+├── fnd/FND-01.yaml …                  stages 2–4 and the review: findings
+└── das/DAS-01.yaml …                  every stage and the review: assumptions made without asking
 ```
 
 - One item per file. The file name is the ID: `dec/DEC-07.yaml`.
 - IDs are the prefix plus a zero-padded number (`DEC-07`, then `DEC-100` when needed). Never reuse or renumber an ID.
-- The YAML items are the source of truth, and the reports explain them. They are written once the answers are applied; until then the draft report is the working copy. If the two disagree, ask which one is right; do not silently pick one.
-- `design-context.yaml` holds the design inputs that the other items refer to. It is the only file that holds more than one entry.
+- The YAML items are the source of truth. A report summarizes and indexes them and never restates what an item says; it holds what only the report records (views, flows, walkthroughs, budgets, reasons, decisions, issues for the quality chain). The items are written while the stage drafts, and answers change them in place. If the report and an item disagree, ask which one is right; do not silently pick one.
+- Items hold the current state only: no changelog, no version, no dates of changes. Git keeps the history (`conventions.md`, "Current state only").
+- `design-context.yaml` holds the design context that the other items refer to. Stage 1 writes it; later stages and reviews only add facts the user gives them (`conventions.md`, "Judgment basis"). It is the only file that holds more than one entry.
 - Views, flows, state diagrams and decision tables live in the reports, as Mermaid diagrams and tables. Items refer to them by the report's section heading.
-- Keep the YAML valid. Quote a free-text value when it contains `: ` or ` #`, or starts with one of `[ { * & ! | > ' " % @` or a backtick, and quote any value inside `[ ]` or `{ }` that contains a comma.
+- Keep the YAML valid. Quote a free-text value when it contains `: ` or ` #`, or starts with one of `[ { * & ! | > ' " % @` or a backtick, and quote any value inside `[ ]` or `{ }` that contains a comma or `: `. Cite decisions and questions without `#` ("decision 12", "design stage 3, decision 4"): an unquoted ` #` starts a comment and silently cuts off the rest of the value.
 
 ## Common fields
 
-Every item file except `design-context.yaml` has these fields. The common fields come first and `changelog` comes last:
+Every item file except `design-context.yaml` and the assumption files (DAS, which have their own fields) has these fields, first:
 
 ```yaml
 id: DEC-07
 title: Short name, in the working language
-status: draft              # draft | agreed | retired   (FND: open | accepted | rejected)
-version: 1
-basis: inferred            # stated | inferred | confirmed: the weakest basis of the judgments in the item
-basis_note: null           # which parts are stated, inferred or confirmed, when they differ
-needs_agreement: false     # true for rankings, design parameters, accepted risks, costs and debts, deferrals
-approver_candidates: []    # roles, e.g. [Product owner, Tech lead]
+status: active             # active | retired   (FND: open | accepted | rejected; DAS: open | confirmed | overturned | retired)
+basis: inferred            # stated | inferred | assumed | confirmed: the weakest basis of the judgments in the item
+basis_note: null           # which parts are stated, inferred, assumed or confirmed, when they differ; findings accepted
+premises: []               # what the item depends on that could change under it: TC, PC, TEAM, CHG, STK, DAS, and the quality chain's CON, EXT, OPF, QAS
 # ... the fields of the item type ...
-changelog:
-  - {version: 1, date: 2026-11-02, change: Created, reason: Stage 2 draft}
 ```
+
+An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
 
 Every item that describes part of the system also has `as_is: keep | change | new | remove` (see "Existing systems" in `conventions.md`). In a system with no code, it is always `new`.
 
@@ -70,17 +71,22 @@ The examples below follow one fictional online store through all the stages.
 ```yaml
 read_from:
   quality_chain: docs/quality/           # null when the user gave the requirements directly
-  other: [Architecture notes (wiki), Roadmap 2026]
+  other: [Architecture notes (wiki), Roadmap 2026, Kick-off notes, Security team memo]
 technology_constraints:
   - id: TC-01
     statement: Card payments go through the payment provider's API; card numbers never reach our servers
     kind: external-service               # mandated | prohibited | platform | external-service
-    source: context.yaml system.constraints; security team memo
+    source: context.yaml CON-01; security team memo
     basis: stated
   - id: TC-02
     statement: Runs in the company's existing cloud account, in one region
     kind: platform
     source: Architecture notes
+    basis: stated
+  - id: TC-03
+    statement: The storefront stays a web app this year; no native app
+    kind: platform
+    source: context.yaml DIN-01                # every design input of the quality chain is taken in as a candidate
     basis: stated
 project_constraints:                     # kind: budget | deadline | team | other
   - id: PC-01
@@ -95,9 +101,9 @@ project_constraints:                     # kind: budget | deadline | team | othe
     basis: stated
   - id: PC-03
     kind: budget
-    statement: null                      # not stated; question 3
-    source: null
-    basis: inferred
+    statement: Not set until the funding review in March
+    source: Stage 1, question 3
+    basis: confirmed
 teams:
   - {id: TEAM-01, name: Store team, owns: Storefront and checkout and stock, basis: stated}
 anticipated_changes:
@@ -117,18 +123,18 @@ as_is:                                   # only when the repository holds code o
 
 ```yaml
 id: DRV-01
-# ... the other common fields ...  (needs_agreement: true, because the ranking is a priority decision)
+# ... the other common fields ...  (premises: [OPF-03, QAS-08]; QAS-08, the provisional target behind NFR-02, was asked in stage 1, question 6, and is listed under "Issues for the quality chain"; the ranking is a business decision, see "Decisions" in conventions.md)
 kind: quality                            # quality | change | constraint | function | observability | security | principle
 statement: Checkout confirms orders without keeping buyers waiting, up to sale-peak load
-sources: [QR-02, NFR-01, SLI-02]         # quality-chain IDs and design-context IDs (TC, PC, TEAM, CHG, STK)
+sources: [QR-02, NFR-02, SLI-02]         # quality-chain IDs and design-context IDs (TC, PC, TEAM, CHG, STK)
 concern_of: [USR-01]                     # user IDs from context.yaml, stakeholder IDs from design-context.yaml
 scenario:                                # quality, change, observability and security drivers; optional for function drivers; null for constraints and principles
   source: Buyers on smartphones (USR-01)
   stimulus: Submit the checkout during a sale
   artifact: Checkout (FR-01)
-  environment: Sale peak, up to 300 requests/s; normal operation
+  environment: Sale peak (OPF-03); normal operation
   response: The order is confirmed and the confirmation page is shown
-  measure: 99% of valid checkouts respond within 1.5 s over a rolling 28 days (NFR-01)
+  measure: NFR-02's SLO, counted by SLI-02     # name the chain's measure by ID; do not copy its statement
 negotiable: null                         # constraints and principles: true | false
 derived_from: []                         # principles: the drivers a principle serves
 priority:                                # every driver except principles
@@ -149,10 +155,10 @@ A principle is a rule for the whole system that follows from several drivers ("e
 
 ```yaml
 id: DEC-02
-# ... the other common fields ...
+# ... the other common fields ...  (premises: [TC-01, CHG-01, DAS-02])
 stage: architecture                      # architecture | high-level-design | detailed-design
 question: How does checkout keep confirming orders when the payment provider fails?
-addresses: [DRV-02]                      # the drivers, interfaces or findings the decision answers
+addresses: [DRV-02, DRV-10]              # the drivers, interfaces or findings the decision answers
 options:
   - name: One provider, retries with back-off
     effect: Rides out short errors; an outage still stops checkout
@@ -168,11 +174,14 @@ gains: [Checkout survives an outage of either provider]
 costs: [A second integration to build and test, Reconciliation must cover two providers]
 sensitive_points: [The error threshold that opens a provider's breaker - too low switches back and forth; too high keeps buyers waiting on a failing provider]
 trade_offs: [{with: DRV-07, note: A second contract raises running cost}]
-assumptions: [The second provider offers the same hosted card fields (TC-01), The second provider screens for fraud inside its charge as the first does (DRV-06)]
+assumptions: ["The second provider works like the first: hosted card fields, and fraud screening inside its charge (DAS-02)"]   # what the decision relies on; one you were unsure of and did not ask about is a DAS in premises
 depends_on: [DEC-01]
-parameters:                              # provisional design values (see "Numbers" in conventions.md)
-  - {name: failover_after, value: 5 consecutive errors or 10 s of timeouts, basis: Provisional; tune with the providers' error rates}
-debt: null                               # {what: ..., why_accepted: ..., repay_when: ...}
+parameters:                              # provisional design values: decisions (see "Numbers" and "Decisions" in conventions.md)
+  - {name: failover_after, value: 5 consecutive errors or 10 s of timeouts, basis: "Provisional starting value, answered with the second provider (stage 2, question 2); tune with the providers' error rates"}
+debt:                                    # {what, why_accepted, repay_when}; null when the decision accepts none
+  what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
+  why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
+  repay_when: Right after the spring sale
 deferred: false
 revisit_when: null                       # required when deferred is true: the event or date that settles it
 as_is: new
@@ -206,7 +215,7 @@ id: IFC-01
 kind: http                               # http | event | file | screen | batch
 name: Checkout API
 provider: ELM-02
-consumers: [ELM-01]                      # the storefront's checkout script, running in the buyer's browser
+consumers: [ELM-01]                      # elements; for a screen, the users (USR IDs) who use it. Here: the storefront's checkout script, running in the buyer's browser
 functions: [FR-01]                       # the FRs whose acceptance criteria pass through it
 operations:                              # http: method and path; event: message; file and batch: the file or job; screen: the screen
   - {name: POST /v1/checkout, does: Confirms the cart as an order and charges the buyer}
@@ -221,11 +230,16 @@ errors:                                  # the error contract
   - {case: The same key with a different cart, signal: 422 with code KEY_REUSED, caller_does: Start a new checkout with a new key}
 idempotency: One Idempotency-Key per order - the storefront creates it when the buyer first submits the cart and reuses it on every retry; the same key returns the first result
 timing:
-  timeout: 15 s (provisional; above the worst case of the payment path, 10.3 s, so that a payment still running is never abandoned; the 1.5 s of NFR-01 is a target, not a timeout)
+  timeout: 15 s (provisional; above the worst case of the payment path, 10.3 s, so that a payment still running is never abandoned; the 1.5 s of NFR-02 is a target, not a timeout)
   ordering: null                         # events: the ordering guarantee and its key
   delivery: null                         # events: at-most-once | at-least-once, and how duplicates are handled
 versioning: Version in the path; only additive changes within v1
-observability: Logs request_id and outcome at the load balancer in front of ELM-02, where SLI-02 is measured, and in the service
+observability: Logs request_id and outcome in the service, for investigations
+sli_bindings:                            # how this interface yields the events of quality-chain SLIs, without changing what the SLI counts
+  - sli: SLI-02
+    events: Each POST /v1/checkout request that reaches the load balancer in front of ELM-02 (the SLI's vantage is the system boundary); requests with the same Idempotency-Key are one checkout, counted by the first request
+    fields: [request_id, idempotency_key, status, elapsed, user_agent]
+    method: The load balancer's access logs, which already exist (OPF-02), with the Idempotency-Key header added to the logged fields
 spec: ifc/specs/checkout.openapi.yaml    # null for screens, and for interfaces whose spec belongs to an external system
 as_is: new
 ```
@@ -243,9 +257,10 @@ relations:
   - {to: DAT-02, kind: one-to-many, note: Order lines}
   - {to: DAT-03, kind: one-to-many, note: Payment attempts}
 consistency: The order and its lines are written in one transaction, as pending; each payment attempt and the order's final state are written in a second transaction once the provider answers
-retention: null                          # a stated period, or a placeholder from the quality chain
+retention: T_order_retention             # a stated period, or a named placeholder listed under "Placeholders" when no input gives one
 classification: personal                 # public | internal | personal | payment | other (say which)
 drivers: [DRV-05]
+sli_bindings: []                         # data SLIs: how this entity yields the SLI's events (which timestamps or attributes), as in IFC
 as_is: new
 ```
 
@@ -266,10 +281,10 @@ interface:
 invariants: []                           # what always holds for the module's state; [] when it holds no state
 depends_on: [MOD-05]
 functions: [FR-03]
-realizes: []                             # the IFC operations this module implements; each operation has exactly one module (MOD-01 realizes IFC-01)
+realizes: []                             # the IFC operations this module implements; each operation has exactly one module in each component that takes part in it (MOD-01 realizes IFC-01 in ELM-02)
 drivers: [DRV-04]
-decisions: [DEC-12]
-behaviour: "Report section: Order total calculator"   # where its states, decision tables and algorithms are drawn
+decisions: [DEC-14]
+behaviour: "Report section: MOD-02 Order total calculator"   # where its states, decision tables and algorithms are drawn
 verification:
   - {checks: "FR-03, criteria 1 to 3", how: Unit tests generated from the decision table}
 parameters: []
@@ -281,22 +296,18 @@ as_is: new
 ```yaml
 id: FND-01
 title: Failover after a timeout can charge the buyer twice
-status: open                             # open | accepted | rejected
-version: 1
+status: open                             # open | accepted | rejected; a rejection that leaves a risk in place is a decision
 basis: inferred
 basis_note: null
-needs_agreement: false                   # true when a rejection would leave a risk in place
-approver_candidates: []
+premises: []
 raised_by: design-review                 # or the stage skill that found it
-raised_in: reviews/2026-11-10-high-level-design.md
+raised_in: reviews/3-high-level-design.md
 to: architecture-to-high-level-design    # the skill that must decide
 targets: [IFC-02]
 severity: critical                       # critical | major | minor
 evidence: The checkout flow sends the charge to provider B as soon as provider A times out. A may still complete its charge, and A's idempotency key does not cover B, so the buyer can be charged twice (DRV-05)
 suggestion: Treat A's timeout as an unknown outcome and settle it at A (look up the key and cancel it if found) before charging B; if A cannot be settled within payment_wait, keep the order pending for reconciliation and tell the buyer the payment is being confirmed
 resolution: null                         # written by the addressed stage: what changed, or why the finding is rejected
-changelog:
-  - {version: 1, date: 2026-11-10, change: Raised, reason: Review of stage 3}
 ```
 
 Severity:
@@ -305,6 +316,25 @@ Severity:
 - `major`: a driver, a function or an interface is met only in part, or two items contradict each other.
 - `minor`: a detail is unclear, inconsistent or incomplete, and nothing fails because of it.
 
+## DAS: assumption (every stage and the review), `das/DAS-02.yaml`
+
+One judgment made without asking, because neither of its ratings was high (`conventions.md`, "Draft first, ask afterwards"). The items that depend on it list it in `premises`.
+
+```yaml
+id: DAS-02
+title: The second payment provider works like the first
+status: open                             # open | confirmed | overturned | retired
+stage: 2                                 # 1 | 2 | 3 | 4 | review-2 | review-3 | review-4: the stage, or the review of a stage, that wrote it
+kind: judgment                           # judgment | decision (a business decision adopted provisionally, such as a design parameter)
+statement: The second provider offers hosted card fields, so card numbers still never reach our servers (TC-01), and screens for fraud inside its charge, as the first does (DRV-06)
+why_unsure: CHG-01 names a second provider but not which one; most providers offer hosted fields, not all
+breadth: medium                          # high | medium | low
+severity: low                            # high | medium | low
+rating_note: A few items of stages 2 and 3 depend on it; checked when the provider is chosen, before any of it is built
+answer: null                             # the user's answer, when someone asked about it later
+answered_in: null                        # where, e.g. "stage 3, question 4" or "review of stage 3, question 2"
+```
+
 ## The detailed design index (stage 4), `docs/design/4-detailed-design.md`
 
 Stage 4 keeps one row per element of kind `component`. The tables of a data store are designed by the components that own the entities stored in it; external systems and nodes get no detailed design.
@@ -312,13 +342,13 @@ Stage 4 keeps one row per element of kind `component`. The tables of a data stor
 ```markdown
 # Detailed design index: <system name>
 
-Updated: <date>
+Updated: <date> · Inputs as of: <commit, or "none">
 
-| Component | Name | Status | Report | Modules | Open findings |
-|---|---|---|---|---|---|
-| ELM-01 | Storefront | not started | | | |
-| ELM-02 | Store API | answers applied | 4-detailed-design/ELM-02.md | MOD-01 to MOD-10 | FND-04 |
-| ELM-03 | Stock sync worker | not started | | | |
+| Component | Name | Status | Report | Modules |
+|---|---|---|---|---|
+| ELM-01 | Storefront | not started | | |
+| ELM-02 | Store API | answers applied | 4-detailed-design/ELM-02.md | MOD-01 to MOD-10 |
+| ELM-03 | Stock sync worker | not started | | |
 ```
 
 Status: `not started`, `draft` or `answers applied`, written with the glossary's terms in the working language.
