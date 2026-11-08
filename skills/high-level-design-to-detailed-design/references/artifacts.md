@@ -44,7 +44,7 @@ docs/design/
 - Items hold the current state only: no changelog, no version, no dates of changes. Git keeps the history (`conventions.md`, "Current state only").
 - `design-context.yaml` holds the design context that the other items refer to. Stage 1 writes it; later stages and reviews only add facts the user gives them (`conventions.md`, "Judgment basis"). It is the only file that holds more than one entry.
 - Views, flows, state diagrams and decision tables live in the reports, as Mermaid diagrams and tables. Items refer to them by the report's section heading.
-- Keep the YAML valid. Quote a free-text value when it contains `: ` or ` #`, or starts with one of `[ { * & ! | > ' " % @` or a backtick, and quote any value inside `[ ]` or `{ }` that contains a comma or `: `.
+- Keep the YAML valid. Quote a free-text value when it contains `: ` or ` #`, or starts with one of `[ { * & ! | > ' " % @` or a backtick, and quote any value inside `[ ]` or `{ }` that contains a comma or `: `. Cite decisions and questions without `#` ("decision 12", "design stage 3, decision 4"): an unquoted ` #` starts a comment and silently cuts off the rest of the value.
 
 ## Common fields
 
