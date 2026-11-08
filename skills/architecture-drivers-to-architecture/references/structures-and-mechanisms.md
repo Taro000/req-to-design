@@ -2,6 +2,7 @@
 
 ## Contents
 - Overall structures
+- Platforms and device support
 - Design mechanisms by quality
 - Design concerns
 
@@ -21,6 +22,17 @@ Choose the overall structure from the primary drivers and the constraints. These
 | Functions the platform runs on demand | Spiky, event-triggered work with little steady load | Start-up delay; the platform's limits; tied to one vendor |
 
 Screen first: drop every option that breaks a non-negotiable constraint (the team cannot run it, the platform does not offer it, the budget cannot pay for it). Then compare what remains against the primary drivers, in rank order, as `decisions.md` describes.
+
+## Platforms and device support
+
+The platforms are what the users' side runs on: a web app or native apps, which operating systems and browsers, and from which versions. The quality chain does not choose them. It names the kinds of device and the situations in the contexts of use of its quality-in-use requirements (a smartphone, one hand, outdoors, an unstable network), and stage 1 turns any platform that the input fixed into a technology constraint.
+
+- When a technology constraint fixes the platform, follow it, and decide only what it leaves open: the browsers a web app supports, or the system versions a native app supports.
+- Otherwise, write a decision with real options: a web app; native apps for named operating systems; one code base built for several systems; a web app now and a native app later.
+- Choose from the kinds of device and the situations in the contexts of use, the CUJ steps that need what only some platforms do well (location while the screen is off, notifications that must arrive, work while offline, the camera or other hardware), the anticipated changes, and the team's skills and deadline.
+- Which versions to support depends on the devices the users have, which only the user's organization knows. Propose a range with its basis (the oldest versions that offer what the CUJs need, for example).
+- Cover all the devices of each kind that a context of use names: "smartphone" means the phones the users carry, of every maker, unless the input says otherwise. Leaving some out leaves their users out and fails the quality-in-use requirements measured there, so it is never drafted silently: it is high severity, and it is asked.
+- When the chosen platform limits what users can do (a web app that cannot report location while the screen is off, for example), write an issue for the quality chain.
 
 ## Design mechanisms by quality
 
@@ -59,7 +71,7 @@ A design mechanism is a known way to produce a response. Pick the ones that prod
 - One request ID carried through every hop, into every log line.
 - Structured logs with the fields the SLIs and investigations need.
 - Metrics per CUJ step; traces across parts; health and diagnostic endpoints.
-- Events emitted at the SLIs' measurement points.
+- A place in the design to observe each SLI's events from its vantage: the users' devices for a user-side SLI, the boundary in front of the system for a system-boundary SLI, a prober for a synthetic SLI, the data itself for a data SLI. Stage 3 binds each SLI to the interface or data that produces its events.
 
 ### Testability and deployability
 - Seams to replace dependencies in tests: an interface for every external system, an injectable clock and ID generator.

@@ -60,11 +60,11 @@ For the data entities the component owns (the DAT items whose owner is this comp
 - for an existing schema, the migrations, in an order that keeps the running version working;
 - for tables another component reads directly, the read-only rights it gets, and the rule that they change only with a new version.
 
-Draw the tables as a Mermaid entity-relationship diagram.
+Draw the tables as a Mermaid entity-relationship diagram. The physical data lives in the component report only; no item holds it.
 
 ## Caches and in-memory structures
 
-For each cache: what it holds, its key, its lifetime (bounded by the freshness the drivers allow), how it is invalidated, and what happens on a miss. For each in-memory structure: its size bound.
+For each cache: what it holds, its key, its lifetime (a design parameter of the module, bounded by the freshness the drivers allow), how it is invalidated, and what happens on a miss. For each in-memory structure: its size bound.
 
 ## Screens
 
@@ -72,11 +72,13 @@ For each screen the component serves: its components and what each shows and tak
 
 ## Verification approach
 
-For each module, list what must be verified and how, without writing the tests:
+For each module, list in the MOD's `verification` what must be verified and how, without writing the tests:
 
 | Checks | How |
 |---|---|
 | FR-03, criteria 1 to 3 | Unit tests generated from the decision table |
 | IFC-01's error contract | Contract tests against checkout.openapi.yaml |
-| The module's share of the NFR-01 budget | A load test at 300 requests/s in staging |
+| The module's share of the NFR-02 budget | A load test at the sale peak (OPF-03) in staging |
 | Analysability (an internal QR) | A CI check that every log line carries request_id |
+
+In the report, describe only what serves several modules: the test doubles for external systems, the environments, the load tests and the checks in CI.

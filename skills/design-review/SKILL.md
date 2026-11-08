@@ -1,9 +1,9 @@
 ---
 name: design-review
-description: Reviews the output of stage 2, 3 or 4 of the design chain (architecture-drivers-to-architecture, architecture-to-high-level-design, high-level-design-to-detailed-design) in a fresh context, apart from the one that wrote the design, and writes findings addressed to the stage that must decide. Every check is an activity with a recorded result - walking drivers and CUJs through the design to find risks, sensitive points and trade-offs; judging whether the design fits its use, survives its planned changes, can be built for its cost and is clear; checking views, allocations and decisions; tracing acceptance criteria, recomputing latency budgets, checking data ownership, error contracts and unknown outcomes; checking modules for complete states, decision tables and verifiability. Never edits the design. Use it after any design stage, or when someone asks to review or evaluate an architecture, a high-level design or a detailed design.
+description: Reviews the output of stage 2, 3 or 4 of the design chain (architecture-drivers-to-architecture, architecture-to-high-level-design, high-level-design-to-detailed-design) in a fresh context and writes findings addressed to the stage that must decide. Every check is an activity with a recorded result - walking drivers and CUJs through the design for risks, sensitive points and trade-offs; judging whether it fits its use, survives planned changes, can be built for its cost and is clear; checking views, allocations, decisions and platforms; tracing acceptance criteria, recomputing latency budgets, checking data ownership, error contracts, unknown outcomes and SLI bindings; checking modules for complete states, decision tables and verifiability; and, at every stage, premises, assumptions that should have been asked, and points left for the design to confirm. Never edits the design. Use it after any design stage, or when asked to review or evaluate an architecture, a high-level design or a detailed design.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Design review
@@ -16,9 +16,9 @@ Every check is an activity with a result: add up the budget, trace the criterion
 
 ## Read first
 
-- `references/conventions.md`: the design chain, findings, the working language, judgment basis marks and the question protocol. Follow it exactly.
-- `references/artifacts.md`: where files go, the schema for FND, and the items under review.
-- `references/review-procedures.md`: the activities for each stage, and how to classify what they find.
+- `references/conventions.md`: the design chain, findings, the working language, judgment basis marks, the question protocol, assumptions and how a run finishes. Follow it exactly.
+- `references/artifacts.md`: where files go, the schemas for FND and DAS, and the items under review.
+- `references/review-procedures.md`: the activities for each stage and for every stage, and how to classify what they find.
 - `references/report-template.md`: the report layout and a worked example.
 - `references/glossary.md`: terms for the working language.
 
@@ -31,8 +31,9 @@ Every check is an activity with a result: add up the budget, trace the criterion
 ## Inputs
 
 - The stage to review: 2 (architecture), 3 (high-level design), or 4 (the detailed design of one component, named by its element ID). If the user does not say, ask.
-- The stage's report and items, and what they were built from: the items of the earlier design stages, `design-context.yaml`, and the quality chain's artifacts (read only).
-- Earlier reviews of the same stage and their findings, so that a finding rejected with a reason is not raised again unless its inputs changed.
+- The stage's report and items, and what they were built from: the items of the earlier design stages, `design-context.yaml`, the assumptions in `das/`, and the quality chain's artifacts (read only), with its shared facts and its assumptions (QAS).
+- The findings in `fnd/`, whatever their status, those of earlier reviews included, so that a finding rejected with a reason is not raised again unless its inputs changed.
+- The review report of the same stage (for stage 4, of the same component), if there is one, for its "Decisions" only: this review replaces it, keeps the answers still in effect and continues the question numbering. Its results are not inputs; do every activity again.
 
 Essential input: the report and items of the stage under review. A stage whose report is still a draft can be reviewed, but say so.
 
@@ -40,31 +41,40 @@ Essential input: the report and items of the stage under review. A stage whose r
 
 ### 1. Scope
 
-Name the stage (and the component, for stage 4), the items in scope and their versions, and the date.
+Name the stage (and the component, for stage 4), the items in scope, and the commit they were read at (`Inputs as of`: the commit current when the review starts, or "none" outside git). The report has one fixed path per reviewed stage and replaces the report already there: `docs/design/reviews/2-architecture.md`, `3-high-level-design.md`, or `4-detailed-design-<element ID>.md`.
 
 ### 2. Do the activities
 
-Do every activity that `review-procedures.md` lists for the stage, working from the artifacts only, and record the result of each one, including the ones that find nothing.
+Do every activity that `review-procedures.md` lists for the stage and for every stage, working from the artifacts only, and record the result of each one, including the ones that find nothing.
 
 ### 3. Classify
 
 For a review of stage 2, sort what the walkthroughs showed into risks, non-risks, sensitive points and trade-offs ("Risks, non-risks, sensitive points and trade-offs" in `review-procedures.md`). For every stage, decide which results are findings.
 
-### 4. Write the findings
+### 4. Draft the findings and the report
 
-Write one finding per problem, following `artifacts.md`: the skill it is addressed to, the items it concerns, the severity, the evidence (what the activity showed, with IDs and numbers) and a suggested resolution. Address each finding to the skill that owns the cause, which may be earlier than the stage reviewed: a high-level design problem caused by an architecture decision goes to `architecture-drivers-to-architecture`. A problem in the quality chain goes to "Issues for the quality chain" instead. Do not raise again a finding that was rejected with a reason, unless its inputs have changed; cite it.
+Write one finding per problem as an FND item, as you draft it, following `artifacts.md`: the skill it is addressed to, the items it concerns, the severity, the evidence (what the activity showed, with IDs and numbers) and a suggested resolution. Address each finding to the skill that owns the cause, which may be earlier than the stage reviewed: a high-level design problem caused by an architecture decision goes to `architecture-drivers-to-architecture`. A problem in the quality chain goes to "Issues for the quality chain" instead. Do not raise again a finding that was rejected with a reason, unless its inputs have changed, and do not write a second finding for a problem that an open one already covers; cite it. Write the draft review report that records the results and indexes the findings, following `report-template.md`.
 
-### 5. Report, questions, items
+### 5. Questions
 
-Write the review report following `report-template.md`. Ask the user about the facts the review needs and cannot find in the artifacts (a provider's SLA, a team's experience), as `conventions.md` describes. A judgment about the design is not a question for the user: it is a finding, which the addressed stage accepts or rejects. Then write the FND items.
+Some activities need facts that the artifacts do not give, such as a provider's SLA or a team's experience. Rate each such point as `conventions.md` describes ("Draft first, ask afterwards"): ask the user when its breadth or severity is high; otherwise write a DAS with `stage` set to the review of the stage under review (`review-2`, `review-3` or `review-4`), keep the drafted judgment, and cite the DAS in the activity's result and in the `premises` of the findings that rest on it. Record a question about an existing assumption as "Assumptions" in `conventions.md` describes. Number the questions per review report, continuing from earlier reviews at the same path, and cite them as "review of stage 3, question 2" or "review of stage 4 ELM-02, question 1".
+
+A judgment about the design is never a question for the user: it is a finding, which the addressed stage accepts or rejects.
+
+Apply the answers to the results, and to the FND and DAS items in place.
+
+### 6. Answers applied
+
+Check the exit criteria, make the report match the items, and set the report's status to "answers applied".
 
 ## Exit criteria
 
-- Every activity listed for the stage was done, and its result is recorded, including those with no finding.
+- Every activity listed for the stage and for every stage was done, and its result is recorded, including those with no finding.
 - Every primary driver and every CUJ in scope was walked through.
-- Every finding names the skill it is addressed to, the items, the severity, the evidence and a suggested resolution.
-- No design item was changed.
-- The report says whether the review ran in a fresh context.
+- Every finding names the skill it is addressed to, the items, the severity, the evidence and a suggested resolution, and lists in `premises` the open assumptions it rests on.
+- Every fact the review needed and could not find was asked about, or is a DAS.
+- No design item was changed, except for the ratings and answers that `conventions.md` lets any run record in an assumption.
+- The report says whether the review ran in a fresh context, and names the commit its inputs were read at.
 
 ## Pitfalls
 
@@ -74,7 +84,10 @@ Write the review report following `report-template.md`. Ask the user about the f
 - Findings without evidence ("seems risky"). The addressed stage cannot accept or reject what it cannot check.
 - Letting minor findings bury critical ones. Order the findings by severity, and keep the minor ones short.
 - Addressing a finding to the stage under review when the cause lies in an earlier stage.
+- Asking the user to judge the design. Questions are for facts the review needs; a judgment is a finding.
+- Raising again a finding that was rejected with a reason when nothing it rests on has changed. The stage has decided; repeating it adds noise, not evidence.
+- Restating the findings in the report. The report indexes them; the evidence lives in the FND files, where the addressed stage reads it.
 
 ## Finish
 
-Tell the user the stage reviewed, whether the context was fresh, the number of findings by severity and by addressed skill, the main risks and trade-offs, the issues for the quality chain, and the next steps: re-run each addressed stage to accept or reject its findings, then review again if critical findings changed the design.
+Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to re-run, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps are to re-run each addressed stage to accept or reject its findings, and to review again when critical findings changed the design.

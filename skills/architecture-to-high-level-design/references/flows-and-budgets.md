@@ -10,7 +10,7 @@
 
 ## End-to-end flows
 
-Draw one Mermaid sequence diagram for every CUJ and every primary driver's scenario. Participants are elements, with their IDs; messages are IFC operations, with their IDs. Show where data is written, in which transaction, and where the flow returns to the person.
+Draw one Mermaid sequence diagram for every CUJ and every primary driver's scenario. Participants are elements, with their IDs; messages are IFC operations, with their IDs. Show where data is written, in which transaction, and where the flow returns to the person. Add a note where an SLI's binding observes the flow, so that the start and end of its latency budget can be seen.
 
 ```mermaid
 sequenceDiagram
@@ -19,6 +19,7 @@ sequenceDiagram
   participant DB as ELM-04 Store database
   participant PA as ELM-05 Provider A
   SF->>API: POST /v1/checkout (IFC-01), the order's Idempotency-Key
+  Note over SF,API: SLI-02 is observed at the load balancer in front of ELM-02
   API->>DB: reserve stock, create the order as pending (transaction 1)
   API->>PA: charge with fraud screening (IFC-02), the same key
   PA-->>API: authorized
@@ -34,10 +35,10 @@ For each flow, add the paths for: a timeout of each call (an unknown outcome whe
 
 For every SLO with a time threshold, check the flow's normal path:
 
-1. Start from the threshold and from where it is measured (the SLI's measurement point). Only the time inside that point counts.
+1. Start from the threshold, the SLI's vantage and the binding that realizes it ("SLI bindings" in `interfaces.md`). Only the time inside the binding's observation point counts. For a binding at the load balancer in front of a component, that is the time from the load balancer receiving the request to its sending the response. For an SLI whose vantage is `user-side`, the time on the person's device and network counts too, and the budget needs hops for them.
 2. List the serial hops of the flow inside it: our own processing, each database call or group of calls, each call to another element or an external system, waits in queues. Calls made in parallel count as one hop, at the slowest of them.
 3. Percentiles do not add up: a rare stall in any one hop can push the whole flow past the sum of the hops' 99th percentiles. To bound the flow with a sum, give each of the n serial hops a budget at the 1 − (1 − target)/n percentile, which for a 99% SLO and three hops is the 99.67th. If no hop exceeds its budget more often than that, the whole flow stays within the sum at least 99% of the time.
-4. Take external systems' numbers at that percentile from their stated SLAs or measurements; a stated 99.9th percentile is a safe stand-in. For our own work, propose provisional values with their basis.
+4. Take external systems' numbers at that percentile from what they promise (the TC that records it, or an OPF in `context.yaml`) or from measurements; a stated 99.9th percentile is a safe stand-in. For our own work, propose provisional values with their basis; like any design parameter, each is a decision ("Decisions" in `conventions.md`).
 5. Keep a margin, and show the sum: the hops plus the margin must not exceed the threshold. Compute it with a script, and put the script's output in the report.
 6. When the numbers at that percentile are not known, say so, and make a load test of the whole flow before release a gate.
 
@@ -45,11 +46,11 @@ For every SLO with a time threshold, check the flow's normal path:
 |---|---|---|
 | ELM-02 own work | 0.15 s | Provisional |
 | ELM-04 reads and writes, both transactions | 0.15 s | Provisional |
-| Charge with fraud screening at ELM-05 | 1.00 s | Provider's stated 99.9th percentile |
+| Charge with fraud screening at ELM-05 | 1.00 s | Provider A's stated 99.9th percentile (TC-04) |
 | Margin | 0.20 s | |
-| Total | 1.50 s | NFR-01 threshold: 1.5 s, measured at the load balancer in front of ELM-02 |
+| Total | 1.50 s | NFR-02's threshold of 1.5 s, observed where SLI-02 is bound: the load balancer in front of ELM-02 (IFC-01) |
 
-The budgets are not timeouts. Set the timeouts as `interfaces.md` ("Timing") describes.
+The budgets are not timeouts. Set the timeouts as `interfaces.md` ("Timing") describes, and compute with the same script the worst case each caller waits for, settlement waits included, from the values in the IFCs' `timing`.
 
 ## Failure paths and the error budget
 
@@ -59,7 +60,7 @@ An SLO of 99% lets 1% of valid events be slow or fail. A failure path does not h
 2. A path that many events take (a retry after a common error) must fit the threshold, like the normal path.
 3. A path that few events take (a failover, until a breaker opens) must fit the error budget: the events it makes slow, over the incidents a window may hold, stay well within the error budget volume. Show the arithmetic.
 
-Example: provider A fails at peak. Until A's breaker opens after 10 s of timeouts (`failover_after`), each checkout waits for A's timeout and for A's settlement before B is tried, several seconds in all. That is at most 10 s × 300 requests/s = 3,000 slow checkouts per outage, 3.6% of NFR-01's error budget of 84,000 checkouts per 28 days.
+Example: provider A fails at the sale peak. Until A's breaker opens after 10 s of timeouts (`failover_after`, DEC-02), each checkout waits for A's timeout and for A's settlement before B is tried, several seconds in all. That is at most 10 s × 300 requests/s (OPF-03) = 3,000 slow checkouts per outage, 3.6% of NFR-02's error budget of 84,000 checkouts per 28 days (from OPF-01).
 
 ## Screen flows
 

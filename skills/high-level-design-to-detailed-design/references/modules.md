@@ -24,7 +24,7 @@
 
 ## Frameworks and off-the-shelf parts
 
-Choosing a framework, a library or a managed service for a module is a decision, with options, the drivers it serves, its cost (licence, lock-in, learning) and the rejected options. Prefer what the shared conventions and the team's skills already use.
+Choosing a framework, a library or a managed service for a module is a decision (a DEC with `stage: detailed-design`), with options, the drivers it serves, its cost (licence, lock-in, learning) and the rejected options. Prefer what the shared conventions and the team's skills already use.
 
 ## Contracts
 
@@ -38,8 +38,8 @@ For each public operation:
 | Invariants | What always holds for the module's state | A confirmed order's total never changes |
 | Errors | Every way the operation can fail, and what the caller learns | `CouponExpired`: the coupon expired after it was added |
 
-Use the types of the shared conventions (money in integer minor units, times in UTC). Define once, in the component report, the structured types the signatures use (`OrderDraft`, `Money`). Write preconditions, postconditions and errors with each operation in the MOD's `interface`, and invariants in its `invariants` field.
+Use the types of the shared conventions (money in integer minor units, times in UTC). Define once, in the component report, the structured types the signatures use (`OrderDraft`, `Money`). Write preconditions, postconditions and errors with each operation in the MOD's `interface`, and invariants in its `invariants` field. The report does not repeat them: two copies drift apart.
 
 ## Allocation
 
-Every acceptance criterion of every FR allocated to the component goes to at least one module. Every operation of every IFC the component provides or consumes goes to exactly one module that realizes it. A criterion or an operation with no module is a gap; one with two modules needs an explanation.
+Every acceptance criterion of every FR allocated to the component goes to at least one module. Every operation of every IFC the component provides or consumes goes to exactly one module of the component, which realizes it: each operation has exactly one module in each component that takes part in it, the provider's and each consumer's. When an SLI binding (`sli_bindings` of an IFC or DAT) needs the component to produce events or fields, that goes to the module that produces them. A criterion or an operation with no module is a gap. A criterion may need several modules; an operation never has two in the same component.

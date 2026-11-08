@@ -5,12 +5,12 @@
 - Ownership
 - Consistency
 - Retention and classification
-- Data quality flows
+- Data quality flows and data SLIs
 - Shared conventions
 
 ## Data entities
 
-Write one DAT for every entity that the FRs read or write and that more than one module or element cares about: orders, payments, stock, accounts, rides. For each: the key attributes (enough to show what it is, not every column), relations, the owner, the store, the consistency rule, retention and classification. Columns, types and indexes come in stage 4. Draw the entities and their relations as a Mermaid entity-relationship diagram in the report.
+Write one DAT for every entity that the FRs read or write and that more than one module or element cares about: orders, payments, stock, accounts, rides. For each: the key attributes (enough to show what it is, not every column), relations, the owner, the store, the consistency rule, retention, classification, and the bindings of data SLIs ("Data quality flows and data SLIs"). Columns, types and indexes come in stage 4. Draw the entities and their relations as a Mermaid entity-relationship diagram in the report.
 
 ## Ownership
 
@@ -28,16 +28,18 @@ Every entity has exactly one owner element: the only one that writes it. Other e
 
 ## Retention and classification
 
-- Retention comes from a law, a contract or a policy that entered the quality chain through an entry point; otherwise it is a placeholder. Never invent a period.
+- Retention comes from a law, a contract or a policy that entered the quality chain through an entry point; otherwise it is a placeholder. Never invent a period. When the inputs name the law, contract or policy but not the period, ask: the content of a law, standard, contract or policy that the inputs name but do not give is always asked when a judgment in this stage depends on it (`conventions.md`, "Draft first, ask afterwards").
 - Classification (personal data, payment data, internal, public) decides encryption, who may read the data, what may be logged and where it may be stored. Personal and payment data never go into logs or analytics events unmasked.
 
-## Data quality flows
+## Data quality flows and data SLIs
 
 For each data quality driver, show where the data comes from, how it is validated, how changes propagate and how long that may take, and what is reconciled against what. The freshness the driver allows bounds every cache and every delay on the path.
 
+For each SLI whose vantage is `data`, write its binding in the DAT's `sli_bindings`, as "SLI bindings" in `interfaces.md` describes: which records are its unit events, the timestamps or attributes its counting rules compare (for freshness, the time a change happened at its source and the time it became visible), and the method (a scheduled query, a reconciliation run). When people see the data through a copy, such as a cache, the binding observes the copy: the time the owner stored a change is not the time people saw it.
+
 ## Shared conventions
 
-Decide these once for the whole system, each as a decision:
+Decide these once for the whole system, each as a decision. A convention that the existing code follows is `stated`. A shared convention has high breadth (`conventions.md`, "Draft first, ask afterwards"), so ask about any that you are unsure of.
 
 | Convention | Decide |
 |---|---|
