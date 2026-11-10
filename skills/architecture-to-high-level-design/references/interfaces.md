@@ -29,7 +29,7 @@
 | sli_bindings | For each quality-chain SLI whose events it produces: which events, the fields the counting rules need, and the method ("SLI bindings") |
 | spec | The OpenAPI or AsyncAPI document |
 
-An FR names an interface by its kind and, for an external system, its EXT ID (`interface: ["screen: buyer checkout", EXT-01]`). Everything in this table is decided here, with one exception: an FR may name the endpoint of an interface that already exists in a running product. That endpoint is a fact about the current system, not a design input and not an issue for the quality chain; the IFC keeps it (`as_is: keep`) unless a decision changes it.
+An FR names an interface by its kind and, for an external system, its EXT ID (`interface: ["screen: buyer checkout", EXT-01]`). Everything in this table is decided here, with one exception: an FR may name the endpoint of an interface that already exists in a running product. That endpoint is a fact about the current system, not a design input and not a request to the quality chain; the IFC keeps it (`as_is: keep`) unless a decision changes it.
 
 ## By kind
 
@@ -123,13 +123,13 @@ A binding decides where and how the events are observed, never what is counted:
 - Keep the counting rules. Every definition, exclusion and counting rule must be computable from the fields.
 - Keep the applicability and the lifecycle. Bind only events of the environment and traffic that `applicability` names ("production, normal traffic"), collected where `lifecycle` says the SLI is measured. Events of other environments or traffic (staging, load tests, synthetic checks that a separate SLI counts) stay out, through where the binding collects or through a field that tells them apart; load-test values are estimates and never feed the SLI.
 
-When the vantage cannot be realized (the system cannot reach the person's devices), or the design would like the same events observed from a second place, do not move the vantage or add one in the binding: a second vantage is a second SLI. Write an issue for the quality chain, as for a counting rule that nothing the system can observe would compute.
+When the vantage cannot be realized (the system cannot reach the person's devices), or the design would like the same events observed from a second place, do not move the vantage or add one in the binding: a second vantage is a second SLI. Write a request to the quality chain, as for a counting rule that nothing the system can observe would compute.
 
 Where the events come from:
 
 - When the SLI has an `existing_source`, bind to that telemetry, list the OPF in the item's `premises`, and add only the fields it lacks.
 - When nothing produces the events, design it here: the log line, the event or the probe, the element that emits it, and its fields. Follow the shared conventions for logs; personal and payment data never go into the fields unmasked.
-- When producing them needs a new behaviour of the system, something no FR provides (the system never learns that a parcel was delivered), write an issue for the quality chain and do not add the behaviour. Telemetry that people do not see (a log line, a timing beacon, a probe) is design, and is added here.
+- When producing them needs a new behaviour of the system, something no FR provides (the system never learns that a parcel was delivered), write a request to the quality chain and do not add the behaviour. Telemetry that people do not see (a log line, a timing beacon, a probe) is design, and is added here.
 
 ## Specs
 

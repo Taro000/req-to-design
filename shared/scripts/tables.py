@@ -16,9 +16,14 @@ quality-chain assumption rated by this stage): the script keeps what the report
 already says in those cells, matched by the row's key, and leaves them empty on
 new rows for the stage to fill in. The report templates say which columns those are.
 
+It also writes the whole request document, quality-chain-requests.md, from the
+requests to the quality chain (qcr/) that are open or answered, whatever skill it
+runs for. The user may write an answer after "Answer:" under a request; until the
+request holds that answer, the script leaves the document as it is and says so.
+
 Usage:
-    python3 scripts/tables.py --skill <skill name>   the reports that skill writes
-    python3 scripts/tables.py [REPORT ...]           the reports named, or every report
+    python3 scripts/tables.py --skill <skill name>   the reports that skill writes, and the request document
+    python3 scripts/tables.py [REPORT ...]           the reports named, or every report and the request document
 Options:
     --design DIR    the design directory (default: docs/design)
     --quality DIR   the quality chain's directory (default: read_from.quality_chain in
@@ -28,6 +33,7 @@ Options:
     --dry-run       only list the reports whose tables would change; exit 1 if any would
 """
 
+import hashlib
 import os
 import re
 import sys
@@ -92,9 +98,11 @@ class Renderer(object):
             return DASH
         return str(value)
 
-    def ranges(self, ids):
-        """MOD-01, MOD-02, MOD-03, MOD-05 -> 'MOD-01 to MOD-03, MOD-05' (Japanese: 'MOD-01〜MOD-03、MOD-05')."""
-        keys = sorted((lib.id_key(i) for i in ids), key=lambda k: (k[0], k[1]))
+    def ranges(self, ids, shortest=2):
+        """MOD-01, MOD-02, MOD-03, MOD-05 -> 'MOD-01 to MOD-03, MOD-05' (Japanese: 'MOD-01〜MOD-03、MOD-05').
+
+        A run of consecutive numbers becomes a range when it has at least `shortest` IDs."""
+        keys = sorted(set(lib.id_key(i) for i in ids), key=lambda k: (k[0], k[1]))
         groups = []
         for prefix, number in keys:
             if groups and groups[-1][0] == prefix and groups[-1][2] == number - 1:
@@ -104,11 +112,11 @@ class Renderer(object):
         width = lambda n: "%02d" % n  # noqa: E731
         out = []
         for prefix, first, last in groups:
-            if first == last:
-                out.append("%s-%s" % (prefix, width(first)))
-            else:
+            if last - first + 1 >= max(shortest, 2):
                 link = "〜" if self.lang == "ja" else " to "
                 out.append("%s-%s%s%s-%s" % (prefix, width(first), link, prefix, width(last)))
+            else:
+                out.extend("%s-%s" % (prefix, width(n)) for n in range(first, last + 1))
         return self.join(out)
 
     # the tables
@@ -245,7 +253,7 @@ class Renderer(object):
             rows.append([s.id, self.text(s.get("title")), self.term("vantage", s.get("vantage")), self.join(on),
                          self.text(s.get("existing_source")), DASH if on else Hand()])
         return Table([("SLI", "SLI"), ("Title", "名前"), ("Vantage", "見る位置"), ("Bound on", "出どころの項目"),
-                      ("Existing source", "既存の出どころ"), ("Issue instead", "代わりの課題")], rows)
+                      ("Existing source", "既存の出どころ"), ("Request instead", "代わりの要求")], rows)
 
     def t_data(self, ctx):
         self.need(ctx, ("stage",), (3,))
@@ -500,6 +508,277 @@ def line_of(text, index):
     return text.count("\n", 0, index) + 1
 
 
+# the request document
+
+REQUESTS_SHOWN = ("open", "answered")
+SECTION_RE = re.compile(r"###[ \t]+(QCR-[0-9]{2,})(?![0-9])")
+PRINTS_RE = re.compile(r"<!--[ \t]*fingerprints:[ \t]*(.*?)[ \t]*-->\Z")
+# an answer's label, also written as a list item, in bold, in lower case or as 回答
+ANSWER_RE = re.compile(r"[ \t]*(?:[-*+][ \t]+)?[*_]{0,2}[ \t]*(?:answer|答え|回答)[ \t]*[*_]{0,2}[ \t]*[:：][ \t]*[*_]{0,2}"
+                       r"[ \t]*(.*)\Z", re.I)
+STAGE_LINE_RE = re.compile(r"- (?:.*?: )?QCR-[0-9]{2,} .*(?: \((?:open|answered)\)|（(?:未回答|回答済み)）)\Z")
+REQUEST_TEXT = {
+    "title": ("Requests to the quality chain", "品質チェーンへの要求書"),
+    "note": ("Written by scripts/tables.py from the requests in qcr/. Edit nothing but the answers: write an answer"
+             " after \"Answer:\" under a request, and the next design run records it in the request. The fingerprints"
+             " on the last line tell the script what was edited by hand.",
+             "scripts/tables.py が qcr/ の要求から書く。手で書くのは答えだけにする。要求の「答え:」の後に答えを書くと、"
+             "次の設計の実行がそれを要求に写す。最後の行の指紋で、スクリプトは手で書いた所を見分ける。"),
+    "intro": ("The design chain never changes the quality chain (`docs/quality/`). When the design shows that a"
+              " requirement should change, or that one it needs is missing, it writes a request; every request that"
+              " is open or answered is here. Write an answer after \"Answer:\" under a request when you know it: the"
+              " next design run records it. Then hand this document to the quality-chain stages listed under \"What"
+              " to do in each quality-chain stage\", and re-run them. On their next run, the design stages follow"
+              " what changed in `docs/quality/`, and drop the requests applied there.",
+              "設計の連鎖は、品質チェーン（`docs/quality/`）を直さない。品質チェーンの要求を変えるべきだと設計で分かったときや、"
+              "設計に要る要求が品質チェーンにないときは、品質チェーンへの要求を書く。ここには、未回答と回答済みの要求がすべてある。"
+              "答えが決まった要求には、「答え:」の後に答えを書く。次の設計の実行が、それを要求に写す。そのうえで、この文書を"
+              "「品質チェーンの段ごとにすること」に挙げた段に渡して、その段を再実行する。設計の段は、次の実行で `docs/quality/` "
+              "の変わった所に追随し、反映された要求をここから外す。"),
+    "list": ("List", "一覧"),
+    "requests": ("Requests and answers", "要求と答え"),
+    "stages": ("What to do in each quality-chain stage", "品質チェーンの段ごとにすること"),
+    "stages_intro": ("Re-run each stage below with this document. It applies the answers and decides with you the"
+                     " requests that have none; the later quality-chain stages follow its changes on their own re-run.",
+                     "下の段に、この文書を渡して再実行する。その段は答えを反映し、答えのない要求はあなたと決める。品質チェーンの"
+                     "後の段は、その変更に自分の再実行で追随する。"),
+    "none": ("No request is open or answered.", "未回答の要求も、回答済みの要求もない。"),
+    "status": ("Status", "状態"),
+    "raised": ("Raised in", "出した段"),
+    "impact": ("Impact", "影響"),
+    "targets": ("Chain items", "品質チェーンの項目"),
+    "quality_stages": ("Quality-chain stages", "品質チェーンの段"),
+    "origin": ("Origin", "由来の項目"),
+    "dependents": ("Items that depend on it", "依存する項目"),
+    "issue": ("Issue", "課題"),
+    "suggestion": ("Suggested change", "直し方の案"),
+    "answer": ("Answer", "答え"),
+}
+BULLET_RE = re.compile(r"- (?:%s): " % "|".join(re.escape(x) for k in ("status", "impact", "targets", "origin", "issue",
+                                                                         "suggestion") for x in REQUEST_TEXT[k]))
+FIXED_TEXTS = set(REQUEST_TEXT[k][n] for k in ("intro", "stages_intro", "none") for n in (0, 1))
+
+
+def one_line(value):
+    return re.sub(r"\s*\n\s*", " ", str(value)).strip() if value not in (None, "") else ""
+
+
+def normalized(value):
+    return re.sub(r"\s+", " ", str(value)).strip() if value not in (None, "") else ""
+
+
+def answer_key(value):
+    """An answer as compared: unescaped, without its spacing, and without a placeholder or a list mark before it."""
+    text = re.sub(r"(?m)^\\#", "#", str(value)) if value not in (None, "") else ""
+    return re.sub(r"\A(?:[%s-](?:\s+|\Z))+" % DASH, "", normalized(text))
+
+
+def answer_lines(answer):
+    """The lines of an answer as the document shows them: a line that starts with # is escaped, to stay text."""
+    return [("\\" + l if l.startswith("#") else l) for l in str(answer).strip().split("\n")]
+
+
+def quality_stages(request):
+    out = []
+    for s in lib.as_list(request.get("quality_stages")):
+        if str(s) in ("1", "2", "3", "4") and int(s) not in out:
+            out.append(int(s))
+    return sorted(out)
+
+
+def fingerprint(lines):
+    return hashlib.sha1("\n".join(lines).strip().encode("utf-8")).hexdigest()[:10]
+
+
+def doc_parts(text):
+    """(rest, sections, fingerprints) of a request document.
+
+    rest: [(line number, line)] outside the sections of the requests; sections: [(QCR ID, line number, lines)];
+    fingerprints: {QCR ID or "rest": fingerprint}, as the last line records them.
+    """
+    rest, sections, prints, current = [], [], {}, None
+    for n, line in enumerate((text or "").split("\n"), 1):
+        m = PRINTS_RE.match(line.strip())
+        if m:
+            for part in m.group(1).split(","):
+                bits = part.split()
+                if len(bits) == 2:
+                    prints[bits[0]] = bits[1]
+            continue
+        if line.startswith("#"):
+            m = SECTION_RE.match(line)
+            if m:
+                current = (m.group(1), n, [line])
+                sections.append(current)
+                continue
+            current = None
+        if current is not None:
+            current[2].append(line)
+        else:
+            rest.append((n, line))
+    return rest, sections, prints
+
+
+def requests_language(project):
+    """The language of the request document: its title's when it exists, else that of the reports or the requests."""
+    if project.request_doc is not None:
+        first = next((l for l in project.request_doc.split("\n") if l.startswith("# ")), project.request_doc)
+        return "ja" if KANA_RE.search(first) else "en"
+    sample = " ".join(BLOCK_RE.sub("", t) for t in project.reports.values())
+    if not sample.strip():
+        sample = " ".join(str(q.get(k) or "") for q in project.of("QCR", active_only=False) for k in ("title", "issue"))
+    return "ja" if KANA_RE.search(sample) else "en"
+
+
+def render_requests(project, glossary, lang=None):
+    """The request document, written from the requests to the quality chain that are open or answered."""
+    lang = lang or requests_language(project)
+    ja = lang == "ja"
+    r = Renderer(project, glossary, lang)
+
+    def t(key):
+        return REQUEST_TEXT[key][1 if ja else 0]
+
+    def label(key, value):
+        return "%s: %s" % (t(key), value)
+
+    def raised_in(stage):
+        stage = str(stage)
+        if stage in ("1", "2", "3", "4"):
+            return ("第 %s 段階" if ja else "stage %s") % stage
+        m = re.match(r"review-([234])\Z", stage)
+        if m:
+            return ("第 %s 段階のレビュー" if ja else "review of stage %s") % m.group(1)
+        return r.text(stage)
+
+    def ids(values):
+        values = [str(v) for v in lib.as_list(values) if v not in (None, "")]
+        valid = [v for v in values if lib.is_id(v)]
+        out = [r.ranges(valid, shortest=3)] if valid else []
+        return r.join(out + [v for v in values if not lib.is_id(v)])
+
+    def status(q):
+        text = r.term("request status", q.status)
+        where = one_line(q.get("answered_in"))
+        if q.status == "answered" and where:
+            text += ("（%s）" if ja else " (%s)") % where
+        return text
+
+    def dependents(q):
+        """The items whose premises name the request, or a QAS whose answer it carries."""
+        names = [q.id] + [x for x in lib.as_list(q.get("targets")) if lib.prefix_of(x) == "QAS"]
+        found = set(i.id for name in names for i in project.dependents(name))
+        return sorted(found, key=lib.id_key)
+
+    def answer(q):
+        if q.get("answer") in (None, ""):
+            return [label("answer", DASH)]
+        lines = answer_lines(q.get("answer"))
+        return [label("answer", lines[0])] if len(lines) == 1 else [t("answer") + ":"] + lines
+
+    shown = [q for q in project.of("QCR", active_only=False) if q.status in REQUESTS_SHOWN]
+    out = ["# " + t("title"), "", "<!-- " + t("note") + " -->", "", t("intro"), "", "## " + t("list"), ""]
+    if not shown:
+        out += [t("none"), ""]
+    else:
+        rows = [[q.id, r.text(one_line(q.get("title"))), ids(q.get("targets")), r.join(quality_stages(q)),
+                 r.term("impact of a request", q.get("impact")), r.term("request status", q.status),
+                 raised_in(q.get("stage"))] for q in shown]
+        table = Table([("QCR", "QCR"), ("Request", "要求"), ("Chain items", "品質チェーンの項目"),
+                       ("Quality-chain stages", "品質チェーンの段"), ("Impact", "影響"), ("Status", "状態"),
+                       ("Raised in", "出した段")], rows)
+        out += [render_table(table, lang, "")[0], "", "## " + t("requests"), ""]
+        stop = "。" if ja else ". "
+        for q in shown:
+            impact = r.term("impact of a request", q.get("impact"))
+            note = one_line(q.get("impact_note"))
+            out += ["### %s %s" % (q.id, one_line(q.get("title"))), "",
+                    "- %s · %s" % (label("status", status(q)), label("raised", raised_in(q.get("stage")))),
+                    "- " + label("impact", impact + (stop + note if note else "")),
+                    "- %s · %s" % (label("targets", ids(q.get("targets"))),
+                                   label("quality_stages", r.join(quality_stages(q)))),
+                    "- %s · %s" % (label("origin", ids(q.get("origin"))), label("dependents", ids(dependents(q)))),
+                    "- " + label("issue", r.text(one_line(q.get("issue")))),
+                    "- " + label("suggestion", r.text(one_line(q.get("suggestion")))),
+                    ""] + answer(q) + [""]
+        if any(quality_stages(q) for q in shown):
+            out += ["## " + t("stages"), "", t("stages_intro"), ""]
+            for stage in sorted(lib.QUALITY_STAGE_SKILLS):
+                lines = []
+                for q in shown:
+                    if stage not in quality_stages(q):
+                        continue
+                    here = [x for x in lib.as_list(q.get("targets")) if project.quality_stage_of(x) == stage]
+                    line = "- %s%s %s" % (ids(here) + ": " if here else "", q.id, one_line(q.get("title")))
+                    lines.append(line + (("（%s）" if ja else " (%s)") % r.term("request status", q.status)))
+                if lines:
+                    heading = ("第 %d 段階（`%s`）" if ja else "Stage %d (`%s`)") % (stage,
+                                                                                lib.QUALITY_STAGE_SKILLS[stage])
+                    out += ["### " + heading, ""] + lines + [""]
+    body = "\n".join(out)
+    rest, sections, _ = doc_parts(body)
+    prints = ["rest " + fingerprint([l for _, l in rest])] + ["%s %s" % (i, fingerprint(ls)) for i, _, ls in sections]
+    return body + "\n<!-- fingerprints: %s -->\n" % ", ".join(prints)
+
+
+def section_edits(lines):
+    """(answer, its line offset, [(offset, line)] written by hand) of a request section that was edited."""
+    answer, at, stray = None, 0, []
+    for k, line in enumerate(lines[1:], 1):
+        if answer is not None:
+            answer.append(line)
+            continue
+        m = ANSWER_RE.match(line)
+        if m:
+            answer, at = [m.group(1)], k
+        elif line.strip() and not BULLET_RE.match(line):
+            stray.append((k, line))
+    return ("\n".join(answer) if answer is not None else None), at, stray
+
+
+def generated_rest_line(line):
+    s = line.strip()
+    return (not s or s.startswith(("#", "|", "<!--")) or s in FIXED_TEXTS or bool(STAGE_LINE_RE.match(s)))
+
+
+def answer_conflicts(project):
+    """[(QCR ID or None, line, message)]: what was written in the request document by hand and the requests lack.
+
+    Only the parts whose fingerprint shows an edit are read, so that a request's answer can change freely while its
+    section in the document is as the script wrote it."""
+    rest, sections, prints = doc_parts(project.request_doc)
+    out = []
+    if project.request_doc is None:
+        return out
+    again = ("record it in the request it concerns, then delete it here, or delete the request's section (or the whole"
+             " document) once the requests hold everything written in it")
+    if prints.get("rest") != fingerprint([l for _, l in rest]):
+        for n, line in rest:
+            if not generated_rest_line(line):
+                out.append((None, n, "this line was written by hand outside the answers, and the script would drop it: "
+                           + again))
+    for ident, start, lines in sections:
+        if prints.get(ident) == fingerprint(lines):
+            continue
+        written, at, stray = section_edits(lines)
+        for k, line in stray:
+            out.append((ident, start + k, "the section of %s holds a line written by hand that is not its answer, and"
+                                          " the script would drop it: %s" % (ident, again)))
+        got = answer_key(written)
+        if not got:
+            continue
+        item = project.get(ident)
+        if item is None or item.prefix != "QCR":
+            out.append((ident, start + at, "an answer is written under %s, which is no request in qcr/: move it under"
+                                           " the request it answers, or delete it" % ident))
+        elif got != answer_key(item.get("answer")):
+            out.append((ident, start + at, "the answer written under %s is not the one qcr/%s.yaml holds: record it"
+                                           " there as written (answer, answered_in: %s, status), then run tables.py"
+                                           " again; if the request holds it in other words, delete it here"
+                                           % (ident, ident, lib.REQUESTS_DOC)))
+    return out
+
+
 def reports_for_skill(project, skill):
     out = []
     for rel in project.reports:
@@ -528,12 +807,17 @@ def main(argv):
     quality = args.quality if args.quality is not None else lib.default_quality_dir(args.design)
     project = lib.Project(args.design, quality)
     glossary = lib.Glossary()
+    requests = True
     if args.reports:
         targets = []
+        requests = False
         for path in args.reports:
             rel = os.path.relpath(os.path.abspath(path), os.path.abspath(args.design)).replace(os.sep, "/")
             if rel.startswith(".."):
                 rel = path.replace(os.sep, "/")
+            if rel == lib.REQUESTS_DOC:
+                requests = True
+                continue
             if rel not in project.reports:
                 print("tables.py: no report %s in %s" % (rel, args.design))
                 return 2
@@ -542,8 +826,23 @@ def main(argv):
         targets = reports_for_skill(project, args.skill)
     else:
         targets = list(project.reports)
+    requests = requests and (project.request_doc is not None or bool(project.of("QCR", active_only=False)))
     changed = 0
     failed = 0
+    if requests:
+        conflicts = answer_conflicts(project)
+        for ident, line, message in conflicts:
+            failed += 1
+            print("%s:%d: %s; the document was not rewritten" % (lib.REQUESTS_DOC, line, message))
+        new_text = render_requests(project, glossary, args.lang)
+        if not conflicts and new_text != project.request_doc:
+            changed += 1
+            if args.dry_run:
+                print("%s: out of date" % lib.REQUESTS_DOC)
+            else:
+                with open(os.path.join(args.design, lib.REQUESTS_DOC), "w", encoding="utf-8") as f:
+                    f.write(new_text)
+                print("%s: rewritten" % lib.REQUESTS_DOC)
     for rel in targets:
         text = project.reports[rel]
         new_text, problems, tables = render_report(project, glossary, rel, text, args.lang)
@@ -558,10 +857,11 @@ def main(argv):
                 with open(os.path.join(args.design, rel), "w", encoding="utf-8") as f:
                     f.write(new_text)
                 print("%s: tables rewritten" % rel)
-    if not targets:
+    if not targets and not requests:
         print("tables.py: no report to write")
     elif not changed and not failed:
-        print("tables.py: %d report(s) checked; every generated table is up to date" % len(targets))
+        checked = (["%d report(s)" % len(targets)] if targets else []) + (["the request document"] if requests else [])
+        print("tables.py: %s checked; everything generated is up to date" % " and ".join(checked))
     if failed:
         return 1
     return 1 if (args.dry_run and changed) else 0

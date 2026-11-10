@@ -43,9 +43,19 @@ Rules:
                      operations, error statuses or error codes
     finding          a finding's to, raised_by, raised_in or resolution; an accepted finding that no
                      item cites in basis_note
-    sli-binding      a quality-chain SLI that no IFC or DAT binds and no issue replaces
-    table            a generated table is out of date, or its markers are wrong (run tables.py)
+    request          a request to the quality chain whose status and answer disagree, or that names no
+                     target or quality-chain stage; a QAS that an item treats as answered, with no answered
+                     request that carries the answer
+    sli-binding      a quality-chain SLI that no IFC or DAT binds, and that the SLI bindings table does not
+                     replace by an open or answered request that targets it
+    table            a generated table or the request document is out of date, or a table's markers are
+                     wrong (run tables.py)
     empty-cell       a cell of a generated table that the report fills in is empty
+    request-edit     an answer, or other text, written by hand in quality-chain-requests.md that the requests
+                     do not hold
+
+Problems in quality-chain-requests.md, and in the status and answer of a request, are listed under the
+skill given with --skill, since every run rewrites the document and may record answers.
 """
 
 import json
@@ -81,8 +91,11 @@ REQUIRED = {
                      "resolution"],
     "DAS": ["id", "title", "status", "stage", "kind", "statement", "why_unsure", "breadth", "severity",
             "rating_note", "answer", "answered_in"],
+    "QCR": ["id", "title", "status", "stage", "targets", "origin", "issue", "suggestion", "quality_stages", "impact",
+            "impact_note", "answer", "answered_in"],
 }
 RATINGS = ["high", "medium", "low"]
+STAGE_VALUES = ["1", "2", "3", "4", "review-2", "review-3", "review-4"]
 ENUMS = {
     "basis": ["stated", "inferred", "assumed", "confirmed"],
     "as_is": ["keep", "change", "new", "remove"],
@@ -95,15 +108,19 @@ ENUMS = {
     ("DAS", "kind"): ["judgment", "decision"],
     ("DAS", "breadth"): RATINGS,
     ("DAS", "severity"): RATINGS,
-    ("DAS", "stage"): ["1", "2", "3", "4", "review-2", "review-3", "review-4"],
+    ("DAS", "stage"): STAGE_VALUES,
+    ("QCR", "stage"): STAGE_VALUES,
+    ("QCR", "impact"): ["high", "low"],
     ("TC", "kind"): ["mandated", "prohibited", "platform", "external-service"],
     ("PC", "kind"): ["budget", "deadline", "team", "other"],
 }
 STATUSES = {"FND": ["open", "accepted", "rejected"], "DAS": ["open", "confirmed", "overturned", "retired"],
-            "HND": ["open", "decided", "retired"]}
+            "HND": ["open", "decided", "retired"], "QCR": ["open", "answered", "applied", "withdrawn"]}
 LEGACY_FIELDS = ["changelog", "version", "needs_agreement", "approver_candidates"]
 LEGACY_DEC_FIELDS = ["deferred", "revisit_when"]  # a deferral is a hand-off now
-PREMISE_PREFIXES = ["TC", "PC", "TEAM", "CHG", "STK", "DAS", "CON", "EXT", "OPF", "QAS"]
+PREMISE_PREFIXES = ["TC", "PC", "TEAM", "CHG", "STK", "DAS", "QCR", "CON", "EXT", "OPF", "QAS"]
+OWN_FIELDS = ("DAS", "QCR")  # item types with their own fields instead of the common ones
+REQUESTS_OWNER = "every skill (each run rewrites %s)" % lib.REQUESTS_DOC
 REFS = {
     "DRV": [("sources", None), ("concern_of", ["USR", "STK"]), ("derived_from", ["DRV"]),
             ("conflicts[].with", ["DRV"])],
@@ -120,6 +137,7 @@ REFS = {
     "HND": [("component", ["ELM:component"]), ("origin", None)],
     "FND": [("targets", lib.DESIGN_PREFIXES)],
     "DAS": [],
+    "QCR": [("targets", lib.QUALITY_PREFIXES), ("origin", lib.DESIGN_PREFIXES)],
 }
 HTTP_METHODS = ["get", "put", "post", "delete", "patch", "head", "options", "trace"]
 OP_RE = re.compile(r"(GET|PUT|POST|DELETE|PATCH|HEAD|OPTIONS|TRACE)\s+(/\S*)")
@@ -149,7 +167,11 @@ class Checker(object):
         self.g = glossary
         self.skill = skill
         self.problems = []
-        self.rendered = {}  # report -> (problems, tables)
+        self.rendered = {}  # report -> its generated tables
+        self.carried = set()  # the QAS whose answer an answered request carries to the quality chain
+        for q in project.of("QCR", active_only=False):
+            if q.status in ("answered", "applied"):
+                self.carried.update(t for t in lib.as_list(q.get("targets")) if lib.prefix_of(t) == "QAS")
 
     def add(self, rule, path, line, message, owner, upstream=None):
         self.problems.append(Problem(rule, path, line, message, owner, upstream))
@@ -171,7 +193,9 @@ class Checker(object):
         self.specs()
         self.findings()
         self.handoffs()
+        self.requests()
         self.reports()
+        self.request_doc()
         self.sli_bindings()
         self.cover()
         return self.problems
@@ -185,7 +209,7 @@ class Checker(object):
         m = re.search(r"^stage:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
         if f.rel.startswith("dec/") and m:
             return lib.STAGE_SKILLS.get(lib.DEC_STAGES.get(m.group(1)))
-        if f.rel.startswith("das/") and m:
+        if f.rel.startswith(("das/", "qcr/")) and m:
             return lib.das_owner(m.group(1))
         m = re.search(r"^raised_by:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
         if f.rel.startswith("fnd/") and m and m.group(1) in lib.SKILLS:
@@ -251,7 +275,7 @@ class Checker(object):
             return
         status = item.get("status")
         legacy = [k for k in LEGACY_FIELDS + (LEGACY_DEC_FIELDS if p == "DEC" else []) if k in item.data]
-        legacy_status = p not in ("FND", "DAS", "HND") and status in ("draft", "agreed")
+        legacy_status = p not in ("FND", "DAS", "HND", "QCR") and status in ("draft", "agreed")
         if legacy or legacy_status:
             what = legacy + (["status: %s" % status] if legacy_status else [])
             self.item_problem("legacy", item, legacy[0] if legacy else "status",
@@ -265,7 +289,7 @@ class Checker(object):
         allowed = STATUSES.get(p, ["active", "retired"])
         if "status" in item.data and status not in allowed and not legacy_status:
             self.item_problem("bad-value", item, "status", "status is %r; allowed: %s" % (status, ", ".join(allowed)))
-        if "basis" in item.data and p != "DAS" and item.get("basis") not in ENUMS["basis"]:
+        if "basis" in item.data and p not in OWN_FIELDS and item.get("basis") not in ENUMS["basis"]:
             self.item_problem("bad-value", item, "basis", "basis is %r; allowed: %s"
                               % (item.get("basis"), ", ".join(ENUMS["basis"])))
         if "as_is" in item.data and item.get("as_is") not in ENUMS["as_is"]:
@@ -274,9 +298,18 @@ class Checker(object):
         for (prefix, key), values in ((k, v) for k, v in ENUMS.items() if isinstance(k, tuple)):
             if prefix == p and key in item.data:
                 value = item.get(key)
-                value = str(value) if key == "stage" and p == "DAS" else value
+                value = str(value) if key == "stage" and p in OWN_FIELDS else value
                 if value not in values:
                     self.item_problem("bad-value", item, key, "%s is %r; allowed: %s" % (key, value, ", ".join(values)))
+        if p == "QCR" and "quality_stages" in item.data:
+            stages = lib.as_list(item.get("quality_stages"))
+            if (not stages and self.p.has_quality) or any(str(s) not in ("1", "2", "3", "4") for s in stages):
+                self.item_problem("bad-value", item, "quality_stages", "quality_stages is %r; it lists the quality-chain"
+                                  " stages that would make the change, from 1 to 4" % (item.get("quality_stages"),))
+        if p == "QCR" and "targets" in item.data and not lib.as_list(item.get("targets")):
+            self.item_problem("request", item, "targets", "targets names the quality-chain items the request asks to"
+                                                          " change, or that show what is missing (without a quality"
+                                                          " chain, the source of the requirement)")
         if p == "DRV":
             priority = item.get("priority")
             if isinstance(priority, dict):
@@ -326,9 +359,10 @@ class Checker(object):
             self.entry_basis(item)
             return
         fields = list(REFS.get(item.prefix, []))
-        if item.prefix != "DAS":
+        if item.prefix not in OWN_FIELDS:
             fields.append(("premises", PREMISE_PREFIXES))
-        check_retired = not item.retired and item.prefix != "FND" and (item.prefix != "HND" or item.status == "open")
+        check_retired = (not item.retired and item.prefix != "FND" and (item.prefix != "HND" or item.status == "open")
+                         and (item.prefix != "QCR" or item.status in ("open", "answered")))
         for field, allowed in fields:
             for value in self.ref_values(item, field):
                 self.reference(item, field, value, allowed, check_retired)
@@ -383,7 +417,7 @@ class Checker(object):
     # basis and assumptions
 
     def basis(self, item):
-        if item.is_entry or item.prefix == "DAS" or "premises" not in item.data:
+        if item.is_entry or item.prefix in OWN_FIELDS or "premises" not in item.data:
             return
         if item.prefix in ("FND", "HND") and item.status != "open":
             return
@@ -401,7 +435,15 @@ class Checker(object):
                               % (", ".join(what), basis))
         if basis == "assumed" and not open_das and not open_qas:
             self.item_problem("basis", item, "basis", "basis is assumed, but premises name no open DAS or QAS: list"
-                              " the assumption in premises, or mark the basis that holds")
+                              " the assumption in premises, or mark the basis that holds (a QCR in premises does"
+                              " not make an item assumed)")
+        if basis != "assumed" and self.p.has_quality:
+            for x in open_qas:
+                if x in cited and x not in self.carried:
+                    self.item_problem("request", item, "basis_note",
+                                      "basis_note cites %s as answered, and no answered request to the quality chain"
+                                      " carries the answer: write a QCR with %s in targets (conventions.md,"
+                                      " 'Assumptions')" % (x, x))
 
     def entry_basis(self, item):
         sources = lib.mentions(item.get("source"))
@@ -765,6 +807,17 @@ class Checker(object):
                 self.item_problem("handoff", hnd, "status", "decided, but no item cites %s in basis_note: cite it, in"
                                                             " full, in the items that decide it" % hnd.id, owner=taker)
 
+    def requests(self):
+        for q in self.p.of("QCR", active_only=False):
+            answer, where = q.get("answer"), q.get("answered_in")
+            if q.status == "answered" and (not answer or not where):
+                self.item_problem("request", q, "answer", "an answered request records the user's answer in answer, and"
+                                                          " where it was given in answered_in", owner=self.skill)
+            if q.status == "open" and answer:
+                self.item_problem("request", q, "status", "the request holds an answer, so it is answered, or withdrawn"
+                                                          " when the user decided that the quality chain need not act on"
+                                                          " it", owner=self.skill)
+
     # reports
 
     def reports(self):
@@ -802,6 +855,20 @@ class Checker(object):
                     self.add("empty-cell", rel, line, "table '%s': fill in '%s' in %d row(s): %s"
                              % (name, column, len(keys), shown), owner)
 
+    def request_doc(self):
+        p = self.p
+        if p.request_doc is None and not p.of("QCR", active_only=False):
+            return
+        owner = self.skill or REQUESTS_OWNER
+        conflicts = tables_mod.answer_conflicts(p)
+        for ident, line, message in conflicts:
+            self.add("request-edit", lib.REQUESTS_DOC, line, message, owner)
+        new_text = tables_mod.render_requests(p, self.g)
+        if not conflicts and new_text != p.request_doc:
+            line = first_difference(p.request_doc, new_text) if p.request_doc is not None else 0
+            what = "is out of date" if p.request_doc is not None else "does not exist yet"
+            self.add("table", lib.REQUESTS_DOC, line, "the request document %s: run scripts/tables.py" % what, owner)
+
     def sli_bindings(self):
         p = self.p
         if not p.of("IFC") or not p.has_quality:
@@ -811,17 +878,25 @@ class Checker(object):
             for b in lib.as_list(it.get("sli_bindings")):
                 if isinstance(b, dict):
                     bound.add(b.get("sli"))
-        replaced = set()
+        named = {}
         for name, line, header, rows, table, empties in self.rendered.get("3-high-level-design.md", []):
             if name == "sli-bindings":
                 for row in rows:
-                    if len(row) > 5 and row[5] and row[5] != tables_mod.DASH:
-                        replaced.add(row[0])
+                    if len(row) > 5:
+                        named[row[0]] = [x for x in lib.mentions(row[5]) if lib.prefix_of(x) == "QCR"]
         for s in p.of("SLI"):
-            if s.id not in bound and s.id not in replaced:
-                self.add("sli-binding", "ifc/", 0, "%s is bound on no IFC or DAT; bind it, or name the issue for the"
-                                                   " quality chain that replaces the binding in the last column of the"
-                                                   " report's SLI bindings table" % s.id, S3)
+            if s.id in bound:
+                continue
+            valid = [q.id for q in p.requests_on(s.id)]
+            if not named.get(s.id):
+                self.add("sli-binding", "ifc/", 0, "%s is bound on no IFC or DAT; bind it, or, when no binding can"
+                                                   " realize it as defined, write a request to the quality chain with"
+                                                   " %s in targets and name it in the last column of the report's SLI"
+                                                   " bindings table" % (s.id, s.id), S3)
+            elif not set(named[s.id]) & set(valid):
+                self.add("sli-binding", "ifc/", 0, "%s is bound on no IFC or DAT, and the report's SLI bindings table"
+                                                   " names %s instead, which is no open or answered request with %s in"
+                                                   " targets" % (s.id, ", ".join(named[s.id]), s.id), S3)
 
     # findings that cover problems
 

@@ -7,7 +7,7 @@ Use these terms for the working language. For a language not listed, or a term m
 | English | 日本語 |
 |---|---|
 | quality chain (the skills that write docs/quality/) | 品質チェーン |
-| issues for the quality chain | 品質チェーンへの課題 |
+| quality-chain stage | 品質チェーンの段 |
 | design stage | 設計の段 |
 | design context | 設計の与件 |
 | finding | 指摘 |
@@ -38,6 +38,11 @@ Use these terms for the working language. For a language not listed, or a term m
 | hand-off parts: what / to / trigger / bounds / origin | 申し送りの中身: 何を / 宛先 / 契機 / 守る枠 / 由来の項目 |
 | hand-off status: open / decided / retired | 申し送りの状態: 未決定 / 決定済み / 廃止 |
 | decide a hand-off / pass it on | 申し送りを決める / 先へ送る |
+| request to the quality chain (QCR, one change the design asks the quality chain to make; in Japanese, write it in full where a bare 要求 could read as a requirement) | 品質チェーンへの要求 |
+| request document (quality-chain-requests.md, which the user hands to the quality chain) | 要求書 |
+| request parts: issue / suggested change / answer | 要求の中身: 課題 / 直し方の案 / 答え |
+| request status: open / answered / applied / withdrawn | 要求の状態: 未回答 / 回答済み / 反映済み / 取り下げ |
+| impact of a request: high / low | 要求の影響: 高 / 低 |
 | implementation (the coding that follows stage 4) | 実装 |
 | open gaps | 未解決の点 |
 | out of scope | 範囲外 |
@@ -160,6 +165,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | entry point (a requirement that does not come from users) | 入口 |
 | conflict (between quality requirements) | 競合 |
 | non-functional requirement | 非機能要件 |
+| kinds of NFR: slo / gate / audit / monitor | 非機能要件の種類: SLO / ゲート / 監査 / 監視 |
+| target / threshold | 目標 / しきい値 |
 | SLI / SLO / error budget | SLI / SLO / エラーバジェット |
 | vantage (where an SLI's events are observed): user-side / system-boundary / synthetic / data | 見る位置: 利用者の側 / システムの境界 / 模擬の利用 / データ |
 | SLI binding (where an SLI's events come from) | SLI の出どころ |

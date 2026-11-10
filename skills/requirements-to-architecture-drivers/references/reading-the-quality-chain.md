@@ -11,7 +11,7 @@
 - Excluded quality requirements
 - The quality chain's assumptions
 - Placeholders and numbers
-- Issues for the quality chain
+- Requests to the quality chain
 
 ## How to read it
 
@@ -19,7 +19,7 @@ The quality chain states requirements in the terms of users and the domain, and 
 
 Read each item's `basis` and `premises`. A chain item that is `stated`, `inferred` or `confirmed` is a stated input for this stage (`conventions.md`, "Judgment basis"). An item that is `assumed` rests on an open assumption of the quality chain (QAS), and so does every driver built on the part of it that the assumption covers ("The quality chain's assumptions").
 
-A chain item's `basis_note` may also say what the design must confirm (how likely a failure is, where a measure can be taken). Turn each such point into a driver, a constraint, a question, an assumption (DAS), or a hand-off (HND) to the stage that designs the part: a driver when it could decide between designs; a constraint when an input already settles it (an external service's SLA, the code); a question or a DAS when it is an uncertain point for this stage, rated like any other; otherwise a hand-off, with the chain item in `origin` and the point in `what` ("Hand-offs" in `conventions.md`). That stage decides the hand-off by confirming the point, citing it in `basis_note`, or raises an issue for the quality chain. When this stage already finds that a point does not hold, it raises the issue itself.
+A chain item's `basis_note` may also say what the design must confirm (how likely a failure is, where a measure can be taken). Turn each such point into a driver, a constraint, a question, an assumption (DAS), or a hand-off (HND) to the stage that designs the part: a driver when it could decide between designs; a constraint when an input already settles it (an external service's SLA, the code); a question or a DAS when it is an uncertain point for this stage, rated like any other; otherwise a hand-off, with the chain item in `origin` and the point in `what` ("Hand-offs" in `conventions.md`). That stage decides the hand-off by confirming the point, citing it in `basis_note`, or writes a request to the quality chain. When this stage already finds that a point does not hold, it writes the request itself.
 
 ## What each item gives the design
 
@@ -45,7 +45,7 @@ A chain item's `basis_note` may also say what the design must confirm (how likel
 
 The FRs name no paths, endpoints or mechanisms (keys, tokens, queues, retries), and the SLIs name no log fields, tools or collection methods. Do not add them in drivers; they are decided from stage 2 on.
 
-The one exception: an FR may name the endpoint of an interface that already exists in a running product. That endpoint is a fact about the current system, like the current structure: it is not a design input and not an issue for the quality chain, and later stages keep the interface (`as_is: keep`) unless a decision changes it.
+The one exception: an FR may name the endpoint of an interface that already exists in a running product. That endpoint is a fact about the current system, like the current structure: it is not a design input and not a request to the quality chain, and later stages keep the interface (`as_is: keep`) unless a decision changes it.
 
 ## Shared facts
 
@@ -53,7 +53,7 @@ The one exception: an FR may name the endpoint of an interface that already exis
 
 - Name a fact by its ID with a short label ("Sale peak (OPF-03)"), and list it in the `premises` of the driver that uses it. Never copy its values or its wording: when the fact changes, the drivers to revisit are exactly those whose premises name it.
 - A number derived from a fact (a capacity estimate from a daily volume) goes in the report, computed with a script, with the fact named.
-- A fact that the chain's own items need but `context.yaml` lacks (an external system that an FR interface names but `external_systems` does not list) is an issue for the quality chain.
+- A fact that the chain's own items need but `context.yaml` lacks (an external system that an FR interface names but `external_systems` does not list) is a request to the quality chain.
 
 ## Design inputs
 
@@ -62,8 +62,8 @@ A design input (DIN) is a design decision that someone made before the design st
 - Take every DIN in as a technology constraint candidate: a TC in `design-context.yaml` with `source: context.yaml DIN-xx` and the kind that fits what it fixes (`mandated`, `prohibited`, `platform` or `external-service`). It then becomes a constraint driver like any other.
 - Set a DIN aside, in the concern inventory with a reason, only when it fixes nothing the design would choose, or the user withdraws it.
 - Whether a DIN can change is rarely stated, because the quality chain only recorded it. Rate its negotiability like any constraint's (`drivers.md`, "Constraints"): a technology constraint has high breadth, so it is asked.
-- A DIN that contradicts a CUJ, a QR or another constraint ("no native app" against a CUJ that needs work while offline) is a contradiction: ask, whatever its ratings. When the answer keeps the DIN and that limits what users can do, raise an issue for the quality chain.
-- A chain item that states a design decision anyway (a platform in a context of use, a mechanism in an acceptance criterion) is treated as a DIN would be, with that item as its source. Suggest moving it to the design inputs in an issue for the quality chain. An FR that names the endpoint of an interface that already exists in a running product states no decision: the endpoint is a fact about the current system ("What each item gives the design").
+- A DIN that contradicts a CUJ, a QR or another constraint ("no native app" against a CUJ that needs work while offline) is a contradiction: ask, whatever its ratings. When the answer keeps the DIN and that limits what users can do, write a request to the quality chain.
+- A chain item that states a design decision anyway (a platform in a context of use, a mechanism in an acceptance criterion) is treated as a DIN would be, with that item as its source. Suggest moving it to the design inputs in a request to the quality chain. An FR that names the endpoint of an interface that already exists in a running product states no decision: the endpoint is a fact about the current system ("What each item gives the design").
 
 ## Platforms and device support
 
@@ -117,8 +117,8 @@ A chain item with `basis: assumed` rests on one or more open QAS, listed in its 
 
 - A driver that rests on the part of a chain item that a QAS covers lists the QAS in its `premises`, and has `basis: assumed` while no design question has answered the QAS. A driver that uses only other parts of the item does not list it.
 - Re-rate the QAS for the design ("Assumptions" in `conventions.md`). When a judgment you would ask about rests on it (the ranking or the primary line, a primary driver's measure, a technology constraint), ask about the QAS in this run, whichever chain stage wrote it.
-- Never write the answer in `docs/quality/`. Record it under "Decisions" and under "Issues for the quality chain": the QAS, the answer, whether it holds, and the stage that wrote it. The drivers that rest on it cite the answer in `basis_note` and are no longer `assumed` on its account. They keep the QAS in `premises` until the quality chain applies the answer.
-- When the answer overturns the QAS, redo the drivers that rest on it, and tell the user to re-run the quality-chain stage that wrote it before stage 2 builds on them.
+- Never write the answer in `docs/quality/`. Record the question and its answer under "Decisions", and write a request to the quality chain that carries the answer: the QAS in `targets`, with the chain items it covers; the answer; a suggestion that says whether the QAS holds; and the stage that wrote it in `quality_stages` ("Assumptions" in `conventions.md`). The drivers that rest on it cite the answer in `basis_note` and are no longer `assumed` on its account. They keep the QAS in `premises` until the quality chain applies the answer.
+- When the answer overturns the QAS, redo the drivers that rest on it, and tell the user to hand the request document to the quality-chain stage that wrote it before stage 2 builds on them.
 - A QAS that no judgment you would ask about rests on needs no question. It stays in the drivers' `premises` and in the report's open assumptions.
 
 ## Placeholders and numbers
@@ -126,10 +126,11 @@ A chain item with `basis: assumed` rests on one or more open QAS, listed in its 
 - Keep the quality chain's placeholder names (`T_stock_lag`, `R_fare`) exactly. Do not give them values.
 - Name a scenario's measure by the NFR's ID ("NFR-02's SLO, counted by SLI-02") and copy nothing of it; when there is no NFR, name the QR's stated number or placeholder with the QR's ID ("within T_stock_lag (QR-03)"). Name volumes and peaks by their OPF ID.
 - Numbers the design needs and the chain does not give (peak concurrency, data volume per year, number of tenants) are facts only the user's organization knows. Ask for the fact when its breadth or severity is high; otherwise write a placeholder with a new name and list it under "Placeholders".
+- A target or a threshold that a scenario's measure needs and the chain does not give (the share of checkouts that must succeed during a provider outage) is a requirement, not a number the design may set: write a new named placeholder, and a request to the quality chain for the target ("Requests to the quality chain").
 
-## Issues for the quality chain
+## Requests to the quality chain
 
-Write an issue, and leave the chain's items untouched, when:
+Write a request to the quality chain, and leave the chain's items untouched, when (`conventions.md`, "Requests to the quality chain"):
 
 - a primary driver cannot be met by any design within the budget, the deadline and the team;
 - two QRs conflict and the chain recorded no resolution a design can follow;
@@ -139,6 +140,6 @@ Write an issue, and leave the chain's items untouched, when:
 - a shared fact is missing (an external system that an FR interface names but `external_systems` does not list);
 - a technology constraint limits what users can do, and the user chose to keep it;
 - a chain item states a design decision ("Design inputs"); an existing endpoint that an FR names is not one, but a fact about the current system;
-- the user answered a question about a QAS.
+- the user answered a question about a QAS ("The quality chain's assumptions").
 
-Write each issue with the chain items it concerns, the change you suggest, and the quality-chain stage that would make it: stage 1 for the context (users, CUJs, shared facts, design inputs), stage 2 for functions, stage 3 for priorities and conflicts, stage 4 for targets and SLIs. For an answered QAS, it is the stage that wrote the QAS.
+A request whose answer could change what a primary driver's scenario asks, or move the primary line, has high impact: ask it in this run, and rank the drivers on the answer. Any other request waits for its answer, and the drivers it would change follow the chain as it stands, with the request in their `premises`.

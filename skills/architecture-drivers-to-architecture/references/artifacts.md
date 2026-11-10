@@ -13,6 +13,8 @@
 - HND: hand-off (stages 1 to 4)
 - FND: finding (stages 2 to 4 and the review)
 - DAS: assumption (every stage and the review)
+- QCR: request to the quality chain (every stage and the review)
+- The request document (scripts/tables.py)
 - The detailed design index (stage 4)
 
 ## Layout
@@ -27,6 +29,7 @@ docs/design/
 ├── 4-detailed-design.md               stage 4 index: every component and its status
 ├── 4-detailed-design/ELM-02.md        stage 4 report, one per component
 ├── reviews/3-high-level-design.md     review report, one per reviewed stage (stage 4: per component, reviews/4-detailed-design-ELM-02.md): the latest review
+├── quality-chain-requests.md          the request document: the requests to the quality chain, written by scripts/tables.py
 ├── design-context.yaml                the design context: constraints, teams, changes, stakeholders, current structure
 ├── drv/DRV-01.yaml …                  stage 1: architecture drivers
 ├── dec/DEC-01.yaml …                  stages 2–4: design decisions
@@ -37,13 +40,14 @@ docs/design/
 ├── mod/MOD-01.yaml …                  stage 4: modules
 ├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
 ├── fnd/FND-01.yaml …                  stages 2–4 and the review: findings
-└── das/DAS-01.yaml …                  every stage and the review: assumptions made without asking
+├── das/DAS-01.yaml …                  every stage and the review: assumptions made without asking
+└── qcr/QCR-01.yaml …                  every stage and the review: requests to the quality chain
 ```
 
 - One item per file. The file name is the ID: `dec/DEC-07.yaml`.
 - IDs are the prefix plus a zero-padded number (`DEC-07`, then `DEC-100` when needed). Never reuse or renumber an ID.
 - Write every ID in full wherever you cite it, in lists inside a text too ("FND-30, FND-31", not "FND-30, 31" or "FND-30・31"). The scripts find a citation by its full ID only.
-- The YAML items are the source of truth. A report summarizes and indexes them and never restates what an item says; it holds what only the report records (views, flows, walkthroughs, budgets, reasons, decisions, issues for the quality chain). Its index tables are written from the items by `scripts/tables.py` ("Scripts" in `conventions.md`). The items are written while the stage drafts, and answers change them in place. If the report and an item disagree, ask which one is right; do not silently pick one.
+- The YAML items are the source of truth. A report summarizes and indexes them and never restates what an item says; it holds what only the report records (views, flows, walkthroughs, budgets, reasons, decisions). Its index tables are written from the items by `scripts/tables.py` ("Scripts" in `conventions.md`). The items are written while the stage drafts, and answers change them in place. If the report and an item disagree, ask which one is right; do not silently pick one.
 - Items hold the current state only: no changelog, no version, no dates of changes. Git keeps the history (`conventions.md`, "Current state only").
 - `design-context.yaml` holds the design context that the other items refer to. Stage 1 writes it; later stages and reviews only add facts the user gives them (`conventions.md`, "Judgment basis"). It is the only file that holds more than one entry.
 - Views, flows, state diagrams and decision tables live in the reports, as Mermaid diagrams and tables. Items refer to them by the report's section heading.
@@ -52,19 +56,19 @@ docs/design/
 
 ## Common fields
 
-Every item file except `design-context.yaml` and the assumption files (DAS, which have their own fields) has these fields, first:
+Every item file except `design-context.yaml`, the assumption files and the requests (DAS and QCR, which have their own fields) has these fields, first:
 
 ```yaml
 id: DEC-07
 title: Short name, in the working language
-status: active             # active | retired   (HND: open | decided | retired; FND: open | accepted | rejected; DAS: open | confirmed | overturned | retired)
+status: active             # active | retired   (HND: open | decided | retired; FND: open | accepted | rejected; DAS: open | confirmed | overturned | retired; QCR: open | answered | applied | withdrawn)
 basis: inferred            # stated | inferred | assumed | confirmed: the weakest basis of the judgments in the item
-basis_note: null           # which parts are stated, inferred, assumed or confirmed, when they differ; findings accepted and hand-offs decided
-premises: []               # what the item depends on that could change under it: TC, PC, TEAM, CHG, STK, DAS, and the quality chain's CON, EXT, OPF, QAS
+basis_note: null           # which parts are stated, inferred, assumed or confirmed, when they differ; findings accepted, hand-offs decided and requests answered
+premises: []               # what the item depends on that could change under it: TC, PC, TEAM, CHG, STK, DAS, QCR, and the quality chain's CON, EXT, OPF, QAS
 # ... the fields of the item type ...
 ```
 
-An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
+An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`. A request to the quality chain (QCR) in `premises` does not make it `assumed`.
 
 Every item that describes part of the system also has `as_is: keep | change | new | remove` (see "Existing systems" in `conventions.md`). In a system with no code, it is always `new`.
 
@@ -127,7 +131,7 @@ as_is:                                   # only when the repository holds code o
 
 ```yaml
 id: DRV-01
-# ... the other common fields ...  (premises: [OPF-03, QAS-08]; QAS-08, the provisional target behind NFR-02, was asked in stage 1, question 6, and is listed under "Issues for the quality chain"; the ranking is a business decision, see "Decisions" in conventions.md)
+# ... the other common fields ...  (premises: [OPF-03, QAS-08]; QAS-08, the provisional target behind NFR-02, was asked in stage 1, question 6, and QCR-03 carries the answer to the quality chain; the ranking is a business decision, see "Decisions" in conventions.md)
 kind: quality                            # quality | change | constraint | function | observability | security | principle
 statement: Checkout confirms orders without keeping buyers waiting, up to sale-peak load
 sources: [QR-02, NFR-02, SLI-02]         # quality-chain IDs and design-context IDs (TC, PC, TEAM, CHG, STK)
@@ -379,6 +383,99 @@ severity: low                            # high | medium | low
 rating_note: A few items of stages 2 and 3 depend on it; checked when the provider is chosen, before any of it is built
 answer: null                             # the user's answer, when someone asked about it later
 answered_in: null                        # where, e.g. "stage 3, question 4" or "review of stage 3, question 2"
+```
+
+## QCR: request to the quality chain (every stage and the review), `qcr/QCR-06.yaml`
+
+One change that the design asks the quality chain to make (`conventions.md`, "Requests to the quality chain"). The stage or review that raises it owns its content; any stage or review records its `status`, `answer` and `answered_in`, re-rates its `impact` and `impact_note`, and fits its `targets` and `quality_stages` to an answer that asks for another change than the one suggested. The items that would change with it list it in `premises` (an item that rests on a QAS whose answer it carries lists the QAS instead); a request does not list them.
+
+```yaml
+id: QCR-06
+title: How a percentage coupon is rounded
+status: answered                         # open | answered | applied | withdrawn
+stage: 4                                 # 1 | 2 | 3 | 4 | review-2 | review-3 | review-4: the stage, or the review of a stage, that raised it
+targets: [FR-03]                         # the quality-chain items it asks to change, or that show what is missing
+origin: [MOD-02, MOD-05]                 # the design items that show the issue
+issue: FR-03's acceptance criteria do not say how a percentage discount is rounded, and MOD-05's decision table needs the rule
+suggestion: Add the rounding rule to FR-03 as an acceptance criterion
+quality_stages: [2]                      # the quality-chain stages that make the change: 1 the context and quality in use, 2 functions, 3 quality requirements, 4 NFRs, SLIs and error budget policies; for a QAS, the stage that wrote it; [] when there is no quality chain
+impact: high                             # high | low: what the design would redo if the quality chain decided otherwise
+impact_note: MOD-02 and MOD-05 move money, which stage 4 decides in full, and MOD-05's decision table rests on the rule
+answer: Once on the order. The percentage applies to the sum of the eligible lines, and the discount is rounded down to the minor unit, so that a buyer never gets more than the stated percentage
+answered_in: stage 4 ELM-02, question 2  # where the user answered: a question, quality-chain-requests.md, or a later stage the user told
+```
+
+A request that carries the answer to a question about a QAS names the QAS in `targets`, with the chain items it covers, and the stage that wrote the QAS in `quality_stages`; its suggestion says whether the assumption holds. A gate, a target or a threshold that the design finds the system needs is a request too, whose suggestion names the NFR it would add or change; the design never writes one into its own items.
+
+## The request document (scripts/tables.py), `docs/design/quality-chain-requests.md`
+
+`scripts/tables.py` writes the whole document whenever it runs, from the requests that are open or answered, in the working language (Japanese or English; another language gets English): the list, each request with its answer, and what each quality-chain stage would change. Applied and withdrawn requests leave it. The user reads it, writes answers in it after "Answer:", and hands it to the quality chain; nothing else in it is edited by hand. A run records each answer written there in its request before it runs the script. The last line holds a fingerprint of each part of the document as the script wrote it: in the parts edited since, the script compares each answer with its request, and leaves the document as it is, and says so, while an answer or other text written by hand is not in the requests (`conventions.md`, "Requests to the quality chain").
+
+The online store's document, with the requests that stages 1, 3 and 4 and the review of stage 3 raise in the worked examples of the report templates:
+
+```markdown
+# Requests to the quality chain
+
+<!-- Written by scripts/tables.py from the requests in qcr/. Edit nothing but the answers: write an answer after "Answer:" under a request, and the next design run records it in the request. The fingerprints on the last line tell the script what was edited by hand. -->
+
+The design chain never changes the quality chain (`docs/quality/`). When the design shows that a requirement should change, or that one it needs is missing, it writes a request; every request that is open or answered is here. Write an answer after "Answer:" under a request when you know it: the next design run records it. Then hand this document to the quality-chain stages listed under "What to do in each quality-chain stage", and re-run them. On their next run, the design stages follow what changed in `docs/quality/`, and drop the requests applied there.
+
+## List
+
+| QCR | Request | Chain items | Quality-chain stages | Impact | Status | Raised in |
+|---|---|---|---|---|---|---|
+| QCR-01 | A target for checkout during a provider outage | QR-08 | 4 | high | answered | stage 1 |
+| QCR-02 | The stock-freshness threshold and target hold | NFR-03, QAS-09 | 4 | high | answered | stage 1 |
+| QCR-03 | The checkout latency target holds | NFR-02, QAS-08 | 4 | high | answered | stage 1 |
+| QCR-04 | A load test of checkout before the spring sale | NFR-02 | 4 | low | open | stage 3 |
+| QCR-05 | Whether a pending payment counts as a checkout answered in time | SLI-02 | 4 | low | open | review of stage 3 |
+| QCR-06 | How a percentage coupon is rounded | FR-03 | 2 | high | answered | stage 4 |
+
+## Requests and answers
+
+<QCR-01 to QCR-03 in the same form>
+
+### QCR-04 A load test of checkout before the spring sale
+
+- Status: open · Raised in: stage 3
+- Impact: low. No design item changes with it; it adds a check before release
+- Chain items: NFR-02 · Quality-chain stages: 4
+- Origin: IFC-01, IFC-02 · Items that depend on it: —
+- Issue: NFR-02's latency budget gives ELM-02's own work and the database provisional values that nothing has measured, and no NFR checks the whole checkout flow at the sale peak before release
+- Suggested change: Add an NFR of kind gate that load-tests checkout at the sale peak (OPF-03) before release, against NFR-02's threshold
+
+Answer: —
+
+<QCR-05 in the same form>
+
+### QCR-06 How a percentage coupon is rounded
+
+- Status: answered (stage 4 ELM-02, question 2) · Raised in: stage 4
+- Impact: high. MOD-02 and MOD-05 move money, which stage 4 decides in full, and MOD-05's decision table rests on the rule
+- Chain items: FR-03 · Quality-chain stages: 2
+- Origin: MOD-02, MOD-05 · Items that depend on it: MOD-02, MOD-05
+- Issue: FR-03's acceptance criteria do not say how a percentage discount is rounded, and MOD-05's decision table needs the rule
+- Suggested change: Add the rounding rule to FR-03 as an acceptance criterion
+
+Answer: Once on the order. The percentage applies to the sum of the eligible lines, and the discount is rounded down to the minor unit, so that a buyer never gets more than the stated percentage
+
+## What to do in each quality-chain stage
+
+Re-run each stage below with this document. It applies the answers and decides with you the requests that have none; the later quality-chain stages follow its changes on their own re-run.
+
+### Stage 2 (`quality-in-use-to-functional-requirements`)
+
+- FR-03: QCR-06 How a percentage coupon is rounded (answered)
+
+### Stage 4 (`product-quality-to-slo`)
+
+- QCR-01 A target for checkout during a provider outage (answered)
+- NFR-03, QAS-09: QCR-02 The stock-freshness threshold and target hold (answered)
+- NFR-02, QAS-08: QCR-03 The checkout latency target holds (answered)
+- NFR-02: QCR-04 A load test of checkout before the spring sale (open)
+- SLI-02: QCR-05 Whether a pending payment counts as a checkout answered in time (open)
+
+<!-- fingerprints: rest bf9534b6ee, QCR-01 9a728d2f53, QCR-02 c45afbb346, QCR-03 7f4f932156, QCR-04 77b9920e09, QCR-05 5ac7af170d, QCR-06 2f7f6f4475 -->
 ```
 
 ## The detailed design index (stage 4), `docs/design/4-detailed-design.md`

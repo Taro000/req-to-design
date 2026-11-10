@@ -35,7 +35,7 @@ Write every quality driver as a scenario with six parts. A design can be checked
 | Artifact | Which part of the system it hits | The FR now; the element, once stage 2 has one |
 | Environment | Under which conditions | The QIU's context of use; the NFR's conditions (workload, users, transactions), with the shared facts they name by ID; normal, peak, degraded, during a deployment |
 | Response | What the system does | The QR's statement, as observable behaviour |
-| Measure | How the response is judged | The NFR's measure, named by ID and never copied ("NFR-02's SLO, counted by SLI-02"); a QR's stated number or placeholder, with the QR's ID; a new named placeholder |
+| Measure | How the response is judged | The NFR's measure, named by ID and never copied ("NFR-02's SLO, counted by SLI-02"); a QR's stated number or placeholder, with the QR's ID; a new named placeholder, with a request to the quality chain for the target |
 
 | Weak | Better |
 |---|---|

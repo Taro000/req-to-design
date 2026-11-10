@@ -21,8 +21,18 @@ SKILL_STAGE = dict((v, k) for k, v in STAGE_SKILLS.items())
 DEC_STAGES = {"architecture": 2, "high-level-design": 3, "detailed-design": 4}
 
 DESIGN_DIRS = [("drv", "DRV"), ("dec", "DEC"), ("elm", "ELM"), ("ifc", "IFC"), ("dat", "DAT"),
-               ("mod", "MOD"), ("hnd", "HND"), ("fnd", "FND"), ("das", "DAS")]
+               ("mod", "MOD"), ("hnd", "HND"), ("fnd", "FND"), ("das", "DAS"), ("qcr", "QCR")]
 IMPLEMENTATION = "implementation"  # a hand-off's `to` when the code decides it
+REQUESTS_DOC = "quality-chain-requests.md"  # the request document, written whole by tables.py from qcr/
+QUALITY_STAGE_SKILLS = {
+    1: "cuj-to-quality-in-use",
+    2: "quality-in-use-to-functional-requirements",
+    3: "functional-requirements-to-product-quality",
+    4: "product-quality-to-slo",
+}
+# the quality-chain stage that writes each kind of chain item (QAS: the stage in the file)
+QUALITY_HOME_STAGE = {"USR": 1, "CUJ": 1, "CON": 1, "EXT": 1, "OPF": 1, "DIN": 1, "KGI": 1, "OUT": 1, "QIU": 1,
+                      "KPI": 1, "FR": 2, "FRP": 2, "QR": 3, "NFR": 4, "SLI": 4, "EBP": 4}
 CONTEXT_LISTS = [("technology_constraints", "TC"), ("project_constraints", "PC"), ("teams", "TEAM"),
                  ("anticipated_changes", "CHG"), ("stakeholders", "STK")]
 QUALITY_DIRS = [("qiu", "QIU"), ("kpi", "KPI"), ("fr", "FR"), ("frp", "FRP"), ("qr", "QR"),
@@ -173,6 +183,7 @@ class Project(object):
         self.duplicates = []  # (item, earlier item)
         self.specs = {}  # rel path -> SourceFile
         self.reports = {}  # rel path -> text
+        self.request_doc = None  # the text of quality-chain-requests.md, when it exists
         self.context = None  # design-context.yaml SourceFile
         self.quality_context = None
         self._load()
@@ -229,6 +240,10 @@ class Project(object):
         for rel in report_paths(d):
             with open(os.path.join(d, rel), "r", encoding="utf-8") as f:
                 self.reports[rel] = f.read()
+        requests_path = os.path.join(d, REQUESTS_DOC)
+        if os.path.exists(requests_path):
+            with open(requests_path, "r", encoding="utf-8") as f:
+                self.request_doc = f.read()
         q = self.quality_dir
         if q and os.path.isdir(q):
             for sub, _ in QUALITY_DIRS:
@@ -307,6 +322,20 @@ class Project(object):
                 out.append(it)
         return sorted(out, key=lambda i: id_key(i.id))
 
+    def requests_on(self, ident):
+        """The requests to the quality chain, open or answered, whose targets name a chain item."""
+        return [q for q in self.of("QCR", active_only=False)
+                if q.status in ("open", "answered") and ident in as_list(q.get("targets"))]
+
+    def quality_stage_of(self, ident):
+        """The quality-chain stage that writes a chain item, or None."""
+        prefix = prefix_of(ident)
+        if prefix == "QAS":
+            it = self.get(ident)
+            stage = str(it.get("stage")) if it is not None else ""
+            return int(stage) if stage in ("1", "2", "3", "4") else None
+        return QUALITY_HOME_STAGE.get(prefix)
+
     def citing(self, ident):
         """Design items whose basis_note cites an ID in full."""
         out = []
@@ -349,7 +378,7 @@ class Project(object):
             return STAGE_SKILLS[4]
         if p == "DEC":
             return STAGE_SKILLS.get(DEC_STAGES.get(item.get("stage")))
-        if p == "DAS":
+        if p in ("DAS", "QCR"):
             return das_owner(item.get("stage"))
         if p == "FND":
             raised_by = item.get("raised_by")

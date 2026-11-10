@@ -32,7 +32,7 @@ The platforms are what the users' side runs on: a web app or native apps, which 
 - Choose from the kinds of device and the situations in the contexts of use, the CUJ steps that need what only some platforms do well (location while the screen is off, notifications that must arrive, work while offline, the camera or other hardware), the anticipated changes, and the team's skills and deadline.
 - Which versions to support depends on the devices the users have, which only the user's organization knows. Propose a range with its basis (the oldest versions that offer what the CUJs need, for example).
 - Cover all the devices of each kind that a context of use names: "smartphone" means the phones the users carry, of every maker, unless the input says otherwise. Leaving some out leaves their users out and fails the quality-in-use requirements measured there, so it is never drafted silently: it is high severity, and it is asked.
-- When the chosen platform limits what users can do (a web app that cannot report location while the screen is off, for example), write an issue for the quality chain.
+- When the chosen platform limits what users can do (a web app that cannot report location while the screen is off, for example), write a request to the quality chain.
 
 ## Design mechanisms by quality
 

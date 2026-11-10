@@ -17,7 +17,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 ## Read first
 
 - `references/conventions.md`: the design chain, what the quality chain leaves to the design, the working language, judgment basis marks, the question protocol, decisions, assumptions, re-runs and how to finish a run. Follow it exactly.
-- `references/artifacts.md`: where files go, and the schemas for `design-context.yaml`, DRV and DAS.
+- `references/artifacts.md`: where files go, and the schemas for `design-context.yaml`, DRV, DAS and QCR.
 - `references/reading-the-quality-chain.md`: what each quality-chain item gives this stage, including its shared facts, design inputs, SLIs and assumptions.
 - `references/drivers.md`: driver kinds, how to write scenarios, constraints and principles, and how to rank.
 - `references/report-template.md`: the report layout and a worked example.
@@ -35,7 +35,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 
   A missing one is an uncertain point, rated like any other (step 13). A missing budget or deadline usually has high breadth, because it can move the line between the primary drivers and the rest, so it is asked.
 - Code and infrastructure definitions in the repository, when there are any.
-- On a re-run: this stage's report (the diff starts from its `Inputs as of` commit), `design-context.yaml`, `drv/`, the DAS files this stage wrote or depends on, and the open findings addressed to this stage: `fnd/` items with `to: requirements-to-architecture-drivers` and `status: open`.
+- On a re-run: this stage's report (the diff starts from its `Inputs as of` commit), `design-context.yaml`, `drv/`, the DAS files this stage wrote or depends on, the open findings addressed to this stage (`fnd/` items with `to: requirements-to-architecture-drivers` and `status: open`), and the requests to the quality chain (`qcr/`) with the answers the user wrote in `quality-chain-requests.md`.
 
 Essential inputs: at least one functional requirement and at least one quality requirement, from the quality chain or from the user. If either is missing, ask for it (or suggest running the quality chain first) before drafting.
 
@@ -49,7 +49,7 @@ From `context.yaml` (the boundary, users, CUJs and external systems) and the int
 - external systems, by EXT ID; `creates_data: true` marks the ones whose data users rely on;
 - for each, how it exchanges with the system: the interfaces the FRs name, by kind (a screen or a notification for whom, a file or a report for whom) and by EXT ID.
 
-Stage 2 draws this as the context view. An FR interface that names an external system missing from `external_systems` is an issue for the quality chain.
+Stage 2 draws this as the context view. An FR interface that names an external system missing from `external_systems` is a request to the quality chain.
 
 ### 2. Current structure
 
@@ -76,7 +76,7 @@ Write a scenario with a source, a stimulus, an artifact, an environment, a respo
 - for every QR whose handling is `emphasized`;
 - for a QR whose handling is `minimum-line`, and for an NFR, only when it could decide between designs: it is hard to achieve, hard to undo, or in conflict with another driver. Otherwise set it aside in the concern inventory with a one-line reason; any reasonable design meets it.
 
-Name the NFR's measure by ID when there is one ("NFR-02's SLO, counted by SLI-02") and copy nothing of it; otherwise keep the QR's placeholders, or write a new named placeholder. Refer to shared facts by ID ("Sale peak (OPF-03)"), never by their values. One scenario may serve several QRs and NFRs. One QR may need several scenarios, when the response or the measure differs between environments (normal load and sale peak, for example).
+Name the NFR's measure by ID when there is one ("NFR-02's SLO, counted by SLI-02") and copy nothing of it; otherwise keep the QR's placeholders, or write a new named placeholder and a request to the quality chain for the target it stands for. Refer to shared facts by ID ("Sale peak (OPF-03)"), never by their values. One scenario may serve several QRs and NFRs. One QR may need several scenarios, when the response or the measure differs between environments (normal load and sale peak, for example).
 
 Include data quality requirements. Freshness, accuracy and consistency of data decide how data moves and where it lives.
 
@@ -110,7 +110,7 @@ Record conflicts between drivers, on both drivers. A conflict between QRs that t
 
 ### 12. Feasibility
 
-Before stage 2 spends effort, check every primary driver against the budget, the deadline and the team: is there any known way to meet it with these resources? When there is none, say so plainly, keep the driver as written, and raise an issue for the quality chain (the target or the priority may have to move). What to give up is a business decision of high severity, so it is asked. When the budget or the deadline is missing, give the verdict with the missing input named.
+Before stage 2 spends effort, check every primary driver against the budget, the deadline and the team: is there any known way to meet it with these resources? When there is none, say so plainly, and keep the driver as written. What to give up is a business decision of high severity, so it is asked; when the answer moves a target or a priority, write a request to the quality chain for it. When the budget or the deadline is missing, give the verdict with the missing input named.
 
 ### 13. Findings, report, questions, items
 
@@ -118,11 +118,11 @@ On a re-run, start from what changed since the report's `Inputs as of` commit, p
 
 Write `design-context.yaml`, the DRV items, the hand-offs and the findings you process as you draft them in steps 1 to 12, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards", "Decisions" and "Assumptions" in `conventions.md`: list the uncertain points, rate the breadth and severity of each, ask about the points that are high on either scale, and record every other point as a DAS item. In this stage:
 
-- Usually high, so asked: the ranking of the primary drivers; a missing budget or deadline; whether a technology constraint or a deadline can change; a quality-chain QAS that the ranking or a primary driver's measure rests on (its answer goes under "Issues for the quality chain").
+- Usually high, so asked: the ranking of the primary drivers; a missing budget or deadline; whether a technology constraint or a deadline can change; a quality-chain QAS that the ranking or a primary driver's measure rests on (a request to the quality chain carries its answer); a request to the quality chain whose answer could change a primary driver or move the primary line (its impact is high).
 - Asked whatever the ratings: a contradiction between inputs (a DIN against a CUJ or a QR, the code against a constraint), and the content of a law, standard, contract or policy that the inputs name but do not give, when a judgment in this stage depends on it (what an external service's SLA promises).
 - Usually below the bar, so recorded as DAS: the difficulty of a driver that stays on the same side of the primary line either way; setting aside a minimum-line QR, when you are unsure whether it could decide between designs; a stakeholder's concern that the inputs imply but do not state.
 
-Each driver lists in `premises` the design-context entries, shared facts (CON, EXT, OPF) and assumptions (DAS, QAS) it rests on, even when `sources` names them too: `sources` says what the driver is built from, and `premises` finds it when one of them changes. A chain item that rests on an open QAS passes it on to the drivers that use the part it covers (`reading-the-quality-chain.md`, "The quality chain's assumptions"). An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`. A driver that rests on a QAS that a question answered cites the answer in `basis_note` and is not `assumed` on its account.
+Each driver lists in `premises` the design-context entries, shared facts (CON, EXT, OPF), assumptions (DAS, QAS) and requests to the quality chain (QCR) it rests on, even when `sources` names them too: `sources` says what the driver is built from, and `premises` finds it when one of them changes. A chain item that rests on an open QAS passes it on to the drivers that use the part it covers (`reading-the-quality-chain.md`, "The quality chain's assumptions"). An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`. A driver that rests on a QAS that a question answered cites the answer in `basis_note` and is not `assumed` on its account.
 
 Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and finish the run ("Finish").
 
@@ -159,4 +159,4 @@ Apply the answers to the items in place, check the exit criteria, set the report
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions this run wrote or depends on (DAS and QAS), one line each with their ratings, highest first, and say that no answer is needed and that any correction is applied like an answer. Then tell the user which files were written, how many drivers of each kind, which are primary, which inputs of the design context are still missing, which issues for the quality chain are open, and that the next stage is `architecture-drivers-to-architecture`; on a re-run, which later stages to re-run for which items, as "Finishing a run" in `conventions.md` describes. No review follows a run of this stage: `design-review` reviews stages 2 to 4. Run `scripts/tables.py` and `scripts/check.py` with `--skill requirements-to-architecture-drivers`, fix what the check reports in this stage's files, and commit the files this run wrote, and only those.
+Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions this run wrote or depends on (DAS and QAS), one line each with their ratings, highest first, and say that no answer is needed and that any correction is applied like an answer. Then tell the user which files were written, how many drivers of each kind, which are primary, which inputs of the design context are still missing, which requests to the quality chain this run raised or answered, and that the next stage is `architecture-drivers-to-architecture`; on a re-run, which later stages to re-run for which items, as "Finishing a run" in `conventions.md` describes. No review follows a run of this stage: `design-review` reviews stages 2 to 4. Run `scripts/tables.py` and `scripts/check.py` with `--skill requirements-to-architecture-drivers`, fix what the check reports in this stage's files, and commit the files this run wrote, and only those.
