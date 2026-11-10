@@ -22,6 +22,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 - `references/drivers.md`: driver kinds, how to write scenarios, constraints and principles, and how to rank.
 - `references/report-template.md`: the report layout and a worked example.
 - `references/glossary.md`: terms for the working language.
+- `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
 
 ## Inputs
 
@@ -142,6 +143,7 @@ Apply the answers to the items in place, check the exit criteria, set the report
 - Every point high on either scale was asked, and so were every contradiction and the content of every law, standard, contract or policy that the inputs name but do not give, when a judgment in this stage depends on it; every other uncertain point is a DAS.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
 - The report indexes the items and restates none of them.
+- `scripts/check.py --skill requirements-to-architecture-drivers` reports no problem, except those waiting for a finding.
 
 ## Pitfalls
 
@@ -157,4 +159,4 @@ Apply the answers to the items in place, check the exit criteria, set the report
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions this run wrote or depends on (DAS and QAS), one line each with their ratings, highest first, and say that no answer is needed and that any correction is applied like an answer. Then tell the user which files were written, how many drivers of each kind, which are primary, which inputs of the design context are still missing, which issues for the quality chain are open, and that the next stage is `architecture-drivers-to-architecture`; on a re-run, which later stages to re-run for which items, as "Finishing a run" in `conventions.md` describes. No review follows a run of this stage: `design-review` reviews stages 2 to 4. Commit the files this run wrote, and only those.
+Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions this run wrote or depends on (DAS and QAS), one line each with their ratings, highest first, and say that no answer is needed and that any correction is applied like an answer. Then tell the user which files were written, how many drivers of each kind, which are primary, which inputs of the design context are still missing, which issues for the quality chain are open, and that the next stage is `architecture-drivers-to-architecture`; on a re-run, which later stages to re-run for which items, as "Finishing a run" in `conventions.md` describes. No review follows a run of this stage: `design-review` reviews stages 2 to 4. Run `scripts/tables.py` and `scripts/check.py` with `--skill requirements-to-architecture-drivers`, fix what the check reports in this stage's files, and commit the files this run wrote, and only those.

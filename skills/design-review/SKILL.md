@@ -23,6 +23,7 @@ The first review of a stage checks all of it. Each later review is a diff review
 - `references/review-procedures.md`: the activities for each stage and for every stage, the scope of a diff review, and how to classify what they find.
 - `references/report-template.md`: the report layout, and worked examples of a full review and a diff review.
 - `references/glossary.md`: terms for the working language.
+- `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
 
 ## Run it in a fresh context
 
@@ -50,7 +51,7 @@ Name the stage (and the component, for stage 4); whether this is a full review o
 
 ### 2. Do the activities
 
-Do every activity that `review-procedures.md` lists for the stage and for every stage, working from the artifacts only, and record the result of each one, including the ones that find nothing. In a diff review, do each activity for what its "In a diff review" column names, and record an activity with nothing there as "No change in scope".
+Run `scripts/check.py` first, without `--skill`. What it checks is not the review's to raise ("Rules for every review" in `review-procedures.md`). Then do every activity that `review-procedures.md` lists for the stage and for every stage, working from the artifacts only, and record the result of each one, including the ones that find nothing. In a diff review, do each activity for what its "In a diff review" column names, and record an activity with nothing there as "No change in scope".
 
 ### 3. Classify
 
@@ -80,6 +81,8 @@ Check the exit criteria, make the report match the items, and set the report's s
 - Every finding names the skill it is addressed to, the items, the severity, the evidence and a suggested resolution, and lists in `premises` the open assumptions it rests on.
 - Every fact the review needed and could not find was asked about, or is a DAS.
 - No design item was changed, except for the ratings and answers that `conventions.md` lets any run record in an assumption.
+- No finding is about what `scripts/check.py` checks, and "Open gaps" names the stages that still have its problems in the items in scope.
+- `scripts/check.py --skill design-review` reports no problem in the review's files.
 - The report says whether the review ran in a fresh context and whether it was a full review or a diff review (with the last review's commit), and names the commit its inputs were read at.
 
 ## Pitfalls
@@ -97,4 +100,4 @@ Check the exit criteria, make the report match the items, and set the report's s
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to run next, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, whether it was a full review or a diff review, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps follow "Findings between design stages" in `conventions.md`: re-run each stage that a critical or major finding is addressed to, to accept or reject it. A stage whose items then change for one is reviewed again, as a diff review: the stage that accepted it, and the stage reviewed here once it has followed a change made upstream for a finding this review raised. Do not name a stage to run for minor findings alone; say how many minor findings wait for the next run of the stage they are addressed to.
+Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to run next, `scripts/tables.py` and `scripts/check.py` with `--skill design-review` for the review's own files, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, whether it was a full review or a diff review, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps follow "Findings between design stages" in `conventions.md`: re-run each stage that a critical or major finding is addressed to, to accept or reject it. A stage whose items then change for one is reviewed again, as a diff review: the stage that accepted it, and the stage reviewed here once it has followed a change made upstream for a finding this review raised. Do not name a stage to run for minor findings alone; say how many minor findings wait for the next run of the stage they are addressed to.

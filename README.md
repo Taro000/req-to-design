@@ -55,6 +55,8 @@ Each stage is a long task. The detailed design runs once per component and, for 
 
 Reports and items show only the current state; git keeps the history. Each skill ends its run by committing the files it wrote, with the reasons in the commit message, and the next run reads what changed since then.
 
+Before it commits, each skill runs two scripts from its `scripts/` directory. `tables.py` writes the index tables of the reports from the YAML items, so that no table is a hand-made copy that can drift. `check.py` checks what needs no judgment, so that reviews do not spend findings on it: that every YAML file parses and no value is cut off at an unquoted ` #`, that every ID points at an item that exists, that the basis marks match the assumptions, that functions and drivers are allocated consistently from elements to interfaces and modules, and that the OpenAPI and AsyncAPI documents have the operations, error statuses and codes of their interfaces. The skill fixes what the check reports in its own files. The scripts need Python 3.8 or later and no packages. To run the check yourself, from the project's root: `python3 <skill directory>/scripts/check.py` (for Claude Code, the skill directory is `.claude/skills/<skill>/`).
+
 Questions and artifacts follow your language and your project's documentation language. The skills themselves are written in English.
 
 ## Artifacts
@@ -71,7 +73,7 @@ docs/design/
 └── ifc/specs/                                            OpenAPI and AsyncAPI documents
 ```
 
-YAML keys and IDs are fixed in English, so every stage can read every other stage's files. Views, flows and state diagrams are Mermaid diagrams inside the reports.
+YAML keys and IDs are fixed in English, so every stage can read every other stage's files. Views, flows and state diagrams are Mermaid diagrams inside the reports. The index tables of the reports, between `<!-- generated: ... -->` marks, are written from the YAML items; edit the items, not those tables.
 
 ## What the skills will not do
 
@@ -83,11 +85,12 @@ YAML keys and IDs are fixed in English, so every stage can read every other stag
 
 ## Maintaining
 
-`references/conventions.md`, `references/artifacts.md` and `references/glossary.md` are identical in every skill, because `npx skills add --skill` installs a single skill directory. Edit them in `shared/`, then run:
+`references/conventions.md`, `references/artifacts.md`, `references/glossary.md` and the scripts in `scripts/` are identical in every skill, because `npx skills add --skill` installs a single skill directory. Edit them in `shared/` and `shared/scripts/`, then run:
 
 ```sh
 scripts/sync-shared.sh          # copy shared/ into every skill
 scripts/sync-shared.sh --check  # fail if any copy differs
+python3 -m unittest discover -s tests   # test the scripts, and that the YAML examples in the skills parse
 ```
 
 ## License

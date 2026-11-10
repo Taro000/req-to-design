@@ -7,7 +7,9 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs as they are, and write the basis marks, statuses, kinds and ratings with the glossary's terms for the working language.
 
-The report indexes the items and never restates what an item says. Refer to decisions and elements by ID and title, and leave their options, rationales, responsibilities, parameter values and other text to the YAML. Only the report holds the summary, the comparison tables of options, the design concerns, the threat model, the views, the walkthroughs, the cost check, the issues for the quality chain, the questions and their answers, the open assumptions, the placeholders, the open gaps and what is out of scope.
+The report indexes the items and never restates what an item says. Refer to decisions and elements by ID and title, and leave their options, rationales, responsibilities, parameter values and other text to the YAML. Only the report holds the summary, the comparison tables of options, the design concerns, the threat model, the views, the walkthroughs, the cost check, the issues for the quality chain, the questions and their answers, the placeholders, the open gaps and what is out of scope.
+
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the elements, the design parameters, the findings and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: where each parameter was decided, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -27,9 +29,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The decisions that set the structure and the platforms, by ID, with the comparison table of their options, as in decisions.md. The views show the result.>
 
 ## Design decisions
+<!-- generated: decisions -->
 | DEC | Title | Addresses | Basis |
 |---|---|---|---|
-<Under the table, one comparison table for every other decision that addresses a primary driver, as in decisions.md.>
+<!-- /generated -->
+<The decisions of stage `architecture`. Under the table, one comparison table for every other decision that addresses a primary driver, as in decisions.md.>
 
 ## Design concerns
 | Concern | Settled by, or why standard practice is enough |
@@ -39,8 +43,10 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The data flow diagram with trust boundaries, then the table of flows, threats and counters, as in views.md.>
 
 ## Elements
+<!-- generated: elements -->
 | ELM | Name | Kind | Team | As-is |
 |---|---|---|---|---|
+<!-- /generated -->
 
 ## Views
 ### Context
@@ -57,22 +63,26 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <One table, as in views.md.>
 
 ## Design parameters
-| Parameter | Decision | Decided in |
+<!-- generated: parameters -->
+| Parameter | DEC | Decided in |
 |---|---|---|
-<Decided in: the question under "Decisions" that settled it, or the DAS that adopted it provisionally.>
+<!-- /generated -->
+<One row per entry of the decisions' `parameters`. Decided in, by hand: the question under "Decisions" that settled it, or the DAS that adopted it provisionally.>
 
 ## Debt and deferrals
 | Item | Debt, or deferral of a full-depth kind | Decided in |
 |---|---|---|
-<A debt is on its DEC; a deferral of a point of this stage's full-depth kinds, or of one that rates high, is a hand-off (HND). Decided in: the question under "Decisions", or the DAS of kind decision.>
+<By hand. A debt is on its DEC; a deferral of a point of this stage's full-depth kinds, or of one that rates high, is a hand-off (HND). Decided in: the question under "Decisions", or the DAS of kind decision.>
 
 ## Cost and team
 <The running cost from stated prices or placeholders, computed with a script; the work to build it; the skills it needs; the verdict.>
 
 ## Findings
-| FND | Title | Raised by | Addressed to | Status |
-|---|---|---|---|---|
-<The findings addressed to this stage, and those this stage raised for stage 1.>
+<!-- generated: findings -->
+| FND | Title | Severity | Raised by | To | Status | Items changed |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The findings addressed to this stage, and those this stage raised for stage 1. Items changed are the items whose `basis_note` cites the finding.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -85,9 +95,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <Questions asked and answers in effect, numbered per stage and continued on re-runs; an overturning answer replaces the row.>
 
 ## Open assumptions
+<!-- generated: assumptions -->
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-<The DAS this stage wrote, and the open DAS and QAS its items depend on.>
+<!-- /generated -->
+<The open DAS this stage wrote, and the open DAS and QAS its items depend on, highest first. Breadth and severity of a QAS, by hand: as this stage rates it.>
 
 ## Placeholders
 | Name | Stands for | Used in |
@@ -188,9 +200,9 @@ Walkthrough of DRV-01 (excerpt):
 |---|---|---|---|---|
 | DRV-01 | ELM-01's checkout script → ELM-02 | DEC-01, DEC-06, DEC-03 (cached stock) | Likely: the charge at the provider's stated 99.9th percentile (1.0 s) leaves 0.5 s for our own work and the database | During failover (DEC-02), checkouts are slower until the failing provider's breaker opens: stage 3 must check that against NFR-02's error budget, and must settle the first provider's outcome before charging the second (DRV-05) |
 
-Design parameters (excerpt):
+Design parameters (excerpt). The script writes the first two columns:
 
-| Parameter | Decision | Decided in |
+| Parameter | DEC | Decided in |
 |---|---|---|
 | failover_after | DEC-02 | question 2 |
 | stock_cache_lifetime | DEC-03 | DAS-03 |

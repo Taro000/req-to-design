@@ -43,6 +43,10 @@ Use these terms for the working language. For a language not listed, or a term m
 | out of scope | 範囲外 |
 | placeholder (for a number not yet decided) | 未定の値 |
 | traceability | トレーサビリティ |
+| generated table (written by scripts/tables.py) | 生成する表 |
+| problem (reported by scripts/check.py) | 検査の問題 |
+| waiting for a finding | 指摘待ち |
+| yes / no (in a table) | はい / いいえ |
 
 ## Inputs and drivers
 
@@ -53,6 +57,7 @@ Use these terms for the working language. For a language not listed, or a term m
 | concern kinds: function / quality / constraint / change / organization | 関心事の種類: 機能 / 品質 / 制約 / 変更 / 組織 |
 | technology constraint: mandated / prohibited / platform / external service | 技術制約: 使う / 使わない / 基盤 / 外部サービス |
 | project constraints (budget, deadline, team) | 費用・納期・体制の制約 |
+| project constraint kinds: budget / deadline / team / other | 費用・納期・体制の制約の種類: 費用 / 納期 / 体制 / その他 |
 | team structure | チームの構成 |
 | anticipated change | 将来の変更 |
 | current structure (of an existing system) | 今の構造 |

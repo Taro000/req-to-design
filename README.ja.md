@@ -55,6 +55,8 @@ npx skills add Taro000/req-to-design --skill design-review -a claude-code -g
 
 報告書と各項目には今の状態だけを書き、履歴は git に任せます。どのスキルも実行の最後に、自分が書いたファイルを変更の理由を書いたメッセージでコミットし、次の実行ではそこからの差分を読みます。
 
+どのスキルも、コミットの前に `scripts/` の 2 つのスクリプトを動かします。`tables.py` は、報告書の索引の表を YAML の項目から作ります。手で写した表がずれることをなくすためです。`check.py` は、判断の要らないことを決まった手順で確かめます。レビューの指摘をそこに使わないためです。確かめるのは、どの YAML も読めて、値が引用符のない ` #` で切れていないこと、ID が実在する項目を指すこと、根拠の印が仮定と合うこと、機能と要求の割り当てが要素からインタフェースとモジュールまで食い違わないこと、OpenAPI と AsyncAPI の記述がインタフェースの操作、エラーの状態コード、エラーの符号を持つこと、などです。スキルは、自分のファイルについて報告された問題を直します。スクリプトは Python 3.8 以降だけで動き、パッケージは要りません。自分で検査を動かすときは、プロジェクトの根から `python3 <スキルのディレクトリ>/scripts/check.py` を実行します（Claude Code では、スキルのディレクトリは `.claude/skills/<スキル>/`）。
+
 質問と成果物の言語は、あなたの言語とプロジェクトの文書の言語に合わせます。スキル自体は英語で書かれています。
 
 ## 成果物
@@ -71,7 +73,7 @@ docs/design/
 └── ifc/specs/                                            OpenAPI と AsyncAPI の記述
 ```
 
-YAML のキーと ID は英語に固定しているので、どの段も他の段のファイルを読めます。ビュー、流れ、状態遷移図は、報告書の中に Mermaid で書きます。
+YAML のキーと ID は英語に固定しているので、どの段も他の段のファイルを読めます。ビュー、流れ、状態遷移図は、報告書の中に Mermaid で書きます。報告書の索引の表（`<!-- generated: ... -->` の印の間）は YAML の項目から作るので、直すときは表ではなく項目を直してください。
 
 ## スキルがしないこと
 
@@ -83,11 +85,12 @@ YAML のキーと ID は英語に固定しているので、どの段も他の�
 
 ## 保守
 
-`references/conventions.md`、`references/artifacts.md`、`references/glossary.md` は、すべてのスキルで同じ内容です。`npx skills add --skill` は 1 つのスキルのディレクトリだけを入れるからです。`shared/` で編集してから、次を実行してください。
+`references/conventions.md`、`references/artifacts.md`、`references/glossary.md` と `scripts/` のスクリプトは、すべてのスキルで同じ内容です。`npx skills add --skill` は 1 つのスキルのディレクトリだけを入れるからです。`shared/` と `shared/scripts/` で編集してから、次を実行してください。
 
 ```sh
 scripts/sync-shared.sh          # shared/ をすべてのスキルにコピーする
 scripts/sync-shared.sh --check  # どれかのコピーが違えば失敗する
+python3 -m unittest discover -s tests   # スクリプトと、スキルの中の YAML の例が読めることを確かめる
 ```
 
 ## ライセンス
