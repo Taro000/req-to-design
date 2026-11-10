@@ -14,12 +14,14 @@ Whoever wrote a design tends to confirm it. The review therefore runs apart from
 
 Every check is an activity with a result: add up the budget, trace the criterion, walk the scenario. "Looks fine" is not a result. The report records what was done, so that a reader can tell a checked area from an unchecked one.
 
+The first review of a stage checks all of it. Each later review is a diff review: it checks only what changed since the last review, and what the change can break. A fresh reading of a large design always finds something new, so reviews that read everything again never run out of findings; what has not changed was covered by the last review.
+
 ## Read first
 
 - `references/conventions.md`: the design chain, findings, the working language, judgment basis marks, the question protocol, assumptions and how a run finishes. Follow it exactly.
 - `references/artifacts.md`: where files go, the schemas for FND and DAS, and the items under review.
-- `references/review-procedures.md`: the activities for each stage and for every stage, and how to classify what they find.
-- `references/report-template.md`: the report layout and a worked example.
+- `references/review-procedures.md`: the activities for each stage and for every stage, the scope of a diff review, and how to classify what they find.
+- `references/report-template.md`: the report layout, and worked examples of a full review and a diff review.
 - `references/glossary.md`: terms for the working language.
 
 ## Run it in a fresh context
@@ -33,7 +35,10 @@ Every check is an activity with a result: add up the budget, trace the criterion
 - The stage to review: 2 (architecture), 3 (high-level design), or 4 (the detailed design of one component, named by its element ID). If the user does not say, ask.
 - The stage's report and items, and what they were built from: the items of the earlier design stages, `design-context.yaml`, the assumptions in `das/`, and the quality chain's artifacts (read only), with its shared facts and its assumptions (QAS).
 - The findings in `fnd/`, whatever their status, those of earlier reviews included, so that a finding rejected with a reason is not raised again unless its inputs changed.
-- The review report of the same stage (for stage 4, of the same component), if there is one, for its "Decisions" only: this review replaces it, keeps the answers still in effect and continues the question numbering. Its results are not inputs; do every activity again.
+- The review report of the same stage (for stage 4, of the same component), if there is one. This review replaces it: it keeps the answers still in effect and continues the question numbering, keeps the issues for the quality chain that the quality chain has not applied yet, and takes over the open gaps. Its other results are not inputs. Whether the report exists decides the kind of review:
+  - None: this is the first review of the stage, a full review. Do every activity for the whole stage.
+  - One: this is a diff review. Its scope is what changed since the last review's commit, and the items connected to a change through `premises`, trace fields or `depends_on` ("Rules for every review" in `review-procedures.md`). Do each activity for its part of that scope, and record an activity with nothing in it as "No change in scope".
+  - Do a full review instead when the user asks for one, or when the last review's commit cannot be found (the project is not under git, or this skill never committed the report).
 
 Essential input: the report and items of the stage under review. A stage whose report is still a draft can be reviewed, but say so.
 
@@ -41,11 +46,11 @@ Essential input: the report and items of the stage under review. A stage whose r
 
 ### 1. Scope
 
-Name the stage (and the component, for stage 4), the items in scope, and the commit they were read at (`Inputs as of`: the commit current when the review starts, or "none" outside git). The report has one fixed path per reviewed stage and replaces the report already there: `docs/design/reviews/2-architecture.md`, `3-high-level-design.md`, or `4-detailed-design-<element ID>.md`.
+Name the stage (and the component, for stage 4); whether this is a full review or a diff review, and for a diff review the last review's commit; the items in scope, found for a diff review as "Rules for every review" in `review-procedures.md` describes; and the commit they were read at (`Inputs as of`: the commit current when the review starts, or "none" outside git). When a diff review finds that nothing has changed since the last review, say so and stop: the last report still holds. The report has one fixed path per reviewed stage and replaces the report already there: `docs/design/reviews/2-architecture.md`, `3-high-level-design.md`, or `4-detailed-design-<element ID>.md`.
 
 ### 2. Do the activities
 
-Do every activity that `review-procedures.md` lists for the stage and for every stage, working from the artifacts only, and record the result of each one, including the ones that find nothing.
+Do every activity that `review-procedures.md` lists for the stage and for every stage, working from the artifacts only, and record the result of each one, including the ones that find nothing. In a diff review, do each activity for what its "In a diff review" column names, and record an activity with nothing there as "No change in scope".
 
 ### 3. Classify
 
@@ -53,7 +58,7 @@ For a review of stage 2, sort what the walkthroughs showed into risks, non-risks
 
 ### 4. Draft the findings and the report
 
-Write one finding per problem as an FND item, as you draft it, following `artifacts.md`: the skill it is addressed to, the items it concerns, the severity, the evidence (what the activity showed, with IDs and numbers) and a suggested resolution. Address each finding to the skill that owns the cause, which may be earlier than the stage reviewed: a high-level design problem caused by an architecture decision goes to `architecture-drivers-to-architecture`. A problem in the quality chain goes to "Issues for the quality chain" instead. Do not raise again a finding that was rejected with a reason, unless its inputs have changed, and do not write a second finding for a problem that an open one already covers; cite it. Write the draft review report that records the results and indexes the findings, following `report-template.md`.
+Write one finding per problem as an FND item, as you draft it, following `artifacts.md`: the skill it is addressed to, the items it concerns, the severity, the evidence (what the activity showed, with IDs and numbers) and a suggested resolution. Address each finding to the skill that owns the cause, which may be earlier than the stage reviewed: a high-level design problem caused by an architecture decision goes to `architecture-drivers-to-architecture`. A problem in the quality chain goes to "Issues for the quality chain" instead. Do not raise again a finding that was rejected with a reason, unless its inputs have changed, and do not write a second finding for a problem that an open one already covers; cite it. In a diff review, raise no new finding about what has not changed ("Rules for every review" in `review-procedures.md`). Write the draft review report that records the results and indexes the findings, following `report-template.md`.
 
 ### 5. Questions
 
@@ -69,12 +74,13 @@ Check the exit criteria, make the report match the items, and set the report's s
 
 ## Exit criteria
 
-- Every activity listed for the stage and for every stage was done, and its result is recorded, including those with no finding.
+- Every activity listed for the stage and for every stage was done, and its result is recorded, including those with no finding. In a diff review, each was done for what its "In a diff review" column names, or is recorded as "No change in scope".
 - Every primary driver and every CUJ in scope was walked through.
+- In a diff review, no new finding is about what has not changed: each one concerns a changed item, or what a change breaks in another item.
 - Every finding names the skill it is addressed to, the items, the severity, the evidence and a suggested resolution, and lists in `premises` the open assumptions it rests on.
 - Every fact the review needed and could not find was asked about, or is a DAS.
 - No design item was changed, except for the ratings and answers that `conventions.md` lets any run record in an assumption.
-- The report says whether the review ran in a fresh context, and names the commit its inputs were read at.
+- The report says whether the review ran in a fresh context and whether it was a full review or a diff review (with the last review's commit), and names the commit its inputs were read at.
 
 ## Pitfalls
 
@@ -86,8 +92,9 @@ Check the exit criteria, make the report match the items, and set the report's s
 - Addressing a finding to the stage under review when the cause lies in an earlier stage.
 - Asking the user to judge the design. Questions are for facts the review needs; a judgment is a finding.
 - Raising again a finding that was rejected with a reason when nothing it rests on has changed. The stage has decided; repeating it adds noise, not evidence.
+- Reading unchanged items again in a diff review, or raising a new finding about one. The last review covered them; a fresh look at the same text always finds something, and the findings then never decrease.
 - Restating the findings in the report. The report indexes them; the evidence lives in the FND files, where the addressed stage reads it.
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to re-run, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps are to re-run each addressed stage to accept or reject its findings, and to review again when critical findings changed the design.
+Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to run next, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, whether it was a full review or a diff review, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps follow "Findings between design stages" in `conventions.md`: re-run each stage that a critical or major finding is addressed to, to accept or reject it, and review that stage again, as a diff review, once accepting one has changed its items. Do not name a stage to run for minor findings alone; say how many minor findings wait for the next run of the stage they are addressed to.

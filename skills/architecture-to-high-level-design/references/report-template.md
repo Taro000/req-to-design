@@ -93,7 +93,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Open gaps
 ## Out of scope
 ## Next
-<Run `design-review` on this stage in a fresh context; re-run this stage to resolve its findings; then run `high-level-design-to-detailed-design` once per component: list them.>
+<Run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when this run changed items to accept a critical or major finding; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `high-level-design-to-detailed-design` once per component: list them.>
 ```
 
 ## Worked example: online store

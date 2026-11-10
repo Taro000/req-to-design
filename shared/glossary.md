@@ -15,6 +15,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | finding status: open / accepted / rejected | 指摘の状態: 未解決 / 受け入れ / 退ける |
 | fresh context (for a review) | 別の文脈 |
 | review | レビュー |
+| full review / diff review (a review of the whole stage / a later review that covers only what changed since the last one) | 全体のレビュー / 差分のレビュー |
+| no change in scope (a diff review's record for an activity with nothing to check) | 対象の変更なし |
 | risk / non-risk | リスク / リスクでないもの |
 | basis: stated / inferred / assumed / confirmed | 根拠: 入力 / 推定 / 仮定 / 確認済み |
 | status: active / retired | 状態: 有効 / 廃止 |

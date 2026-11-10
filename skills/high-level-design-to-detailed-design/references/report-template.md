@@ -105,7 +105,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Open gaps
 ## Out of scope
 ## Next
-<Run `design-review` on this component in a fresh context; re-run the stages that this report's findings are addressed to; re-run this stage for the component to resolve the findings the review addresses to it; then design the next component in the index.>
+<Run `design-review` on this component in a fresh context when it has not been reviewed yet, or when this run changed items to accept a critical or major finding; re-run the stages that this report addresses a critical or major finding to; re-run this stage for the component for the critical or major findings a review addresses to it; then design the next component in the index. Minor findings start no run.>
 ```
 
 ## The index
