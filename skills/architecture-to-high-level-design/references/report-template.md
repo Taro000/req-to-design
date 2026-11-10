@@ -93,7 +93,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Open gaps
 ## Out of scope
 ## Next
-<Run `design-review` on this stage in a fresh context; re-run this stage to resolve its findings; then run `high-level-design-to-detailed-design` once per component: list them.>
+<Run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `high-level-design-to-detailed-design` once per component: list them.>
 ```
 
 ## Worked example: online store
@@ -148,7 +148,7 @@ id: IFC-01
 title: Checkout API
 status: active
 basis: assumed
-basis_note: The binding of SLI-02 uses the load balancer logs that already exist (OPF-02); the handling of unsettled payments is confirmed (question 1); the timeout is a provisional decision (DAS-06); the rest is inferred from DEC-02, DRV-05 and the shared conventions
+basis_note: The binding of SLI-02 uses the load balancer logs that already exist (OPF-02), and counts a checkout submitted again once, following FND-03; the handling of unsettled payments follows FND-01 and is confirmed (question 1); the timeout is a provisional decision (DAS-06); the rest is inferred from DEC-02, DRV-05 and the shared conventions
 premises: [OPF-02, DAS-06]
 kind: http
 name: Checkout API
