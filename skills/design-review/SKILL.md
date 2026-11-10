@@ -75,8 +75,8 @@ Check the exit criteria, make the report match the items, and set the report's s
 ## Exit criteria
 
 - Every activity listed for the stage and for every stage was done, and its result is recorded, including those with no finding. In a diff review, each was done for what its "In a diff review" column names, or is recorded as "No change in scope".
-- Every primary driver and every CUJ in scope was walked through.
-- In a diff review, no new finding is about what has not changed: each one concerns a changed item, or what a change breaks in another item.
+- Every primary driver and every CUJ in scope was walked through; in a diff review, those that the A1 and A2 columns name.
+- In a diff review, no new finding is about what has not changed: each one concerns a changed item, or what a change breaks in another item, and then its evidence names that change.
 - Every finding names the skill it is addressed to, the items, the severity, the evidence and a suggested resolution, and lists in `premises` the open assumptions it rests on.
 - Every fact the review needed and could not find was asked about, or is a DAS.
 - No design item was changed, except for the ratings and answers that `conventions.md` lets any run record in an assumption.
@@ -92,9 +92,9 @@ Check the exit criteria, make the report match the items, and set the report's s
 - Addressing a finding to the stage under review when the cause lies in an earlier stage.
 - Asking the user to judge the design. Questions are for facts the review needs; a judgment is a finding.
 - Raising again a finding that was rejected with a reason when nothing it rests on has changed. The stage has decided; repeating it adds noise, not evidence.
-- Reading unchanged items again in a diff review, or raising a new finding about one. The last review covered them; a fresh look at the same text always finds something, and the findings then never decrease.
+- In a diff review, reading again the items that no change reaches, or raising a new finding about a problem that no change caused. The last review covered them; a fresh look at the same text always finds something, and the findings then never decrease.
 - Restating the findings in the report. The report indexes them; the evidence lives in the FND files, where the addressed stage reads it.
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to run next, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, whether it was a full review or a diff review, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps follow "Findings between design stages" in `conventions.md`: re-run each stage that a critical or major finding is addressed to, to accept or reject it, and review that stage again, as a diff review, once accepting one has changed its items. Do not name a stage to run for minor findings alone; say how many minor findings wait for the next run of the stage they are addressed to.
+Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to run next, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, whether it was a full review or a diff review, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps follow "Findings between design stages" in `conventions.md`: re-run each stage that a critical or major finding is addressed to, to accept or reject it. A stage whose items then change for one is reviewed again, as a diff review: the stage that accepted it, and the stage reviewed here once it has followed a change made upstream for a finding this review raised. Do not name a stage to run for minor findings alone; say how many minor findings wait for the next run of the stage they are addressed to.

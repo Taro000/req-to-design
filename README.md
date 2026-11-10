@@ -20,7 +20,7 @@ Agent skills that turn a system's requirements into its design: first the driver
 | 4 | `high-level-design-to-detailed-design` | Stage 3 output, one component per run | Modules with contracts, states, decision tables, physical data and a verification approach |
 | Review | `design-review` | The output of stage 2, 3 or 4 | Findings addressed to the stage that must decide |
 
-Run the review in a fresh session, not in the one that wrote the design. Findings go back to the stage that owns the items; re-run that stage to accept or reject them when a finding is critical or major. Minor findings wait until the stage runs again for another reason. Review a stage again only after it has changed items to accept a critical or major finding: that review looks only at what changed since the last one. The skills never write to `docs/quality/`: when the design shows that a requirement should change, the report says so, and you decide whether to re-run the quality chain.
+Run the review in a fresh session, not in the one that wrote the design. Findings go back to the stage that owns the items; re-run that stage to accept or reject them when a finding is critical or major. Minor findings wait until the stage runs again for another reason. Review a stage again only after a critical or major finding has changed its items; that review looks only at what changed since the last one. The skills never write to `docs/quality/`: when the design shows that a requirement should change, the report says so, and you decide whether to re-run the quality chain.
 
 ## Install
 
@@ -43,7 +43,7 @@ Run each step in a fresh request:
 
 1. "Derive the architecture drivers from docs/quality/. Technology constraints: … Budget and deadline: … Teams: … Roadmap: …"
 2. "Design the architecture from the drivers."
-3. In a new session: "Review the architecture." If there are critical or major findings: "Re-run the architecture stage to resolve the findings." Then review it again in a new session.
+3. In a new session: "Review the architecture." If there are critical or major findings: "Re-run the architecture stage to resolve the findings." If that changed the architecture, review it again in a new session.
 4. "Write the high-level design." Review it in a new session, and resolve its findings the same way.
 5. "Write the detailed design of ELM-02." Repeat for every component listed in `docs/design/4-detailed-design.md`, and review each one.
 

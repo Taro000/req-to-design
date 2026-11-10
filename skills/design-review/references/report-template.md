@@ -53,7 +53,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The DAS this review wrote, and the open DAS and QAS that the items in scope or the findings depend on, highest first, with their ratings after activity E3.>
 
 ## Open gaps
-<What the review could not check, and why: an input that is missing, a stage report still in draft. A diff review lists again the gaps of the last review that it still cannot check.>
+<What the review could not check, and why: an input that is missing, a stage report still in draft. A diff review lists again the gaps of the last review that it still cannot check, and notes in one line any problem that looks critical in what has not changed, for the user to decide on a full review.>
 ```
 
 ## Worked example: review of the online store's high-level design
@@ -122,10 +122,12 @@ Activities (excerpt):
 | # | Activity | What was done | Result | Findings |
 |---|---|---|---|---|
 | B1 | Trace acceptance criteria | Traced the criteria of FR-01, FR-04 and FR-05, the FRs that the changed IFCs serve | All traced; FR-05's second criterion goes through IFC-06's cart read | none |
-| B3 | Check error contracts | Followed every error case of IFC-01, IFC-02 and IFC-06, and what each caller does, through the checkout flow | A timeout at A is an unknown outcome, settled at A before B is tried; while it is unsettled, IFC-01 answers that the payment is being confirmed | none |
+| B2 | Recompute latency budgets | Ran the budget script again for NFR-02, with the failover path that settles A's charge before B is tried | The normal path fits; the failover path makes at most 3,000 checkouts slow per provider outage, 3.6% of the error budget | none |
+| B3 | Check error contracts | Followed every error case of IFC-01, IFC-02, IFC-05 and IFC-06, and what each caller does, through the failure paths of the checkout flow | A timeout at A is an unknown outcome, settled at A before B is tried; while it is unsettled, IFC-01 answers that the payment is being confirmed | none |
+| B4 | Check timeouts | Checked the timeouts on every call path through IFC-01, IFC-02 and IFC-06 | The payment path's worst case, 10.3 s, is below IFC-01's 15 s timeout; the cart read path holds too | none |
 | B5 | Check event IFCs | No change in scope | | |
 | B6 | Check data entities | Checked DAT-04 and DAT-06, which IFC-06's cart read uses | DAT-04 keeps one writer, ELM-03, and ELM-02 reads it under the read-only decision DEC-11; DAT-06 is ELM-02's own | none |
-| B8 | Check shared conventions | Checked IFC-06 and its spec against the shared conventions | All followed, except one error code that IFC-06 writes in camel case | FND-04 |
+| B8 | Check shared conventions | Checked IFC-01, IFC-02, IFC-05 and IFC-06, and the specs of IFC-01 and IFC-06, against the shared conventions | All followed, except one error code that IFC-06 writes in camel case | FND-04 |
 | E1 | Read findings | Read FND-01 to FND-03, which stage 3 accepted, and the items they changed | Each change is in the items, cited in their `basis_note` | none |
 | E6 | Check points to confirm | No change in scope | | |
 
