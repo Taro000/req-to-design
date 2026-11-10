@@ -8,7 +8,8 @@ the item concerned, the problem is shown as waiting for that finding and does
 not count.
 
 Usage:
-    python3 scripts/check.py [--skill <skill name>] [--design DIR] [--quality DIR] [--format text|json]
+    python3 scripts/check.py [--skill <skill name> | --skill implementation] [--design DIR] [--quality DIR]
+                             [--format text|json]
 
 With --skill, the exit status is 1 when that skill's files have problems that
 do not wait for a finding, and generated tables are checked only in that
@@ -36,13 +37,15 @@ Rules:
                      operations realized by modules, decisions used by modules
     conflict         a conflict recorded on one driver only
     cycle            module dependencies (depends_on) that form a cycle
+    depth            a module at full depth with no depth_reason, or a module at bounds depth with a behaviour
+                     section, invariants or parameters (its inside is implementation's)
     debt             a debt without repay_when
     handoff          a hand-off's from, to, component, trigger, origin or resolution; a decided hand-off that
                      no item cites in basis_note
-    spec             a spec that is missing, unused or not found, or that differs from its IFC in
-                     operations, error statuses or error codes
-    finding          a finding's to, raised_by, raised_in or resolution; an accepted finding that no
-                     item cites in basis_note
+    spec             a spec that is missing (with no hand-off of the schema to implementation), unused
+                     or not found, or that differs from its IFC in operations, error statuses or error codes
+    finding          a finding's to, raised_by (a skill or implementation), raised_in or resolution; an
+                     accepted finding that no item cites in basis_note
     request          a request to the quality chain whose status and answer disagree, or that names no
                      target or quality-chain stage; a QAS that an item treats as answered, with no answered
                      request that carries the answer
@@ -83,9 +86,9 @@ REQUIRED = {
                      "spec", "as_is"],
     "DAT": COMMON + ["entity", "owner", "store", "key_attributes", "relations", "consistency", "retention",
                      "classification", "drivers", "sli_bindings", "as_is"],
-    "MOD": COMMON + ["component", "name", "responsibility", "visibility", "interface", "invariants", "depends_on",
-                     "functions", "realizes", "drivers", "decisions", "behaviour", "verification", "parameters",
-                     "as_is"],
+    "MOD": COMMON + ["component", "name", "depth", "depth_reason", "responsibility", "visibility", "interface",
+                     "invariants", "depends_on", "functions", "realizes", "drivers", "decisions", "behaviour",
+                     "verification", "parameters", "as_is"],
     "HND": COMMON + ["from", "to", "component", "origin", "what", "bounds", "trigger", "resolution"],
     "FND": COMMON + ["raised_by", "raised_in", "to", "targets", "severity", "evidence", "suggestion",
                      "resolution"],
@@ -104,6 +107,7 @@ ENUMS = {
     ("ELM", "kind"): ["component", "data-store", "external-system", "node"],
     ("IFC", "kind"): ["http", "event", "file", "screen", "batch"],
     ("MOD", "visibility"): ["public", "internal"],
+    ("MOD", "depth"): ["full", "bounds"],
     ("FND", "severity"): ["critical", "major", "minor"],
     ("DAS", "kind"): ["judgment", "decision"],
     ("DAS", "breadth"): RATINGS,
@@ -212,7 +216,7 @@ class Checker(object):
         if f.rel.startswith(("das/", "qcr/")) and m:
             return lib.das_owner(m.group(1))
         m = re.search(r"^raised_by:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
-        if f.rel.startswith("fnd/") and m and m.group(1) in lib.SKILLS:
+        if f.rel.startswith("fnd/") and m and m.group(1) in lib.SKILLS + [lib.IMPLEMENTATION]:
             return m.group(1)
         m = re.search(r"^from:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
         if f.rel.startswith("hnd/") and m and m.group(1) in lib.SKILLS:
@@ -328,6 +332,18 @@ class Checker(object):
             debt = item.get("debt")
             if debt and (not isinstance(debt, dict) or not debt.get("repay_when")):
                 self.item_problem("debt", item, "debt", "a debt needs what, why_accepted and repay_when")
+        if p == "MOD":
+            depth = item.get("depth")
+            if depth == "full" and not item.get("depth_reason"):
+                self.item_problem("depth", item, "depth_reason", "a module at full depth says in depth_reason which"
+                                                                 " kind it is, or why it would rate high at bounds"
+                                                                 " depth")
+            if depth == "bounds":
+                kept = [k for k in ("behaviour", "invariants", "parameters") if item.get(k)]
+                if kept:
+                    self.item_problem("depth", item, kept[0], "a module at bounds depth leaves its inside to"
+                                                              " implementation: write %s as null or []"
+                                                              % ", ".join(kept))
 
     def entry_fields(self, item):
         for key in ("basis",):
@@ -660,10 +676,12 @@ class Checker(object):
                 self.compare_spec(i, f)
             elif i.get("kind") in ("http", "event") and "spec" in i.data:
                 provider = i.get("provider")
-                if provider in components:
+                if provider in components and not p.schema_handoffs(i.id):
                     kind = "an OpenAPI" if i.get("kind") == "http" else "an AsyncAPI"
                     self.item_problem("spec", i, "spec", "an %s interface that %s provides needs %s document under"
-                                                         " ifc/specs/" % (i.get("kind"), provider, kind))
+                                                         " ifc/specs/, or a hand-off of its schema to %s that names"
+                                                         " it in origin" % (i.get("kind"), provider, kind,
+                                                                            lib.IMPLEMENTATION))
         for rel in p.specs:
             if rel not in used:
                 self.add("spec", rel, 1, "no active IFC names this spec in its spec field", S3)
@@ -764,12 +782,14 @@ class Checker(object):
             if "to" in fnd.data and to not in stage_skills:
                 self.item_problem("finding", fnd, "to", "to is %r; a finding is addressed to the stage skill that must"
                                                         " decide: %s" % (to, ", ".join(stage_skills)))
-            if "raised_by" in fnd.data and fnd.get("raised_by") not in lib.SKILLS:
+            raisers = lib.SKILLS + [lib.IMPLEMENTATION]
+            if "raised_by" in fnd.data and fnd.get("raised_by") not in raisers:
                 self.item_problem("finding", fnd, "raised_by", "raised_by is %r; it is one of %s"
-                                  % (fnd.get("raised_by"), ", ".join(lib.SKILLS)))
+                                  % (fnd.get("raised_by"), ", ".join(raisers)))
             raised_in = fnd.get("raised_in")
-            if isinstance(raised_in, str) and raised_in and not os.path.exists(os.path.join(self.p.design_dir,
-                                                                                            raised_in)):
+            # implementation names the path of the code, which is not under the design directory
+            if fnd.get("raised_by") != lib.IMPLEMENTATION and isinstance(raised_in, str) and raised_in and \
+                    not os.path.exists(os.path.join(self.p.design_dir, raised_in)):
                 self.item_problem("finding", fnd, "raised_in", "raised_in names %s, which is not under %s"
                                   % (raised_in, self.p.design_dir))
             owner = to if to in stage_skills else None
@@ -807,16 +827,20 @@ class Checker(object):
                 self.item_problem("handoff", hnd, "status", "decided, but no item cites %s in basis_note: cite it, in"
                                                             " full, in the items that decide it" % hnd.id, owner=taker)
 
+    def run_skill(self):
+        """The design skill this check runs for: implementation writes no request and no request document."""
+        return self.skill if self.skill in lib.SKILLS else None
+
     def requests(self):
         for q in self.p.of("QCR", active_only=False):
             answer, where = q.get("answer"), q.get("answered_in")
             if q.status == "answered" and (not answer or not where):
                 self.item_problem("request", q, "answer", "an answered request records the user's answer in answer, and"
-                                                          " where it was given in answered_in", owner=self.skill)
+                                                          " where it was given in answered_in", owner=self.run_skill())
             if q.status == "open" and answer:
                 self.item_problem("request", q, "status", "the request holds an answer, so it is answered, or withdrawn"
                                                           " when the user decided that the quality chain need not act on"
-                                                          " it", owner=self.skill)
+                                                          " it", owner=self.run_skill())
 
     # reports
 
@@ -859,7 +883,7 @@ class Checker(object):
         p = self.p
         if p.request_doc is None and not p.of("QCR", active_only=False):
             return
-        owner = self.skill or REQUESTS_OWNER
+        owner = self.run_skill() or REQUESTS_OWNER
         conflicts = tables_mod.answer_conflicts(p)
         for ident, line, message in conflicts:
             self.add("request-edit", lib.REQUESTS_DOC, line, message, owner)
@@ -1050,7 +1074,7 @@ def main(argv):
     parser = argparse.ArgumentParser(description="Check the design items, specs and reports.")
     parser.add_argument("--design", default="docs/design")
     parser.add_argument("--quality", default=None)
-    parser.add_argument("--skill", default=None, choices=lib.SKILLS)
+    parser.add_argument("--skill", default=None, choices=lib.SKILLS + [lib.IMPLEMENTATION])
     parser.add_argument("--format", default="text", choices=("text", "json"))
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):

@@ -2,6 +2,7 @@
 
 ## Contents
 - Splitting a component into modules
+- Depth of modules
 - Dependencies and visibility
 - Frameworks and off-the-shelf parts
 - Contracts
@@ -15,6 +16,22 @@
 - Keep cohesion high: everything in a module serves its responsibility. Keep coupling low: modules talk through their interfaces, never through each other's data.
 - Prefer modules named after what they do for the business, with the technical parts inside them, to modules named only after technical layers.
 
+## Depth of modules
+
+The detailed design goes into detail only where a mistake in the code is costly to find and to undo ("Decision depth" in `conventions.md`). Give every module one of two depths, in its `depth` field:
+
+| Depth | The module | This stage writes |
+|---|---|---|
+| `full` | Moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions, or migrates data; or would rate high on breadth or severity at bounds depth | Its responsibility, its whole contract, its allocation and verification approach, and, as they apply, its states, decision tables, algorithms, concurrency and error handling, what keeps the invariants of its data, its migrations, caches, screens and parameter values (`behaviour-and-data.md`) |
+| `bounds` | Any other | Its responsibility, the summary of its contract, the acceptance criteria allocated to it and its verification approach. Implementation decides its inside within these |
+
+- Bounds is the default. For a module at full depth, write in `depth_reason` which of the kinds it is, or why it would rate high at bounds depth.
+- A module shares state with work that runs at the same time when it decides how work that runs at once on the same records or values is kept apart or put in order: it holds the lock, the version check or the key that decides which one wins. A module that only stores or reads records, while a constraint under "Data" and another module's concurrency settle the race, does not.
+- Rate each module that is of none of these kinds in step 2, as a whole and as it would stand at bounds depth, with its contract holding what other modules rely on: would a wrong inside cause harm of high severity (money, personal data, safety, stored data that cannot be repaired), or would five or more items have to change? It is at full depth when either rating is high. A module that decides what personal data leaves the component typically rates high. The points inside a module at bounds depth are not rated one by one: implementation decides them.
+- A module is at one depth as a whole. When a small part of a module is of these kinds and the rest is not, that part is often a module of its own: split it, so that the rest stays at bounds depth.
+- Leaving a module of these kinds, or one that would rate high, at bounds depth defers a point of this stage's full-depth kinds: a business decision ("Deferring the rest" in `conventions.md`). Its `depth_reason` cites the question or the DAS that decided it.
+- The depth decides only how much this stage writes. At either depth, a module keeps the shared conventions, the IFCs it realizes and the DATs it writes, and its verification approach checks it.
+
 ## Dependencies and visibility
 
 - Dependencies point toward stable modules. Business rules do not depend on frameworks, storage or providers; the adapters for those depend on the rules.
@@ -24,11 +41,11 @@
 
 ## Frameworks and off-the-shelf parts
 
-Choosing a framework, a library or a managed service for a module is a decision (a DEC with `stage: detailed-design`), with options, the drivers it serves, its cost (licence, lock-in, learning) and the rejected options. Prefer what the shared conventions and the team's skills already use.
+Choosing a framework, a library or a managed service for a module is a decision (a DEC with `stage: detailed-design`), with options, the drivers it serves, its cost (licence, lock-in, learning) and the rejected options. Prefer what the shared conventions and the team's skills already use. A library used only inside a module at bounds depth is implementation's choice, within the shared conventions.
 
 ## Contracts
 
-For each public operation:
+For each public operation of a module at full depth:
 
 | Part | Says | Example |
 |---|---|---|
@@ -38,7 +55,9 @@ For each public operation:
 | Invariants | What always holds for the module's state | A confirmed order's total never changes |
 | Errors | Every way the operation can fail, and what the caller learns | `CouponExpired`: the coupon expired after it was added |
 
-Use the types of the shared conventions (money in integer minor units, times in UTC). Define once, in the component report, the structured types the signatures use (`OrderDraft`, `Money`). Write preconditions, postconditions and errors with each operation in the MOD's `interface`, and invariants in its `invariants` field. The report does not repeat them: two copies drift apart.
+Use the types of the shared conventions (money in integer minor units, times in UTC). Define once, in the component report, the structured types the signatures use at either depth (`OrderDraft`, `Money`). Write preconditions, postconditions and errors with each operation in the MOD's `interface`, and invariants in its `invariants` field. The report does not repeat them: two copies drift apart.
+
+A module at bounds depth gets the summary of its contract, which is what its callers rely on: the signature of each public operation, its postcondition and the errors the caller must handle. Write a precondition only when the caller must check something the module does not (`pre: null` otherwise), and no invariants: what holds inside the module is implementation's, within the summary.
 
 ## Allocation
 

@@ -7,9 +7,9 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs as they are, and write the basis marks, statuses and other enum values with the glossary's terms for the working language.
 
-The report indexes `design-context.yaml`, the DRV items and the DAS items, and never restates them: statements, scenarios, reasons and values live in the YAML only, and the report's tables hold IDs, titles or short labels, enum values and references. What the report holds that no item does: the summary, the inputs and how each input item was classified, the boundary list, the excluded QRs checked, where the primary line falls, who resolves each conflict, the feasibility check, decisions, placeholders, open gaps and what is out of scope. The requests to the quality chain are QCR items, which `quality-chain-requests.md` lists; the report does not.
+The report indexes `design-context.yaml`, the DRV, HND and DAS items, and never restates them: statements, scenarios, reasons and values live in the YAML only, and the report's tables hold IDs, titles or short labels, enum values and references. What the report holds that no item does: the summary, the inputs and how each input item was classified, the boundary list, the excluded QRs checked, where the primary line falls, who resolves each conflict, the feasibility check, decisions, placeholders, open gaps and what is out of scope. The requests to the quality chain are QCR items, which `quality-chain-requests.md` lists; the report does not.
 
-`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design context, the architecture drivers, the ranking table, the conflicts, the findings and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the label of each design-context entry, who resolves each conflict, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design context, the architecture drivers, the ranking table, the conflicts, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the label of each design-context entry, who resolves each conflict, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -84,6 +84,13 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <The findings addressed to this stage, from a later stage or a review, and those this stage raised. Items changed are the items whose `basis_note` cites the finding; the reason for a rejection is in its `resolution`, and a rejection that leaves a risk in place is also under "Decisions".>
 
+## Hand-offs
+<!-- generated: handoffs -->
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The hand-offs this stage wrote, and those addressed to it. This stage writes one for each point that a quality-chain item leaves for the design to confirm and that becomes no driver, constraint, question or DAS here, addressed to the stage that designs the part, and one for each point of its own whose deferral waits for an event. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
+
 ## Decisions
 | # | Question | Answer | Items |
 |---|---|---|---|
@@ -102,7 +109,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <New placeholders, and the quality chain's placeholders that the drivers use, each with the chain item it comes from.>
 
 ## Open gaps
-<What no input settles and no design stage can take up: blind spots no vantage can see; proposed FRPs. A point left to a later design stage, such as one that a quality-chain item leaves for the design to confirm, is a hand-off (HND), not an open gap.>
+<Only what no input settles and no design stage can take up: blind spots no vantage can see; proposed FRPs; a value cut off at ` #` in a file another stage wrote, for that stage to fix. A point that a later stage or implementation decides is under "Hand-offs", not here.>
 
 ## Out of scope
 ## Next
@@ -183,7 +190,7 @@ Conflicts (excerpt):
 |---|---|
 | DRV-01, DRV-06 | Stage 2: screen for fraud inside the charge call, or give a separate call its own share of the 1.5 s |
 | DRV-02, DRV-09 | The business: failover comes right after the spring sale (question 5) |
-| DRV-02, DRV-07 | The business, when the budget is set at the funding review (question 3) |
+| DRV-02, DRV-07 | The business, when stage 2 weighs the options for DRV-02; there is no budget to weigh them against until the funding review (question 3) |
 
 Feasibility (excerpt):
 
@@ -193,7 +200,15 @@ Feasibility (excerpt):
 | DRV-02 | no known way before PC-01 | A second integration and its reconciliation take weeks that four developers (PC-02) do not have before the sale; it is built right after it (question 5) |
 | DRV-09 | yes, if failover waits | Holds once DRV-02 moves after the sale (question 5) |
 
-The budget is missing (PC-03): the verdicts weigh only the team and the date, and the cost of DRV-02's second contract is weighed at the funding review (question 3).
+The budget is missing (PC-03): the verdicts weigh only the team and the date, and stage 2 weighs the cost of DRV-02's second contract with no budget to check it against until the funding review (question 3).
+
+Hand-offs (excerpt):
+
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+| HND-01 | Where the time of a stock change at the warehouse can be read | requirements-to-architecture-drivers | architecture-to-high-level-design | — | open | — |
+
+SLI-03's `basis_note` leaves it to the design to confirm that the time each count changed at the warehouse can be read. No driver, constraint or ranking here turns on it, and stage 3 binds SLI-03 to its source, so the point goes there; `artifacts.md` shows HND-01 once stage 3 has decided it. The missing budget needs no hand-off: it is an input that question 3 asked for, and this stage runs again when the funding review sets it. Nor does the conflict between DRV-02 and DRV-07: stage 2 compares its options against both drivers anyway.
 
 Requests to the quality chain: this run wrote three, which `quality-chain-requests.md` lists (`artifacts.md`, "The request document"). QCR-01 asks for a target for checkout during a provider outage, which DRV-02's measure needs; DRV-02 is primary, so the request has high impact and was asked (question 7), and DRV-02 lists it in `premises` and keeps the placeholder A_failover until the quality chain sets the target. QCR-02 and QCR-03 carry the answers to QAS-09 (question 2) and QAS-08 (question 6) to the quality chain.
 

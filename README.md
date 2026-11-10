@@ -16,8 +16,8 @@ Agent skills that turn a system's requirements into its design: first the driver
 |---|---|---|---|
 | 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`), including the design decisions it found in its inputs; the design context, which never comes from users (technology constraints; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
 | 2 | `architecture-drivers-to-architecture` | Stage 1 output | Design decisions with their options and rationale, elements, five views, a threat model |
-| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces with OpenAPI and AsyncAPI documents, end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
-| 4 | `high-level-design-to-detailed-design` | Stage 3 output, one component per run | Modules with contracts, states, decision tables, physical data and a verification approach |
+| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces (with OpenAPI and AsyncAPI documents for those that devices, other teams or external systems use), end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
+| 4 | `high-level-design-to-detailed-design` | Stage 3 output, one component per run | Modules with contracts and a verification approach; states, decision tables and data constraints only for the modules where a mistake in the code is costly; the hand-off to implementation |
 | Review | `design-review` | The output of stage 2, 3 or 4 | Findings addressed to the stage that must decide |
 
 Run the review in a fresh session, not in the one that wrote the design. Findings go back to the stage that owns the items; re-run that stage to accept or reject them when a finding is critical or major. Minor findings wait until the stage runs again for another reason. Review a stage again only after a critical or major finding has changed its items; that review looks only at what changed since the last one. The skills never write to `docs/quality/`, and never decide what the quality chain owns, such as a target or a check before release: when the design shows that a requirement should change, or that one is missing, a stage writes a request to the quality chain, and `docs/design/quality-chain-requests.md` collects the requests for you to answer and hand to the quality chain.
@@ -46,6 +46,7 @@ Run each step in a fresh request:
 3. In a new session: "Review the architecture." If there are critical or major findings: "Re-run the architecture stage to resolve the findings." If that changed the architecture, review it again in a new session.
 4. "Write the high-level design." Review it in a new session, and resolve its findings the same way.
 5. "Write the detailed design of ELM-02." Repeat for every component listed in `docs/design/4-detailed-design.md`, and review each one.
+6. Implement from `docs/design/4-detailed-design.md`. Its hand-off to implementation tells the coding agent what the design decides, what the code decides, and how to raise a finding when the code cannot keep a design decision.
 
 Requests to the quality chain gather in `docs/design/quality-chain-requests.md`. A stage asks you about a request at once only when its answer could change a primary driver, or a decision that is hard to undo; the other requests wait, and the design follows the requirements as they stand. Write an answer after "Answer:" under a request whenever you know it: the next run records it. Then hand the document to the quality-chain stages it names, and re-run them; the design stages follow what changed when they next run.
 
@@ -53,7 +54,7 @@ Each stage drafts everything first. It then rates every point it was unsure of b
 
 Each stage decides in full only what is hard to change later: the kinds of point that `conventions.md` lists for it, and any point whose breadth or severity is high. It hands the rest off, with the bounds to keep, to the later stage or to the implementation that will decide it, and each stage takes up the hand-offs addressed to it.
 
-Each stage is a long task. The detailed design runs once per component and, for a mid-sized system, produces more documents than the requirements did. Plan time to review them and to answer the questions that matter most.
+Each stage is a long task. The detailed design runs once per component; it writes in detail only the modules where a mistake in the code is costly, and hands the rest to implementation. Plan time to review the documents and to answer the questions that matter most.
 
 Reports and items show only the current state; git keeps the history. Each skill ends its run by committing the files it wrote, with the reasons in the commit message, and the next run reads what changed since then.
 
@@ -66,7 +67,7 @@ Questions and artifacts follow your language and your project's documentation la
 ```
 docs/design/
 ├── 1-architecture-drivers.md … 3-high-level-design.md   one report per stage
-├── 4-detailed-design.md, 4-detailed-design/              an index, and one report per component
+├── 4-detailed-design.md, 4-detailed-design/              an index with the hand-off to implementation, and one report per component
 ├── reviews/                                              the latest review of each stage
 ├── design-context.yaml                                   the design context: constraints, teams, changes, stakeholders, current structure
 ├── drv/  dec/  elm/  ifc/  dat/  mod/  fnd/             one YAML file per item

@@ -50,7 +50,7 @@ For every SLO with a time threshold, check the flow's normal path:
 | Margin | 0.20 s | |
 | Total | 1.50 s | NFR-02's threshold of 1.5 s, observed where SLI-02 is bound: the load balancer in front of ELM-02 (IFC-01) |
 
-The budgets are not timeouts. Set the timeouts as `interfaces.md` ("Timing") describes, and compute with the same script the worst case each caller waits for, settlement waits included, from the values in the IFCs' `timing`.
+The budgets are not timeouts. Set the timeouts on the paths of time SLOs and of money as `interfaces.md` ("Timing") describes, and compute with the same script the worst case each caller waits for, settlement waits included, from the values in the IFCs' `timing`. On every other call between elements, the IFC's `timing` holds only the bounds, and stage 4 sets the values.
 
 ## Failure paths and the error budget
 
@@ -60,7 +60,7 @@ An SLO of 99% lets 1% of valid events be slow or fail. A failure path does not h
 2. A path that many events take (a retry after a common error) must fit the threshold, like the normal path.
 3. A path that few events take (a failover, until a breaker opens) must fit the error budget: the events it makes slow, over the incidents a window may hold, stay well within the error budget volume. Show the arithmetic.
 
-Example: provider A fails at the sale peak. Until A's breaker opens after 10 s of timeouts (`failover_after`, DEC-02), each checkout waits for A's timeout and for A's settlement before B is tried, several seconds in all. That is at most 10 s × 300 requests/s (OPF-03) = 3,000 slow checkouts per outage, 3.6% of NFR-02's error budget of 84,000 checkouts per 28 days (from OPF-01).
+Example: provider A fails at the sale peak. Until A's breaker opens after 10 s of timeouts (`failover_after` in IFC-02's timing, which stage 2 left to this stage in HND-02), each checkout waits for A's timeout and for A's settlement before B is tried, several seconds in all. That is at most 10 s × 300 requests/s (OPF-03) = 3,000 slow checkouts per outage, 3.6% of NFR-02's error budget of 84,000 checkouts per 28 days (from OPF-01).
 
 ## Screen flows
 
@@ -68,7 +68,7 @@ For each CUJ with screens, draw a Mermaid flowchart of the screens and the actio
 
 ## States across elements
 
-For each entity whose life spans several elements, draw a Mermaid state diagram. Label each transition with its trigger and the element that causes it, and include timeouts and cancellations. Every state has a way out, or is final. A state that money, goods or a booking can still leave is never final: a payment whose outcome is unknown waits in its own state until it is settled.
+Draw a Mermaid state diagram for each entity whose life spans several elements and that holds money, a booking or an unknown outcome, and for any other such entity whose states rate high on breadth or severity. For any other entity, the states and events its consumers see are in the IFCs that carry them, and the rest of its states are left to the stage that designs its owner. Label each transition with its trigger and the element that causes it, and include timeouts and cancellations. Every state has a way out, or is final. A state that money, goods or a booking can still leave is never final: a payment whose outcome is unknown waits in its own state until it is settled.
 
 ```mermaid
 stateDiagram-v2

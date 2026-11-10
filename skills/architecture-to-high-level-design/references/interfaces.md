@@ -23,11 +23,11 @@
 | auth | Who may call it, and how that is proven |
 | errors | Every error case, how it is signalled, and what the caller does |
 | idempotency | Whether the operation can be repeated safely, and how |
-| timing | Every timeout and wait on the call, settlement waits included; ordering guarantee; delivery guarantee ("Timing") |
+| timing | The timeouts and waits on the call, settlement waits included, or only their bounds on a call off the paths of time SLOs and of money; ordering guarantee; delivery guarantee ("Timing") |
 | versioning | How the interface changes without breaking its consumers |
 | observability | What it logs and emits for investigations and operations |
 | sli_bindings | For each quality-chain SLI whose events it produces: which events, the fields the counting rules need, and the method ("SLI bindings") |
-| spec | The OpenAPI or AsyncAPI document |
+| spec | The OpenAPI or AsyncAPI document, for the interfaces that get one ("Specs") |
 
 An FR names an interface by its kind and, for an external system, its EXT ID (`interface: ["screen: buyer checkout", EXT-01]`). Everything in this table is decided here, with one exception: an FR may name the endpoint of an interface that already exists in a running product. That endpoint is a fact about the current system, not a design input and not a request to the quality chain; the IFC keeps it (`as_is: keep`) unless a decision changes it.
 
@@ -35,15 +35,15 @@ An FR names an interface by its kind and, for an external system, its EXT ID (`i
 
 | Kind | Also specify |
 |---|---|
-| http | Resource paths and methods; request and response schemas; status codes; paging for lists; rate limits |
-| event | The channel or topic; the message schema; who publishes and who subscribes; the ordering key; the delivery guarantee; how consumers recognize duplicates; how long messages are kept |
+| http | Resource paths and methods; status codes; paging for lists; rate limits; request and response schemas, for an interface that gets a spec ("Specs") |
+| event | The channel or topic; who publishes and who subscribes; the ordering key; the delivery guarantee; how consumers recognize duplicates; how long messages are kept; the message schema, for an interface that gets a spec ("Specs") |
 | file | The name pattern; layout and encoding; who writes it and when; how the reader knows it is complete; what happens to a malformed file |
 | screen | Its purpose in the CUJ step; the data it shows and takes; its actions and where each leads; error and empty states |
 | batch | The schedule or trigger; input and output; how a failed run restarts; how long a run may take (from the NFRs) |
 
 A component's access to its own data store is not an interface; stage 4 designs it. When another component reads that store directly, the tables it reads become part of the owner's interface ("Ownership" in `data-and-conventions.md`).
 
-For an external system, write the interface as what the design relies on (operations, errors, the timeouts and waits of our calls to it). What the system promises (an SLA, a rate limit, a stated latency) is a technology constraint: cite it by the ID of the TC that records it, or of the OPF in `context.yaml` that states it, and never restate it (`conventions.md`, "Scope"). What the design assumes beyond that is a DAS. List its EXT ID from `context.yaml` in `premises`, with those TC, OPF and DAS IDs. Do not write a spec for it; link the owner's.
+For an external system, write the interface as what the design relies on (operations, errors, and the timeouts and waits of our calls to it, or their bounds: "Timing"). What the system promises (an SLA, a rate limit, a stated latency) is a technology constraint: cite it by the ID of the TC that records it, or of the OPF in `context.yaml` that states it, and never restate it (`conventions.md`, "Scope"). What the design assumes beyond that is a DAS. List its EXT ID from `context.yaml` in `premises`, with those TC, OPF and DAS IDs. Do not write a spec for it; link the owner's.
 
 ## Error contracts
 
@@ -84,11 +84,13 @@ A timeout, a dropped connection or an unclear error on a call that changes somet
 ## Timing
 
 - A timeout is not a budget. The latency budget checks that the flow is fast enough when things are healthy; timeouts decide what happens when they are not.
-- This stage owns every timeout and wait on a call that crosses an element boundary, settlement waits included (how long the caller tries to settle an unknown outcome with the same party before it holds the record for reconciliation). Write them in the IFC's `timing`, so that the worst case each caller waits for is computed here, and back each provisional value with a DAS of `kind: decision` or an answered question. Stage 4 sets only the values inside one component, refers to the IFC's timing by its ID, and raises a finding addressed to this stage when it needs a change. A component's access to its own data store is not an interface; stage 4 sets those timeouts.
+- This stage sets the timeouts and waits of every call on the path of an SLO with a time threshold, or on a path that moves money, settlement waits included (how long the caller tries to settle an unknown outcome with the same party before it holds the record for reconciliation), and the other values that stage 2 hands off on those paths, such as a breaker's threshold. The latency budgets, and the unknown outcomes of money, depend on them. Write the values of a call in its IFC's `timing`, so that the worst case each caller waits for is computed here; a value that belongs to no single call, such as a cache's lifetime, goes in the `parameters` of the decision that sets it. Back each provisional value with a DAS of `kind: decision` or an answered question. Stage 4 refers to them by the item's ID, and raises a finding addressed to this stage when it needs a change.
+- On every other call between elements, decide only the bounds, and write them in the IFC's `timing`: the caller's timeout stays above the worst case it waits for, within the order of the timeouts that stage 2 decided. Hand the values off to stage 4, with one hand-off for each component that makes such calls, naming the IFCs in its `bounds`; stage 4 sets them in that component.
+- A component's access to its own data store is not an interface; stage 4 sets those timeouts.
 - Set each call's timeout above the slowest response the dependency gives when healthy (its stated 99.9th percentile, or its stated maximum), so that healthy calls almost never time out. On a call that changes something, every timeout creates an unknown outcome.
 - Set each caller's timeout above the worst case of everything it waits for, settlement included, so that no caller abandons work that is still running. Each callee's own timeouts stay within its caller's remaining time.
 - Never use an SLO's threshold as a timeout.
-- Each timeout, retry limit and back-off is a design parameter, and so a decision ("Decisions" in `conventions.md`). Say what it is based on: the dependency's stated percentile, the worst case it must cover, a library's default. Most are low or medium on both scales and are recorded as a DAS of `kind: decision`; the item that holds the value lists the DAS in `premises`. Values that hinge on the same fact share one DAS, whose statement names them and leaves their values in the IFCs.
+- Each timeout, retry limit and back-off that this stage sets is a design parameter, and so a decision ("Decisions" in `conventions.md`). Say what it is based on: the dependency's stated percentile, the worst case it must cover, a library's default. Most are low or medium on both scales and are recorded as a DAS of `kind: decision`; the item that holds the value lists the DAS in `premises`. Values that hinge on the same fact share one DAS, whose statement names them and leaves their values in the IFCs.
 - Ordering: for events, say whether order matters and, if so, per which key (per order, per vehicle). Order across all events is rarely needed and is expensive.
 - Delivery: at-least-once with consumers that recognize duplicates is the usual choice. Say how duplicates are recognized (an event ID).
 
@@ -133,9 +135,11 @@ Where the events come from:
 
 ## Specs
 
-Write the decided parts only, and mark provisional values, with the DAS that records each one.
+Write a spec for every HTTP or event interface with an external system, called from the users' devices, or used by another team: its whole contract is decided here, schema included ("Decision depth" in `conventions.md`). Write the decided parts only, and mark provisional values, with the DAS that records each one.
 
-- OpenAPI, for each HTTP interface: paths and methods; request and response schemas with required fields and formats; every error response, using the shared error schema; the security scheme; the idempotency header where it applies.
-- AsyncAPI, for each event interface this system publishes or defines: channels; messages with their payload schemas and headers (event ID, schema version, the time the event happened); who publishes and who subscribes; the delivery and ordering notes from the IFC.
+- OpenAPI, for each such HTTP interface: paths and methods; request and response schemas with required fields and formats; every error response, using the shared error schema; the security scheme; the idempotency header where it applies.
+- AsyncAPI, for each such event interface that this system publishes or defines: channels; messages with their payload schemas and headers (event ID, schema version, the time the event happened); who publishes and who subscribes; the delivery and ordering notes from the IFC.
 
 Name each file after its interface (`checkout.openapi.yaml`, `order-events.asyncapi.yaml`) and keep one document per interface, so that each can change on its own. For an external system's interface, link the owner's document instead of writing one.
+
+Every other HTTP or event interface between elements gets no spec. Its IFC holds what its consumers rely on: its operations, its errors and their codes, what its idempotency keys mean, how it answers when an outcome is unknown, and the states and events its consumers see. The schemas of its requests, responses and messages are handed off to implementation, which generates them from the code: write one hand-off for each component that provides such interfaces, with the IFCs in `origin`, and the IFCs and the shared conventions in `bounds`. A schema written here as well would be a second copy of the code, and would drift from it.

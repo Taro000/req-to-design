@@ -11,6 +11,8 @@
 - Screens
 - Verification approach
 
+Everything here except the verification approach is for the modules at full depth ("Depth of modules" in `modules.md`), and for the tables another component reads directly. For a module at bounds depth, implementation decides its states, rules, algorithms, concurrency, error handling, data, caches and screens, within its MOD item, the IFCs it realizes and the DATs it writes. Every module, at either depth, has a verification approach.
+
 ## States
 
 A module whose behaviour depends on what happened before has states. Draw them as a Mermaid state diagram, with:
@@ -47,32 +49,33 @@ Say what runs at the same time inside the component (requests, workers, schedule
 
 ## Error handling
 
-For each module: which errors it handles itself and how, which it turns into its own errors for its caller, and which it passes on. Where the component meets the outside, errors become the IFC's error contract. Every error caught is either recovered from or logged with the request ID; none is swallowed.
+For each module at full depth: which errors it handles itself and how, which it turns into its own errors for its caller, and which it passes on. Where the component meets the outside, errors become the IFC's error contract. Every error caught is either recovered from or logged with the request ID; none is swallowed.
 
 ## Physical data
 
-For the data entities the component owns (the DAT items whose owner is this component), wherever they are stored:
+Design only the physical data that keeps the invariants the modules at full depth rely on, in the data entities the component owns (the DAT items whose owner is this component), wherever they are stored:
 
-- tables or collections; columns with their types, nullability, defaults and constraints (keys, uniqueness, checks);
+- what keeps each invariant: a constraint (a key, a uniqueness, partial when the invariant holds only in some states, a check, a foreign key), an index, a transaction that keeps what must be atomic and the module that runs it, a conditional update that changes a row only from the state it names, or the rights of a database role that keep records from being deleted or rewritten;
 - one row per event for records of money and other records that must never be rewritten (one row per payment attempt, not one row per order that is updated);
-- indexes, each tied to a query that needs it: write the query;
-- the transactions the modules use;
-- for an existing schema, the migrations, in an order that keeps the running version working;
-- for tables another component reads directly, the read-only rights it gets, and the rule that they change only with a new version.
+- for an existing schema, the migrations, in an order that keeps the running version working.
 
-Draw the tables as a Mermaid entity-relationship diagram. The physical data lives in the component report only; no item holds it.
+Name the table and the columns that each of these covers, and nothing more of the table. A table that another component reads directly is part of an interface: design it in full, whichever module writes it, with its columns, types and constraints, the read-only rights the reader gets, the decision that allows the read, and the rule that it changes only with a new version.
+
+Implementation designs the rest: the tables and their other columns and types, the indexes that queries need, and the tables that only modules at bounds depth write. The DATs bound it: their attributes and relations, owner, consistency rule, classification and retention.
+
+Write the invariants in the component report, one table per database table: the invariant, what keeps it, and the modules that rely on it. The physical data lives in the component report only; no item holds it.
 
 ## Caches and in-memory structures
 
-For each cache: what it holds, its key, its lifetime (a design parameter of the module, bounded by the freshness the drivers allow), how it is invalidated, and what happens on a miss. For each in-memory structure: its size bound.
+For each cache of a module at full depth: what it holds, its key, its lifetime (a design parameter of the module, bounded by the freshness the drivers allow), how it is invalidated, and what happens on a miss. For each in-memory structure: its size bound. The caches of modules at bounds depth are implementation's, within the freshness the drivers and the IFCs allow.
 
 ## Screens
 
-For each screen the component serves: its components and what each shows and takes; its states (loading, empty, error, success, and any the acceptance criteria name); the validation of each input, with its messages; and what the accessibility requirements need (keyboard order, labels, contrast), from the QRs.
+For a screen that a module at full depth serves: its states, in the module's state diagram (loading, empty, error, success, and any the acceptance criteria name, such as a payment still being confirmed); the validation of each input, with its messages, in a decision table when it has several conditions; and what the accessibility requirements need (keyboard order, labels, contrast), from the QRs. Implementation designs every other screen, within its screen IFC (the data it shows and takes, its actions, its error and empty states), the acceptance criteria allocated to its module and the accessibility requirements, which the module's verification approach checks.
 
 ## Verification approach
 
-For each module, list in the MOD's `verification` what must be verified and how, without writing the tests:
+For every module, at either depth, list in the MOD's `verification` what must be verified and how, without writing the tests:
 
 | Checks | How |
 |---|---|
@@ -81,4 +84,4 @@ For each module, list in the MOD's `verification` what must be verified and how,
 | The module's share of the NFR-02 budget | A load test at the sale peak (OPF-03) in staging |
 | Analysability (an internal QR) | A CI check that every log line carries request_id |
 
-In the report, describe only what serves several modules: the test doubles for external systems, the environments, the load tests and the checks in CI.
+For a module at bounds depth, these checks are what holds the code to the summary of its contract and to its acceptance criteria. In the report, describe only what serves several modules: the test doubles for external systems, the environments, the load tests and the checks in CI.

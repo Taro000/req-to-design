@@ -36,7 +36,7 @@ The platforms are what the users' side runs on: a web app or native apps, which 
 
 ## Design mechanisms by quality
 
-A design mechanism is a known way to produce a response. Pick the ones that produce the response a driver's scenario asks for, and record each choice as a decision.
+A design mechanism is a known way to produce a response. Pick the ones that produce the response a driver's scenario asks for, and record each choice as a decision. For a mechanism that spans elements, decide here its principles and the promises it makes across elements; how each operation applies it, and the values it runs with, are left to later stages (SKILL.md, step 2).
 
 ### Availability and fault tolerance
 - Notice failures: health checks, a timeout on every call, watching each dependency's error rate.
@@ -96,7 +96,7 @@ A design mechanism is a known way to produce a response. Pick the ones that prod
 
 ## Design concerns
 
-Walk all eight for the whole system. For each, point to the decisions that settle it, or write "standard practice is enough" with a reason.
+Walk all eight for the whole system. For each, point to the decisions that settle it and to the later stages that decide the rest, with their triggers, or write "standard practice is enough" with a reason.
 
 | Concern | Questions |
 |---|---|

@@ -428,6 +428,8 @@ DESIGN = {
         premises: []
         component: ELM-01
         name: Checkout handler
+        depth: full
+        depth_reason: Moves money - it turns the cart into an order that is charged
         responsibility: Turns a cart into an order
         visibility: public
         interface:
@@ -525,6 +527,23 @@ DESIGN = {
         """),
 }
 
+SCHEMA_HAND_OFF = d("""
+    id: HND-03
+    title: The schema of the checkout API
+    status: open
+    basis: inferred
+    basis_note: null
+    premises: []
+    from: architecture-to-high-level-design
+    to: implementation
+    component: ELM-01
+    origin: [IFC-01]
+    what: The request and response schemas of IFC-01, which implementation generates from the code
+    bounds: IFC-01's operations and errors
+    trigger: When ELM-01's interfaces are implemented
+    resolution: null
+    """)
+
 HEADER = "Status: answers applied · Updated: 2026-11-10 · Inputs as of: none · Stage %s"
 
 
@@ -537,19 +556,20 @@ def blocks(*names, **hand):
 
 REPORTS = {
     "1-architecture-drivers.md": "# Architecture drivers\n\n" + HEADER % "1 of 4" + "\n\n" + blocks(
-        "design-context", "drivers", "ranking", "conflicts", "findings", "assumptions",
+        "design-context", "drivers", "ranking", "conflicts", "findings", "handoffs", "assumptions",
         design_context="| ID | Label | Kind | Source | Basis |\n|---|---|---|---|---|\n"
                        "| TC-01 | Card payments through the provider | | | |\n| PC-01 | Release before the sale | | | |\n"
                        "| TEAM-01 | Store team | | | |\n",
         conflicts="| Drivers | Resolved by |\n|---|---|\n| DRV-01, DRV-02 | The business (question 2) |\n"),
     "2-architecture.md": "# Architecture\n\n" + HEADER % "2 of 4" + "\n\n" + blocks(
-        "decisions", "elements", "parameters", "findings", "assumptions",
+        "decisions", "elements", "parameters", "findings", "handoffs", "assumptions",
         parameters="| Parameter | DEC | Decided in |\n|---|---|---|\n| pool_size | DEC-01 | question 1 |\n"),
     "3-high-level-design.md": "# High-level design\n\n" + HEADER % "3 of 4" + "\n\n" + blocks(
-        "decisions", "interfaces", "sli-bindings", "data", "criteria", "findings", "assumptions",
+        "decisions", "interfaces", "sli-bindings", "data", "criteria", "findings", "handoffs", "assumptions",
         criteria="| FR | Criterion | IFCs | Flow |\n|---|---|---|---|\n| FR-01 | 1 | | Checkout |\n"
                  "| FR-01 | 2 | | Checkout, declined card |\n| FR-02 | 1 | | Order history |\n"),
-    "4-detailed-design.md": "# Detailed design index\n\nUpdated: 2026-11-10 · Inputs as of: none\n\n" + blocks("components"),
+    "4-detailed-design.md": "# Detailed design index\n\nUpdated: 2026-11-10 · Inputs as of: none\n\n" + blocks(
+        "components") + "\n## Hand-off to implementation\n\n" + blocks("implementation-handoffs"),
     "4-detailed-design/ELM-01.md": "# Detailed design of the Store API\n\n" + HEADER % "4 of 4" + "\n\n" + blocks(
         "modules", "decisions", "parameters", "findings", "assumptions",
         parameters="| Parameter | MOD | Decision | Budget or timeout it fits |\n|---|---|---|---|\n"
@@ -737,6 +757,12 @@ class CheckTest(unittest.TestCase):
         self.assertFinds("spec", "error code CARD_DECLINED")
         self.assertFinds("spec", "GET /v1/carts is in the spec")
 
+    def test_schema_hand_off_stands_in_for_a_spec(self):
+        self.f.edit("ifc/IFC-01.yaml", "spec: ifc/specs/checkout.openapi.yaml", "spec: null")
+        self.assertFinds("spec", "needs an OpenAPI document")
+        self.f.write(os.path.join(self.f.design, "hnd/HND-03.yaml"), SCHEMA_HAND_OFF)
+        self.assertEqual([p for p in self.f.check() if "needs an OpenAPI" in p.message], [])
+
     def test_unknown_retired_and_wrong_kind(self):
         self.f.edit("dec/DEC-01.yaml", "rationale: The deadline (DRV-02)", "rationale: The deadline (DRV-02, DEC-99)")
         self.f.edit("dec/DEC-01.yaml", "depends_on: []", "depends_on: [DRV-01]")
@@ -761,6 +787,44 @@ class CheckTest(unittest.TestCase):
         self.f.edit("fnd/FND-01.yaml", "to: architecture-drivers-to-architecture", "to: design-review")
         self.assertFinds("finding", "no item cites FND-01")
         self.assertFinds("finding", "to is 'design-review'")
+
+    def test_finding_raised_by_implementation(self):
+        self.f.write(os.path.join(self.f.design, "fnd/FND-02.yaml"), d("""
+            id: FND-02
+            title: The checkout cannot keep its postcondition when the card is declined
+            status: open
+            basis: inferred
+            basis_note: null
+            premises: []
+            raised_by: implementation
+            raised_in: src/checkout/handler.ts
+            to: high-level-design-to-detailed-design
+            targets: [MOD-01]
+            severity: major
+            evidence: An order exists only after the charge, and a declined card leaves none
+            suggestion: Say in MOD-01's postcondition that an order exists once the charge is authorized
+            resolution: null
+            """))
+        self.f.tables()
+        self.assertEqual(summary(self.f.check()), [])
+        self.assertIn("| major | implementation | high-level-design-to-detailed-design | open |",
+                      self.f.read("4-detailed-design/ELM-01.md"))
+        self.f.edit("fnd/FND-02.yaml", "severity: major", "severity: urgent")
+        problems = self.assertFinds("bad-value", "severity")
+        self.assertEqual(problems[0].owner, "implementation")
+        self.f.edit("fnd/FND-02.yaml", "raised_by: implementation", "raised_by: the code")
+        self.assertFinds("finding", "raised_by is 'the code'")
+
+    def test_module_depth(self):
+        self.f.edit("mod/MOD-01.yaml", "depth_reason: Moves money - it turns the cart into an order that is charged",
+                    "depth_reason: null")
+        self.assertFinds("depth", "says in depth_reason")
+        self.f.edit("mod/MOD-01.yaml", "depth: full", "depth: bounds")
+        self.assertFinds("depth", "write behaviour, parameters as null or []")
+        self.f.edit("mod/MOD-01.yaml", "depth: bounds", "depth: deep")
+        self.assertFinds("bad-value", "depth is 'deep'")
+        self.f.edit("mod/MOD-01.yaml", "depth: deep\n", "")
+        self.assertFinds("missing-field", "depth")
 
     def test_allocation_gaps(self):
         self.f.edit("elm/ELM-05.yaml", "functions: [FR-01, FR-02]", "functions: [FR-01]")
@@ -974,10 +1038,26 @@ class TablesTest(unittest.TestCase):
                       "- FR-02: QCR-02 An empty order history（未回答）\n", text)
         self.assertIn("\n答え: —\n", text)
 
+    def test_hand_offs_and_the_schema_hand_off(self):
+        row = ("| HND-01 | Where checkouts can be counted | requirements-to-architecture-drivers |"
+               " architecture-to-high-level-design | — | decided | IFC-01 |")
+        self.assertIn(row, self.f.read("1-architecture-drivers.md"))
+        self.assertIn(row, self.f.read("3-high-level-design.md"))
+        self.assertNotIn("| HND-02 |", self.f.read("3-high-level-design.md"))  # stage 4's, to implementation
+        self.f.edit("ifc/IFC-01.yaml", "spec: ifc/specs/checkout.openapi.yaml", "spec: null")
+        self.f.write(os.path.join(self.f.design, "hnd/HND-03.yaml"), SCHEMA_HAND_OFF)
+        self.f.tables()
+        stage3 = self.f.read("3-high-level-design.md")
+        self.assertIn("| HND-03 | The schema of the checkout API | architecture-to-high-level-design | implementation |"
+                      " ELM-01 | open | — |", stage3)
+        self.assertRegex(stage3, r"\| IFC-01 \| Checkout API \|[^\n]*\| HND-03 \| [^|]+ \|\n")
+
     def test_index_and_assumptions(self):
         index = self.f.read("4-detailed-design.md")
-        self.assertIn("| ELM-01 | Store API | answers applied | 4-detailed-design/ELM-01.md | MOD-01 |", index)
-        self.assertIn("| ELM-05 | Storefront | not started | — | — |", index)
+        self.assertIn("| ELM-01 | Store API | answers applied | 4-detailed-design/ELM-01.md | MOD-01 | — |", index)
+        self.assertIn("| ELM-05 | Storefront | not started | — | — | — |", index)
+        self.assertIn("| HND-02 | ELM-01 | Where the cart limit is kept | When MOD-01 is implemented |", index)
+        self.assertIn("| MOD-01 | Checkout handler | full | public |", self.f.read("4-detailed-design/ELM-01.md"))
         stage1 = self.f.read("1-architecture-drivers.md")
         self.assertIn("| QAS-01 | Target of checkout latency | decision | low | high | DRV-01 |", stage1)
         stage2 = self.f.read("2-architecture.md")
@@ -985,9 +1065,9 @@ class TablesTest(unittest.TestCase):
 
     def test_every_mark_in_the_templates_works(self):
         templates = {
-            "requirements-to-architecture-drivers": ("## Report template", "1-architecture-drivers.md", 6),
-            "architecture-drivers-to-architecture": ("## Report template", "2-architecture.md", 5),
-            "architecture-to-high-level-design": ("## Report template", "3-high-level-design.md", 7),
+            "requirements-to-architecture-drivers": ("## Report template", "1-architecture-drivers.md", 7),
+            "architecture-drivers-to-architecture": ("## Report template", "2-architecture.md", 6),
+            "architecture-to-high-level-design": ("## Report template", "3-high-level-design.md", 8),
             "high-level-design-to-detailed-design": ("## Component report template", "4-detailed-design/ELM-01.md", 5),
             "design-review": ("## Report template", "reviews/2-architecture.md", 2),
         }
@@ -1005,7 +1085,7 @@ class TablesTest(unittest.TestCase):
         body = re.search(r"```markdown\n(# Detailed design index.*?)\n```", text, re.S).group(1)
         new_text, problems, written = tables.render_report(lib.Project(self.f.design, self.f.quality), lib.Glossary(),
                                                            "4-detailed-design.md", body)
-        self.assertEqual((problems, len(written)), ([], 1))
+        self.assertEqual((problems, len(written)), ([], 2))
         self.assertIn("| ELM-01 | Store API | answers applied |", new_text)
 
     def test_japanese_report(self):

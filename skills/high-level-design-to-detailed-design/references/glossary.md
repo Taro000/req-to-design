@@ -44,6 +44,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | request status: open / answered / applied / withdrawn | 要求の状態: 未回答 / 回答済み / 反映済み / 取り下げ |
 | impact of a request: high / low | 要求の影響: 高 / 低 |
 | implementation (the coding that follows stage 4) | 実装 |
+| hand-off to implementation (the section of the detailed design index that coding agents read first) | 実装への申し送り |
+| hand-offs addressed to implementation (the HND items whose `to` is implementation, which that section lists) | 実装宛ての申し送り |
 | open gaps | 未解決の点 |
 | out of scope | 範囲外 |
 | placeholder (for a number not yet decided) | 未定の値 |
@@ -142,6 +144,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | shared conventions | 共通の約束事 |
 | module | モジュール |
 | visibility: public / internal | 公開範囲: 公開 / 内部 |
+| module depth: full / bounds (its inside left to implementation) | モジュールの深さ: 確定 / 枠 |
+| contract summary (the contract of a module at bounds depth) | 契約の要約 |
 | dependency | 依存 |
 | precondition / postcondition / invariant | 事前条件 / 事後条件 / 不変条件 |
 | state diagram | 状態遷移図 |
