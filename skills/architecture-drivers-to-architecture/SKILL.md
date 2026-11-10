@@ -25,6 +25,7 @@ The quality chain states requirements and leaves the design to this chain. Two k
 - `references/views.md`: the five views, consistency rules, walkthroughs, the threat model and teams.
 - `references/report-template.md`: the report layout and a worked example.
 - `references/glossary.md`: terms for the working language.
+- `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
 
 ## Inputs
 
@@ -122,6 +123,7 @@ Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the dra
 - Each uncertain point has been asked or recorded as a DAS, and every business decision is under "Decisions" or is a DAS of kind `decision`, as `conventions.md` describes.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
 - Items refer to the quality chain and the design context by ID, and copy none of their statements.
+- `scripts/check.py --skill architecture-drivers-to-architecture` reports no problem, except those waiting for a finding.
 
 ## Pitfalls
 
@@ -136,4 +138,4 @@ Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the dra
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions, without asking for answers; name the later stages to re-run and the reviews to repeat; and commit the files this run wrote: the report, the DEC, ELM, DAS and FND items, and the DAS files of other stages that it re-rated or answered. Tell the user also which files were written, how many decisions and elements, the platforms decided, which drivers are met, deferred or at risk, the findings processed and raised, the issues for the quality chain, and the next steps: run `design-review` on this stage in a fresh context, resolve its findings by re-running this stage, then run `architecture-to-high-level-design`.
+Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions, without asking for answers; name the later stages to re-run and the reviews to repeat; run `scripts/tables.py` and `scripts/check.py` with `--skill architecture-drivers-to-architecture` and fix what the check reports in this stage's files; and commit the files this run wrote: the report, the DEC, ELM, DAS and FND items, and the DAS files of other stages that it re-rated or answered. Tell the user also which files were written, how many decisions and elements, the platforms decided, which drivers are met, deferred or at risk, the findings processed and raised, the issues for the quality chain, and the next steps: run `design-review` on this stage in a fresh context, resolve its findings by re-running this stage, then run `architecture-to-high-level-design`.

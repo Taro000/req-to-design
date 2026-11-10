@@ -11,6 +11,8 @@ Each reviewed stage has one report at a fixed path, and the next review of the s
 
 The report holds what only the review records: the activities and their results, and for stage 2 the risks, non-risks, sensitive points and trade-offs. It indexes the findings and assumptions, and never restates their evidence or statements: those live in the FND and DAS files.
 
+`scripts/tables.py` writes the findings and the open assumptions between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`). Do not edit them by hand, except the breadth and severity of a quality-chain assumption, which the review writes as activity E3 rates it (the script starts them from the QAS's own). Every other table is written by hand.
+
 ## Report template
 
 ```markdown
@@ -32,9 +34,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|---|---|---|
 
 ## Findings
+<!-- generated: findings -->
 | FND | Title | Severity | To | Targets |
 |---|---|---|---|---|
-<Ordered by severity: the findings this review raised, and the open findings that earlier reviews raised at this path and that still hold. Under the table, cite in one line the rejected findings not raised again.>
+<!-- /generated -->
+<The open findings raised at this report's path, by this review and by earlier ones, ordered by severity. Under the table, by hand, cite in one line the rejected findings not raised again.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -46,9 +50,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The questions about facts the review needed, and their answers: those of this review, and those of earlier reviews at this path that are still in effect. Items: the items, findings and activities the answer bears on.>
 
 ## Open assumptions
+<!-- generated: assumptions -->
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-<The DAS this review wrote, and the open DAS and QAS that the items in scope or the findings depend on, highest first, with their ratings after activity E3.>
+<!-- /generated -->
+<The open DAS this review wrote, and the open DAS and QAS that the items of the reviewed stage or the findings raised here depend on, highest first, with their ratings after activity E3.>
 
 ## Open gaps
 <What the review could not check, and why: an input that is missing, a stage report still in draft.>

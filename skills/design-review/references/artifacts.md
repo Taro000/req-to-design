@@ -40,11 +40,13 @@ docs/design/
 
 - One item per file. The file name is the ID: `dec/DEC-07.yaml`.
 - IDs are the prefix plus a zero-padded number (`DEC-07`, then `DEC-100` when needed). Never reuse or renumber an ID.
-- The YAML items are the source of truth. A report summarizes and indexes them and never restates what an item says; it holds what only the report records (views, flows, walkthroughs, budgets, reasons, decisions, issues for the quality chain). The items are written while the stage drafts, and answers change them in place. If the report and an item disagree, ask which one is right; do not silently pick one.
+- Write every ID in full wherever you cite it, in lists inside a text too ("FND-30, FND-31", not "FND-30, 31" or "FND-30・31"). The scripts find a citation by its full ID only.
+- The YAML items are the source of truth. A report summarizes and indexes them and never restates what an item says; it holds what only the report records (views, flows, walkthroughs, budgets, reasons, decisions, issues for the quality chain). Its index tables are written from the items by `scripts/tables.py` ("Scripts" in `conventions.md`). The items are written while the stage drafts, and answers change them in place. If the report and an item disagree, ask which one is right; do not silently pick one.
 - Items hold the current state only: no changelog, no version, no dates of changes. Git keeps the history (`conventions.md`, "Current state only").
 - `design-context.yaml` holds the design context that the other items refer to. Stage 1 writes it; later stages and reviews only add facts the user gives them (`conventions.md`, "Judgment basis"). It is the only file that holds more than one entry.
 - Views, flows, state diagrams and decision tables live in the reports, as Mermaid diagrams and tables. Items refer to them by the report's section heading.
 - Keep the YAML valid. Quote a free-text value when it contains `: ` or ` #`, or starts with one of `[ { * & ! | > ' " % @` or a backtick, and quote any value inside `[ ]` or `{ }` that contains a comma or `: `. Cite decisions and questions without `#` ("decision 12", "design stage 3, decision 4"): an unquoted ` #` starts a comment and silently cuts off the rest of the value.
+- The comments in the schemas below explain the fields; do not copy them into the items. In an item, a comment after an unquoted value is reported as a value cut off at ` #`.
 
 ## Common fields
 
@@ -158,7 +160,7 @@ id: DEC-02
 # ... the other common fields ...  (premises: [TC-01, CHG-01, DAS-02])
 stage: architecture                      # architecture | high-level-design | detailed-design
 question: How does checkout keep confirming orders when the payment provider fails?
-addresses: [DRV-02, DRV-10]              # the drivers, interfaces or findings the decision answers
+addresses: [DRV-02, DRV-10]              # the drivers, interfaces or findings the decision answers, or the FR, QR, NFR or SLI it answers directly
 options:
   - name: One provider, retries with back-off
     effect: Rides out short errors; an outage still stops checkout
@@ -281,7 +283,7 @@ interface:
 invariants: []                           # what always holds for the module's state; [] when it holds no state
 depends_on: [MOD-05]
 functions: [FR-03]
-realizes: []                             # the IFC operations this module implements; each operation has exactly one module in each component that takes part in it (MOD-01 realizes IFC-01 in ELM-02)
+realizes: []                             # the IFC operations this module implements, each as the IFC ID and the operation's name ("IFC-01 POST /v1/checkout"); each operation has exactly one module in each component that takes part in it (MOD-01 realizes IFC-01 in ELM-02)
 drivers: [DRV-04]
 decisions: [DEC-14]
 behaviour: "Report section: MOD-02 Order total calculator"   # where its states, decision tables and algorithms are drawn
@@ -337,18 +339,20 @@ answered_in: null                        # where, e.g. "stage 3, question 4" or 
 
 ## The detailed design index (stage 4), `docs/design/4-detailed-design.md`
 
-Stage 4 keeps one row per element of kind `component`. The tables of a data store are designed by the components that own the entities stored in it; external systems and nodes get no detailed design.
+Stage 4 keeps one row per element of kind `component`. The tables of a data store are designed by the components that own the entities stored in it; external systems and nodes get no detailed design. `scripts/tables.py` writes the table from the elements, the component reports and the modules.
 
 ```markdown
 # Detailed design index: <system name>
 
 Updated: <date> · Inputs as of: <commit, or "none">
 
+<!-- generated: components -->
 | Component | Name | Status | Report | Modules |
 |---|---|---|---|---|
-| ELM-01 | Storefront | not started | | |
+| ELM-01 | Storefront | not started | — | — |
 | ELM-02 | Store API | answers applied | 4-detailed-design/ELM-02.md | MOD-01 to MOD-10 |
-| ELM-03 | Stock sync worker | not started | | |
+| ELM-03 | Stock sync worker | not started | — | — |
+<!-- /generated -->
 ```
 
-Status: `not started`, `draft` or `answers applied`, written with the glossary's terms in the working language.
+Status: `not started` when the component has no report, otherwise the status in its report's header (`draft` or `answers applied`), written with the glossary's terms in the working language.

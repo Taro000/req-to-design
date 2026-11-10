@@ -7,7 +7,9 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs, paths, field names and codes as they are, and write the basis marks and statuses with the glossary's terms for the working language.
 
-The report never restates what an item says: no operations, error contracts, timings, fields, bindings, or other text or values copied from the YAML. It indexes the items by ID, title, enum values and references, and holds what only the report records: the flows, the latency budgets and the worst cases behind the timeouts, the screen flows, the data model diagram, the states across elements, the shared conventions, the acceptance criteria trace, the issues for the quality chain and the decisions.
+The report never restates what an item says: no operations, error contracts, timings, fields, bindings, or other text or values copied from the YAML. It indexes the items by ID, title, enum values and references, and holds what only the report records: the flows, the latency budgets and the worst cases behind the timeouts, the screen flows, the data model diagram, the states across elements, the shared conventions, the flows that the acceptance criteria pass through, the issues for the quality chain and the decisions.
+
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the interfaces, the SLI bindings, the data entities, the acceptance criteria trace, the findings and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the issue that replaces the binding of an SLI that nothing binds, the flow each acceptance criterion passes through, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -28,14 +30,25 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|
 <One row per shared convention, with the DEC that records it. What was decided lives in the DEC only; stage 4 reads the conventions from those DECs.>
 
+## Design decisions
+<!-- generated: decisions -->
+| DEC | Title | Addresses | Basis |
+|---|---|---|---|
+<!-- /generated -->
+<The decisions of stage `high-level-design`, the shared conventions included.>
+
 ## Interfaces
+<!-- generated: interfaces -->
 | IFC | Title | Kind | Provider | Consumers | FRs | Spec | Basis |
 |---|---|---|---|---|---|---|---|
+<!-- /generated -->
 
 ## SLI bindings
-| SLI | Title | Vantage | Bound on | Existing source |
-|---|---|---|---|---|
-<One row per quality-chain SLI. "Bound on" is the IFC or DAT that holds the binding; for an SLI that cannot be bound, the number of its issue for the quality chain.>
+<!-- generated: sli-bindings -->
+| SLI | Title | Vantage | Bound on | Existing source | Issue instead |
+|---|---|---|---|---|---|
+<!-- /generated -->
+<One row per quality-chain SLI. Bound on: the IFCs and DATs whose `sli_bindings` name it. Issue instead, by hand, only for an SLI that nothing can bind: the number of its issue for the quality chain.>
 
 ## End-to-end flows
 ### <CUJ-xx name>
@@ -55,22 +68,28 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Data
 <The entity-relationship diagram, then:>
+<!-- generated: data -->
 | DAT | Title | Owner | Store | Classification | Basis |
 |---|---|---|---|---|---|
+<!-- /generated -->
 ### Data quality flows
 
 ## States across elements
 <One state diagram per entity whose life spans several elements.>
 
 ## Acceptance criteria trace
+<!-- generated: criteria -->
 | FR | Criterion | IFCs | Flow |
 |---|---|---|---|
-<One row per acceptance criterion, by its number in the FR.>
+<!-- /generated -->
+<One row per acceptance criterion of every FR allocated to a component, by its number in the FR. IFCs: the interfaces whose `functions` include the FR. Flow, by hand: the flow the criterion passes through, and the part of an interface when it helps.>
 
 ## Findings
-| FND | Raised by | To | Targets | Severity | Status |
-|---|---|---|---|---|---|
-<The findings addressed to this stage, and those this stage raised.>
+<!-- generated: findings -->
+| FND | Title | Severity | Raised by | To | Status | Items changed |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The findings addressed to this stage, and those this stage raised. Items changed are the items whose `basis_note` cites the finding.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -82,9 +101,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <Questions asked and the answers in effect, numbered per stage and continued on re-runs; an overturning answer replaces the row.>
 
 ## Open assumptions
+<!-- generated: assumptions -->
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-<The DAS this stage wrote, and the open DAS and QAS its items depend on.>
+<!-- /generated -->
+<The open DAS this stage wrote, and the open DAS and QAS its items depend on, highest first. Breadth and severity of a QAS, by hand: as this stage rates it.>
 
 ## Placeholders
 | Name | Stands for | Used in |
@@ -98,33 +119,33 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Worked example: online store
 
-Interfaces (excerpt). The operations, error contracts, timing and bindings are in each IFC's file; the report only indexes them.
+Interfaces (excerpt). The operations, error contracts, timing and bindings are in each IFC's file; the script indexes them.
 
 | IFC | Title | Kind | Provider | Consumers | FRs | Spec | Basis |
 |---|---|---|---|---|---|---|---|
 | IFC-01 | Checkout API | http | ELM-02 | ELM-01 | FR-01 | checkout.openapi.yaml | assumed |
-| IFC-02 | Payment provider A | http | ELM-05 | ELM-02 | FR-01 | the provider's own | assumed |
-| IFC-03 | Stock changed events from the warehouse | event | ELM-07 | ELM-03 | FR-04, FR-05 | the warehouse's own | inferred |
-| IFC-04 | Checkout screen | screen | ELM-01 | USR-01 | FR-01 | none | inferred |
-| IFC-05 | Cart screen | screen | ELM-01 | USR-01 | FR-04, FR-05 | none | inferred |
+| IFC-02 | Payment provider A | http | ELM-05 | ELM-02 | FR-01 | — | assumed |
+| IFC-03 | Stock changed events from the warehouse | event | ELM-07 | ELM-03 | FR-04, FR-05 | — | inferred |
+| IFC-04 | Checkout screen | screen | ELM-01 | USR-01 | FR-01 | — | inferred |
+| IFC-05 | Cart screen | screen | ELM-01 | USR-01 | FR-04, FR-05 | — | inferred |
 
-The consumers of a screen are the users who use it (USR-01, the buyer). Provider A's stated latencies for a charge, a lookup and a cancel come from its API documentation, which the user gave for this run; this stage added them to `design-context.yaml` as TC-04 and lists the document under "Inputs" (`conventions.md`, "Judgment basis"). IFC-02 cites TC-04 and does not restate it.
+The consumers of a screen are the users who use it (USR-01, the buyer). IFC-02 and IFC-03 have no spec of ours: provider A and the warehouse team own theirs, and "Inputs" links them. Provider A's stated latencies for a charge, a lookup and a cancel come from its API documentation, which the user gave for this run; this stage added them to `design-context.yaml` as TC-04 and lists the document under "Inputs" (`conventions.md`, "Judgment basis"). IFC-02 cites TC-04 and does not restate it.
 
 SLI bindings (excerpt):
 
-| SLI | Title | Vantage | Bound on | Existing source |
-|---|---|---|---|---|
-| SLI-02 | Checkout latency | system-boundary | IFC-01 | OPF-02 |
+| SLI | Title | Vantage | Bound on | Existing source | Issue instead |
+|---|---|---|---|---|---|
+| SLI-02 | Checkout latency | system-boundary | IFC-01 | OPF-02 | — |
 
 Latency budget for NFR-02: SLI-02's vantage is the system boundary, and its binding observes it at the load balancer in front of ELM-02 (IFC-01). ELM-01's checkout script runs in the buyer's browser and calls IFC-01 through that load balancer, so the script's own time and the buyer's network are outside the budget. The hop table in `flows-and-budgets.md` budgets three serial hops at the 99.67th percentile, 1.30 s in all, plus a 0.20 s margin, against the 1.5 s threshold. The failover path makes at most 3,000 checkouts slow per provider outage at the sale peak (OPF-03), 3.6% of the error budget ("Failure paths and the error budget"). The script's output is pasted under the table.
 
 Timeouts on the payment path, from the same script: IFC-02's provider_timeout and payment_wait at A, then the same values at B, whose interface keeps them, plus the 0.3 s that the budget gives ELM-02's own work and the database, make a worst case of 2.0 + 3.0 + 2.0 + 3.0 + 0.3 = 10.3 s. IFC-01's timeout of 15 s is above it, so the storefront never abandons a payment that is still running. The three values are provisional and share DAS-06; stage 4 uses them by IFC ID and sets none of them.
 
-Acceptance criteria trace (excerpt):
+Acceptance criteria trace (excerpt). The script lists every interface that carries FR-01; the flow, written by hand, says where this criterion passes:
 
 | FR | Criterion | IFCs | Flow |
 |---|---|---|---|
-| FR-01 | 1 | IFC-01 (`idempotency`) | Checkout, duplicate request path |
+| FR-01 | 1 | IFC-01, IFC-02, IFC-04 | Checkout, duplicate request path (IFC-01 `idempotency`) |
 
 Decisions (excerpt):
 

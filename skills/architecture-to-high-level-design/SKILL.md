@@ -23,6 +23,7 @@ The quality chain names an interface only by its kind and, for an external syste
 - `references/data-and-conventions.md`: data entities, ownership, consistency, retention, classification, data quality flows, data SLIs and shared conventions.
 - `references/report-template.md`: the report layout and a worked example.
 - `references/glossary.md`: terms for the working language.
+- `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
 
 ## Inputs
 
@@ -110,6 +111,7 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 - Every open finding addressed to this stage is accepted or rejected.
 - Each uncertain point was asked or recorded as a DAS, as `conventions.md` describes, and every provisional design parameter is either under "Decisions" or in a DAS of `kind: decision`.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
+- `scripts/check.py --skill architecture-to-high-level-design` reports no problem, except those waiting for a finding.
 
 ## Pitfalls
 
@@ -127,4 +129,4 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions (no answer needed), tell the user which stages to re-run and which reviews to repeat, and commit the files this run wrote. Also tell the user which files were written; how many interfaces, specs, flows and entities; which latency budgets fit and which do not; which SLIs are bound and which became issues; the findings processed and raised; the issues for the quality chain; and the next steps: run `design-review` on this stage in a fresh context, re-run this stage to resolve its findings, then run `high-level-design-to-detailed-design` for each component, naming them.
+Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions (no answer needed), tell the user which stages to re-run and which reviews to repeat, run `scripts/tables.py` and `scripts/check.py` with `--skill architecture-to-high-level-design` and fix what the check reports in this stage's files, and commit the files this run wrote. Also tell the user which files were written; how many interfaces, specs, flows and entities; which latency budgets fit and which do not; which SLIs are bound and which became issues; the findings processed and raised; the issues for the quality chain; and the next steps: run `design-review` on this stage in a fresh context, re-run this stage to resolve its findings, then run `high-level-design-to-detailed-design` for each component, naming them.

@@ -21,6 +21,7 @@ Every check is an activity with a result: add up the budget, trace the criterion
 - `references/review-procedures.md`: the activities for each stage and for every stage, and how to classify what they find.
 - `references/report-template.md`: the report layout and a worked example.
 - `references/glossary.md`: terms for the working language.
+- `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
 
 ## Run it in a fresh context
 
@@ -45,7 +46,7 @@ Name the stage (and the component, for stage 4), the items in scope, and the com
 
 ### 2. Do the activities
 
-Do every activity that `review-procedures.md` lists for the stage and for every stage, working from the artifacts only, and record the result of each one, including the ones that find nothing.
+Run `scripts/check.py` first, without `--skill`. What it checks is not the review's to raise ("Rules for every review" in `review-procedures.md`). Then do every activity that `review-procedures.md` lists for the stage and for every stage, working from the artifacts only, and record the result of each one, including the ones that find nothing.
 
 ### 3. Classify
 
@@ -74,6 +75,8 @@ Check the exit criteria, make the report match the items, and set the report's s
 - Every finding names the skill it is addressed to, the items, the severity, the evidence and a suggested resolution, and lists in `premises` the open assumptions it rests on.
 - Every fact the review needed and could not find was asked about, or is a DAS.
 - No design item was changed, except for the ratings and answers that `conventions.md` lets any run record in an assumption.
+- No finding is about what `scripts/check.py` checks, and "Open gaps" names the stages that still have its problems in the items in scope.
+- `scripts/check.py --skill design-review` reports no problem in the review's files.
 - The report says whether the review ran in a fresh context, and names the commit its inputs were read at.
 
 ## Pitfalls
@@ -90,4 +93,4 @@ Check the exit criteria, make the report match the items, and set the report's s
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to re-run, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps are to re-run each addressed stage to accept or reject its findings, and to review again when critical findings changed the design.
+Finish the run as `conventions.md` describes ("Finishing a run"): the open assumptions to skim, what to re-run, `scripts/tables.py` and `scripts/check.py` with `--skill design-review` for the review's own files, and a commit of the files this review wrote (the report, the findings, and the assumptions it wrote, re-rated or answered). Also tell the user the stage reviewed, whether the context was fresh, the number of findings by severity and by addressed skill, the main risks and trade-offs, and the issues for the quality chain. The next steps are to re-run each addressed stage to accept or reject its findings, and to review again when critical findings changed the design.

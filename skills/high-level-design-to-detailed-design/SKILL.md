@@ -22,6 +22,7 @@ This stage writes documents, not code. Interfaces are written in a language-neut
 - `references/behaviour-and-data.md`: states, decision tables, algorithms, concurrency, error handling, physical data, caches, screens and the verification approach.
 - `references/report-template.md`: the component report, the index, and a worked example.
 - `references/glossary.md`: terms for the working language.
+- `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
 
 ## Inputs
 
@@ -38,7 +39,7 @@ Essential input: the IFCs of the component. If there are none, ask for the high-
 
 ### 1. Scope
 
-Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. Add every component element to the index if it is not there yet. When the component already has a report, start from what changed since its `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
+Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. The index lists every component element; `scripts/tables.py` writes its rows. When the component already has a report, start from what changed since its `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
 
 ### 2. Modules
 
@@ -78,13 +79,13 @@ A quality-chain item's `basis_note` may leave a point for the design to confirm,
 
 ### 11. Findings, report, questions, items, index
 
-Process every open finding addressed to this stage for this component. When an interface, an entity or an architecture decision does not work, write a finding addressed to the stage that owns it; do not change its items yourself. Write the MOD, DEC and FND items as you draft them in steps 2 to 10, and the draft component report that indexes them, following `report-template.md`, and mark the component `draft` in the index.
+Process every open finding addressed to this stage for this component. When an interface, an entity or an architecture decision does not work, write a finding addressed to the stage that owns it; do not change its items yourself. Write the MOD, DEC and FND items as you draft them in steps 2 to 10, and the draft component report that indexes them, following `report-template.md`; the index shows the component as `draft` from the status in the report's header.
 
 Then list and rate the uncertain points, ask about the ones `conventions.md` says to ask about, and record the rest as assumptions ("Draft first, ask afterwards"). The rules in `modules.md` and `behaviour-and-data.md` settle most choices here; a choice they settle from what the inputs state stays `inferred` and is not a point. Most of the points that remain stay inside one module and are easy to change later, so both ratings are low and they become assumptions. The points of high severity here are typically those that move money, touch personal data, fix the shape of stored data or tie the component to a vendor; breadth is high when five or more modules depend on a point, as they do on a framework they all use.
 
 Re-rate the open assumptions this component's judgments depend on, whichever stage wrote them, and ask about one when a judgment you would ask about depends on it ("Assumptions" in `conventions.md`). Number the questions per component report and continue the numbering when the component is re-run; from elsewhere, cite one as "stage 4 ELM-02, question 3".
 
-Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and update the component's row in the index.
+Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and update the index's header; `scripts/tables.py` updates the component's row.
 
 ## Exit criteria
 
@@ -101,6 +102,7 @@ Apply the answers to the items in place, check the exit criteria, set the report
 - The index lists every component with its current status, and its header gives the date and the `Inputs as of` commit.
 - Every point that stage 1 addressed to this stage for this component, from what a quality-chain item leaves for the design to confirm, is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
 - Every open finding addressed to this stage for this component is accepted or rejected.
+- `scripts/check.py --skill high-level-design-to-detailed-design` reports no problem, except those waiting for a finding.
 
 ## Pitfalls
 
@@ -115,4 +117,4 @@ Apply the answers to the items in place, check the exit criteria, set the report
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the issues for the quality chain, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context, re-run the stages that this run's findings are addressed to, re-run this stage for the component to resolve the findings the review addresses to it, and run this stage for the next component. Then commit the files this run wrote (the component report, the index, the MOD, DEC, DAS and FND files, and the DAS files of other stages that it re-rated or answered), with a message that names the component.
+Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the issues for the quality chain, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context, re-run the stages that this run's findings are addressed to, re-run this stage for the component to resolve the findings the review addresses to it, and run this stage for the next component. Then run `scripts/tables.py` and `scripts/check.py` with `--skill high-level-design-to-detailed-design`, fix what the check reports in this stage's files, and commit the files this run wrote (the component report, the index, the MOD, DEC, DAS and FND files, and the DAS files of other stages that it re-rated or answered), with a message that names the component.
