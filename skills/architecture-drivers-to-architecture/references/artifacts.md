@@ -32,7 +32,7 @@ docs/design/
 ├── dec/DEC-01.yaml …                  stages 2–4: design decisions
 ├── elm/ELM-01.yaml …                  stage 2: elements
 ├── ifc/IFC-01.yaml …                  stage 3: interfaces
-├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents
+├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents, for the interfaces that get one
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
 ├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
@@ -180,8 +180,7 @@ sensitive_points: [The error threshold that opens a provider's breaker - too low
 trade_offs: [{with: DRV-07, note: A second contract raises running cost}]
 assumptions: ["The second provider works like the first: hosted card fields, and fraud screening inside its charge (DAS-02)"]   # what the decision relies on; one you were unsure of and did not ask about is a DAS in premises
 depends_on: [DEC-01]
-parameters:                              # provisional design values: decisions (see "Numbers" and "Decisions" in conventions.md)
-  - {name: failover_after, value: 5 consecutive errors or 10 s of timeouts, basis: "Provisional starting value, answered with the second provider (stage 2, question 2); tune with the providers' error rates"}
+parameters: []                           # {name, value, basis}: provisional design values that this stage sets, each a decision ("Numbers" and "Decisions" in conventions.md); DEC-02 sets none, and leaves the value of its sensitive point to stage 3 (HND-02)
 debt:                                    # {what, why_accepted, repay_when}; null when the decision accepts none
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
@@ -233,7 +232,7 @@ errors:                                  # the error contract
   - {case: The same key while the first request is still running, signal: 409 with code CHECKOUT_IN_PROGRESS, caller_does: Wait and poll the order}
   - {case: The same key with a different cart, signal: 422 with code KEY_REUSED, caller_does: Start a new checkout with a new key}
 idempotency: One Idempotency-Key per order - the storefront creates it when the buyer first submits the cart and reuses it on every retry; the same key returns the first result
-timing:
+timing:                                  # on the paths of time SLOs and of money, every timeout and wait; on other calls, only their bounds, with the values handed off to stage 4
   timeout: 15 s (provisional; above the worst case of the payment path, 10.3 s, so that a payment still running is never abandoned; the 1.5 s of NFR-02 is a target, not a timeout)
   ordering: null                         # events: the ordering guarantee and its key
   delivery: null                         # events: at-most-once | at-least-once, and how duplicates are handled
@@ -244,7 +243,7 @@ sli_bindings:                            # how this interface yields the events 
     events: Each POST /v1/checkout request that reaches the load balancer in front of ELM-02 (the SLI's vantage is the system boundary); requests with the same Idempotency-Key are one checkout, counted by the first request
     fields: [request_id, idempotency_key, status, elapsed, user_agent]
     method: The load balancer's access logs, which already exist (OPF-02), with the Idempotency-Key header added to the logged fields
-spec: ifc/specs/checkout.openapi.yaml    # null for screens, and for interfaces whose spec belongs to an external system
+spec: ifc/specs/checkout.openapi.yaml    # null for screens, files and batches, for interfaces whose spec belongs to an external system, and for those whose schema is handed off to implementation
 as_is: new
 ```
 
@@ -321,7 +320,7 @@ resolution: "Confirmed in DAT-04: changed_at keeps the time of the change, which
 A detail that stage 4 leaves to implementation, inside a module it designs in full:
 
 ```yaml
-id: HND-02
+id: HND-06
 title: Where the coupon rules are kept
 status: open                             # a hand-off to implementation stays open: the code and its tests decide it
 basis: inferred

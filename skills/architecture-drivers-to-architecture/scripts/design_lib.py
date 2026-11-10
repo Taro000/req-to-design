@@ -315,6 +315,11 @@ class Project(object):
                 out.append(it)
         return sorted(out, key=lambda i: id_key(i.id))
 
+    def schema_handoffs(self, ident):
+        """The hand-offs that leave the schema of an interface to implementation: addressed to implementation, not
+        retired, with the interface in their origin."""
+        return [h for h in self.of("HND") if h.get("to") == IMPLEMENTATION and ident in as_list(h.get("origin"))]
+
     def component_of_finding(self, finding):
         """The components a finding addressed to stage 4 concerns."""
         out = set()

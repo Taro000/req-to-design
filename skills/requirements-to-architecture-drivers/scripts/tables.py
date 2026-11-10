@@ -220,10 +220,16 @@ class Renderer(object):
         rows = []
         for i in self.p.of("IFC"):
             spec = i.get("spec")
+            if isinstance(spec, str) and spec:
+                spec_cell = os.path.basename(spec)
+            elif i.get("kind") in ("http", "event"):
+                # an interface between elements whose schema implementation generates: the hand-off that leaves it
+                spec_cell = self.join([h.id for h in self.p.schema_handoffs(i.id)])
+            else:
+                spec_cell = DASH
             rows.append([i.id, self.text(i.get("title")), self.term("interface kinds", i.get("kind")),
                          self.text(i.get("provider")), self.join(i.get("consumers")), self.join(i.get("functions")),
-                         os.path.basename(spec) if isinstance(spec, str) and spec else DASH,
-                         self.term("basis", i.get("basis"))])
+                         spec_cell, self.term("basis", i.get("basis"))])
         return Table([("IFC", "IFC"), ("Title", "名前"), ("Kind", "種類"), ("Provider", "提供側"),
                       ("Consumers", "利用側"), ("FRs", "FR"), ("Spec", "仕様"), ("Basis", "根拠")], rows)
 
@@ -313,6 +319,22 @@ class Renderer(object):
                  self.join([i.id for i in self.p.citing(f.id)])] for f in findings]
         return Table([("FND", "FND"), ("Title", "名前"), ("Severity", "重さ"), ("Raised by", "出した段"),
                       ("To", "宛先"), ("Status", "状態"), ("Items changed", "変えた項目")], rows)
+
+    def handoffs_of(self, ctx):
+        """The hand-offs that the stage wrote, and those addressed to it; in stage 4, those of the component."""
+        skill = lib.STAGE_SKILLS[ctx.stage]
+        out = [h for h in self.p.of("HND", active_only=False) if h.get("from") == skill or h.get("to") == skill]
+        if ctx.stage == 4 and ctx.component:
+            out = [h for h in out if h.get("component") == ctx.component]
+        return out
+
+    def t_handoffs(self, ctx):
+        self.need(ctx, ("stage",))
+        rows = [[h.id, self.text(h.get("title")), self.text(h.get("from")), self.text(h.get("to")),
+                 self.text(h.get("component")), self.term("hand-off status", h.status),
+                 self.join([i.id for i in self.p.citing(h.id)])] for h in self.handoffs_of(ctx)]
+        return Table([("HND", "HND"), ("Title", "名前"), ("From", "書いた段"), ("To", "宛先"),
+                      ("Component", "コンポーネント"), ("Status", "状態"), ("Decided in", "決めた項目")], rows)
 
     def assumptions_of(self, ctx):
         ids = set()

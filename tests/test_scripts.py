@@ -495,6 +495,23 @@ DESIGN = {
         """),
 }
 
+SCHEMA_HAND_OFF = d("""
+    id: HND-03
+    title: The schema of the checkout API
+    status: open
+    basis: inferred
+    basis_note: null
+    premises: []
+    from: architecture-to-high-level-design
+    to: implementation
+    component: ELM-01
+    origin: [IFC-01]
+    what: The request and response schemas of IFC-01, which implementation generates from the code
+    bounds: IFC-01's operations and errors
+    trigger: When ELM-01's interfaces are implemented
+    resolution: null
+    """)
+
 HEADER = "Status: answers applied · Updated: 2026-11-10 · Inputs as of: none · Stage %s"
 
 
@@ -507,16 +524,16 @@ def blocks(*names, **hand):
 
 REPORTS = {
     "1-architecture-drivers.md": "# Architecture drivers\n\n" + HEADER % "1 of 4" + "\n\n" + blocks(
-        "design-context", "drivers", "ranking", "conflicts", "findings", "assumptions",
+        "design-context", "drivers", "ranking", "conflicts", "findings", "handoffs", "assumptions",
         design_context="| ID | Label | Kind | Source | Basis |\n|---|---|---|---|---|\n"
                        "| TC-01 | Card payments through the provider | | | |\n| PC-01 | Release before the sale | | | |\n"
                        "| TEAM-01 | Store team | | | |\n",
         conflicts="| Drivers | Resolved by |\n|---|---|\n| DRV-01, DRV-02 | The business (question 2) |\n"),
     "2-architecture.md": "# Architecture\n\n" + HEADER % "2 of 4" + "\n\n" + blocks(
-        "decisions", "elements", "parameters", "findings", "assumptions",
+        "decisions", "elements", "parameters", "findings", "handoffs", "assumptions",
         parameters="| Parameter | DEC | Decided in |\n|---|---|---|\n| pool_size | DEC-01 | question 1 |\n"),
     "3-high-level-design.md": "# High-level design\n\n" + HEADER % "3 of 4" + "\n\n" + blocks(
-        "decisions", "interfaces", "sli-bindings", "data", "criteria", "findings", "assumptions",
+        "decisions", "interfaces", "sli-bindings", "data", "criteria", "findings", "handoffs", "assumptions",
         criteria="| FR | Criterion | IFCs | Flow |\n|---|---|---|---|\n| FR-01 | 1 | | Checkout |\n"
                  "| FR-01 | 2 | | Checkout, declined card |\n| FR-02 | 1 | | Order history |\n"),
     "4-detailed-design.md": "# Detailed design index\n\nUpdated: 2026-11-10 · Inputs as of: none\n\n" + blocks("components"),
@@ -707,6 +724,12 @@ class CheckTest(unittest.TestCase):
         self.assertFinds("spec", "error code CARD_DECLINED")
         self.assertFinds("spec", "GET /v1/carts is in the spec")
 
+    def test_schema_hand_off_stands_in_for_a_spec(self):
+        self.f.edit("ifc/IFC-01.yaml", "spec: ifc/specs/checkout.openapi.yaml", "spec: null")
+        self.assertFinds("spec", "needs an OpenAPI document")
+        self.f.write(os.path.join(self.f.design, "hnd/HND-03.yaml"), SCHEMA_HAND_OFF)
+        self.assertEqual([p for p in self.f.check() if "needs an OpenAPI" in p.message], [])
+
     def test_unknown_retired_and_wrong_kind(self):
         self.f.edit("dec/DEC-01.yaml", "rationale: The deadline (DRV-02)", "rationale: The deadline (DRV-02, DEC-99)")
         self.f.edit("dec/DEC-01.yaml", "depends_on: []", "depends_on: [DRV-01]")
@@ -807,6 +830,20 @@ class TablesTest(unittest.TestCase):
         self.f.tables()
         self.assertEqual(before, dict((rel, self.f.read(rel)) for rel in REPORTS))
 
+    def test_hand_offs_and_the_schema_hand_off(self):
+        row = ("| HND-01 | Where checkouts can be counted | requirements-to-architecture-drivers |"
+               " architecture-to-high-level-design | — | decided | IFC-01 |")
+        self.assertIn(row, self.f.read("1-architecture-drivers.md"))
+        self.assertIn(row, self.f.read("3-high-level-design.md"))
+        self.assertNotIn("| HND-02 |", self.f.read("3-high-level-design.md"))  # stage 4's, to implementation
+        self.f.edit("ifc/IFC-01.yaml", "spec: ifc/specs/checkout.openapi.yaml", "spec: null")
+        self.f.write(os.path.join(self.f.design, "hnd/HND-03.yaml"), SCHEMA_HAND_OFF)
+        self.f.tables()
+        stage3 = self.f.read("3-high-level-design.md")
+        self.assertIn("| HND-03 | The schema of the checkout API | architecture-to-high-level-design | implementation |"
+                      " ELM-01 | open | — |", stage3)
+        self.assertRegex(stage3, r"\| IFC-01 \| Checkout API \|[^\n]*\| HND-03 \| [^|]+ \|\n")
+
     def test_index_and_assumptions(self):
         index = self.f.read("4-detailed-design.md")
         self.assertIn("| ELM-01 | Store API | answers applied | 4-detailed-design/ELM-01.md | MOD-01 |", index)
@@ -818,9 +855,9 @@ class TablesTest(unittest.TestCase):
 
     def test_every_mark_in_the_templates_works(self):
         templates = {
-            "requirements-to-architecture-drivers": ("## Report template", "1-architecture-drivers.md", 6),
-            "architecture-drivers-to-architecture": ("## Report template", "2-architecture.md", 5),
-            "architecture-to-high-level-design": ("## Report template", "3-high-level-design.md", 7),
+            "requirements-to-architecture-drivers": ("## Report template", "1-architecture-drivers.md", 7),
+            "architecture-drivers-to-architecture": ("## Report template", "2-architecture.md", 6),
+            "architecture-to-high-level-design": ("## Report template", "3-high-level-design.md", 8),
             "high-level-design-to-detailed-design": ("## Component report template", "4-detailed-design/ELM-01.md", 5),
             "design-review": ("## Report template", "reviews/2-architecture.md", 2),
         }

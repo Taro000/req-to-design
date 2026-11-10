@@ -9,7 +9,7 @@ Write the report in the working language. Translate the headings. Keep the IDs, 
 
 The report never restates what an item says: no operations, error contracts, timings, fields, bindings, or other text or values copied from the YAML. It indexes the items by ID, title, enum values and references, and holds what only the report records: the flows, the latency budgets and the worst cases behind the timeouts, the screen flows, the data model diagram, the states across elements, the shared conventions, the flows that the acceptance criteria pass through, the issues for the quality chain and the decisions.
 
-`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the interfaces, the SLI bindings, the data entities, the acceptance criteria trace, the findings and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the issue that replaces the binding of an SLI that nothing binds, the flow each acceptance criterion passes through, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the interfaces, the SLI bindings, the data entities, the acceptance criteria trace, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the issue that replaces the binding of an SLI that nothing binds, the flow each acceptance criterion passes through, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -42,6 +42,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 | IFC | Title | Kind | Provider | Consumers | FRs | Spec | Basis |
 |---|---|---|---|---|---|---|---|
 <!-- /generated -->
+<Spec: the file under `ifc/specs/`, or, for an HTTP or event interface between elements whose schema implementation generates from the code, the hand-off that leaves it there. "—" for a screen, a file or a batch, and for an external system's interface, whose owner's document the report links.>
 
 ## SLI bindings
 <!-- generated: sli-bindings -->
@@ -60,7 +61,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ### <NFR-xx>
 <Where the SLI's binding observes the flow, the hop table, the failure paths, and the script's output.>
 ### Timeouts
-<For each call path, the timeouts and waits in the IFCs' `timing`, settlement waits included, and the worst case each caller waits for, from the same script.>
+<For each call path of an SLO with a time threshold, and each path that moves money: the timeouts and waits in the IFCs' `timing`, settlement waits included, and the worst case each caller waits for, from the same script. Then the other calls between elements: the IFCs whose `timing` holds only the bounds, and the hand-offs that leave the values to stage 4.>
 
 ## Screens
 ### <CUJ-xx name>
@@ -75,7 +76,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ### Data quality flows
 
 ## States across elements
-<One state diagram per entity whose life spans several elements.>
+<One state diagram per entity whose life spans several elements and that holds money, a booking or an unknown outcome, or whose states rate high.>
 
 ## Acceptance criteria trace
 <!-- generated: criteria -->
@@ -90,6 +91,13 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|---|---|---|---|---|
 <!-- /generated -->
 <The findings addressed to this stage, and those this stage raised. Items changed are the items whose `basis_note` cites the finding.>
+
+## Hand-offs
+<!-- generated: handoffs -->
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The hand-offs this stage wrote, and those addressed to it: the schemas of interfaces between elements, to implementation; the timeouts of calls off the paths of time SLOs and of money, to stage 4; any other point left to a later stage that it would not take up otherwise. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -112,6 +120,8 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|---|
 
 ## Open gaps
+<Only what this stage could not close and no later stage will take up, such as a value cut off at ` #` in a file another stage wrote, for that stage to fix. A point left to stage 4 or to implementation is under "Hand-offs"; a problem in the architecture is a finding addressed to stage 2; one that only a change in the quality chain would close is under "Issues for the quality chain".>
+
 ## Out of scope
 ## Next
 <Run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `high-level-design-to-detailed-design` once per component: list them.>
@@ -128,8 +138,11 @@ Interfaces (excerpt). The operations, error contracts, timing and bindings are i
 | IFC-03 | Stock changed events from the warehouse | event | ELM-07 | ELM-03 | FR-04, FR-05 | — | inferred |
 | IFC-04 | Checkout screen | screen | ELM-01 | USR-01 | FR-01 | — | inferred |
 | IFC-05 | Cart screen | screen | ELM-01 | USR-01 | FR-04, FR-05 | — | inferred |
+| IFC-06 | Catalog reads for the storefront's pages | http | ELM-02 | ELM-01 | FR-04 | HND-04 | inferred |
 
 The consumers of a screen are the users who use it (USR-01, the buyer). IFC-02 and IFC-03 have no spec of ours: provider A and the warehouse team own theirs, and "Inputs" links them. Provider A's stated latencies for a charge, a lookup and a cancel come from its API documentation, which the user gave for this run; this stage added them to `design-context.yaml` as TC-04 and lists the document under "Inputs" (`conventions.md`, "Judgment basis"). IFC-02 cites TC-04 and does not restate it.
+
+IFC-01 has its whole contract here, OpenAPI document included, because the buyer's browser calls it. IFC-06 serves the product pages that ELM-01 renders on its server: no device and no other team calls it, so its IFC holds its operations, its errors and their codes, and the schema of its requests and responses is handed off to implementation, which generates it from ELM-02's code (HND-04). Its calls are on no path of a time SLO and move no money (NFR-03 counts how long a stock change takes to become visible, which its own budget covers, not how long a page takes to load), so its `timing` holds only the bound: ELM-01's timeout above the worst case of the read it waits for. Stage 4 sets the value for ELM-01 (HND-05).
 
 SLI bindings (excerpt):
 
@@ -139,13 +152,25 @@ SLI bindings (excerpt):
 
 Latency budget for NFR-02: SLI-02's vantage is the system boundary, and its binding observes it at the load balancer in front of ELM-02 (IFC-01). ELM-01's checkout script runs in the buyer's browser and calls IFC-01 through that load balancer, so the script's own time and the buyer's network are outside the budget. The hop table in `flows-and-budgets.md` budgets three serial hops at the 99.67th percentile, 1.30 s in all, plus a 0.20 s margin, against the 1.5 s threshold. The failover path makes at most 3,000 checkouts slow per provider outage at the sale peak (OPF-03), 3.6% of the error budget ("Failure paths and the error budget"). The script's output is pasted under the table.
 
-Timeouts on the payment path, from the same script: IFC-02's provider_timeout and payment_wait at A, then the same values at B, whose interface keeps them, plus the 0.3 s that the budget gives ELM-02's own work and the database, make a worst case of 2.0 + 3.0 + 2.0 + 3.0 + 0.3 = 10.3 s. IFC-01's timeout of 15 s is above it, so the storefront never abandons a payment that is still running. The three values are provisional and share DAS-06; stage 4 uses them by IFC ID and sets none of them.
+Timeouts on the payment path, from the same script: IFC-02's provider_timeout and payment_wait at A, then the same values at B, whose interface keeps them, plus the 0.3 s that the budget gives ELM-02's own work and the database, make a worst case of 2.0 + 3.0 + 2.0 + 3.0 + 0.3 = 10.3 s. IFC-01's timeout of 15 s is above it, so the storefront never abandons a payment that is still running. The three values are provisional and share DAS-06 with IFC-02's failover_after, the threshold that HND-02 left to this stage; stage 4 uses them by IFC ID and sets none of them. Off these paths, IFC-06's `timing` holds only the bound, and HND-05 leaves the value to stage 4.
 
 Acceptance criteria trace (excerpt). The script lists every interface that carries FR-01; the flow, written by hand, says where this criterion passes:
 
 | FR | Criterion | IFCs | Flow |
 |---|---|---|---|
 | FR-01 | 1 | IFC-01, IFC-02, IFC-04 | Checkout, duplicate request path (IFC-01 `idempotency`) |
+
+Hand-offs (excerpt):
+
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+| HND-01 | Where the time of a stock change at the warehouse can be read | requirements-to-architecture-drivers | architecture-to-high-level-design | — | decided | DAT-04 |
+| HND-02 | The error threshold at which checkout fails over | architecture-drivers-to-architecture | architecture-to-high-level-design | — | decided | IFC-02 |
+| HND-03 | How long ELM-02 keeps a stock count it has read | architecture-drivers-to-architecture | architecture-to-high-level-design | — | decided | DEC-11 |
+| HND-04 | The schemas of the interfaces between elements that ELM-02 provides | architecture-to-high-level-design | implementation | ELM-02 | open | — |
+| HND-05 | The timeouts of ELM-01's calls to IFC-06 | architecture-to-high-level-design | high-level-design-to-detailed-design | ELM-01 | open | — |
+
+HND-03 is decided within NFR-03's budget: DEC-11, which lets ELM-02 read the stock table, gives the cache the share of T_stock_lag that the warehouse event and ELM-03 leave, as a provisional value in its `parameters` (DAS-07). HND-04 stays open in the design, as every hand-off to implementation does; stage 4 takes up HND-05 at its run for ELM-01.
 
 Decisions (excerpt):
 
@@ -159,6 +184,7 @@ Open assumptions (excerpt):
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
 | DAS-06 | Timeouts on the payment path adopted provisionally | decision | medium | low | IFC-01, IFC-02 |
+| DAS-07 | Stock cache lifetime adopted provisionally | decision | low | low | DEC-11 |
 
 ## Example items
 
@@ -212,7 +238,7 @@ id: IFC-02
 title: Payment provider A
 status: active
 basis: assumed
-basis_note: Operations and errors as provider A's documentation gives them, linked in the report; its stated latencies are TC-04; settling a timed-out charge at A before trying another provider follows FND-01; the handling of unsettled payments is confirmed (question 1); the timing is a provisional decision (DAS-06); the rest is inferred
+basis_note: Operations and errors as provider A's documentation gives them, linked in the report; its stated latencies are TC-04; settling a timed-out charge at A before trying another provider follows FND-01; the handling of unsettled payments is confirmed (question 1); the timing is a provisional decision (DAS-06), and its failover_after decides HND-02; the rest is inferred
 premises: [EXT-01, TC-01, TC-04, DAS-06]
 kind: http
 name: Payment provider A
@@ -221,7 +247,7 @@ consumers: [ELM-02]
 functions: [FR-01]
 # ... operations, format, protocol, auth, errors and idempotency ...
 timing:
-  timeout: provider_timeout 2.0 s on each call to A (provisional, DAS-06; above the 99.9th percentile that TC-04 states for a charge, so that healthy charges almost never time out); payment_wait 3.0 s to settle an unknown outcome at A, by looking up the key and cancelling the charge there, before any other provider is tried (provisional, DAS-06; room for a lookup and a cancel at the latencies TC-04 states, and to repeat the lookup once)
+  timeout: provider_timeout 2.0 s on each call to A (provisional, DAS-06; above the 99.9th percentile that TC-04 states for a charge, so that healthy charges almost never time out); payment_wait 3.0 s to settle an unknown outcome at A, by looking up the key and cancelling the charge there, before any other provider is tried (provisional, DAS-06; room for a lookup and a cancel at the latencies TC-04 states, and to repeat the lookup once); failover_after 5 consecutive errors or 10 s of timeouts, after which ELM-02 stops calling A and sends new charges to B (provisional, DAS-06; the failover path then uses 3.6% of NFR-02's error budget per outage at the sale peak, as the report computes)
   ordering: null
   delivery: null
 # ... versioning and observability ...
@@ -230,7 +256,7 @@ spec: null                               # provider A owns its document; the rep
 as_is: new
 ```
 
-`docs/design/das/DAS-06.yaml`. The timing values that hinge on the providers' real latencies share it; its statement names them and leaves their values in IFC-01 and IFC-02, so that tuning them changes only those files:
+`docs/design/das/DAS-06.yaml`. The timing values that hinge on how the providers behave in operation share it; its statement names them and leaves their values in IFC-01 and IFC-02, so that tuning them changes only those files:
 
 ```yaml
 id: DAS-06
@@ -238,8 +264,8 @@ title: Timeouts on the payment path adopted provisionally
 status: open
 stage: 3
 kind: decision
-statement: IFC-02 uses the provisional provider_timeout and payment_wait in its timing, and IFC-01's timeout stays above the worst case of the payment path that they give, until operation shows the providers' real latencies
-why_unsure: The values rest on the latencies that provider A states (TC-04), which our own traffic has not measured yet, and no input says how long buyers wait before they give up or press again
+statement: IFC-02 uses the provisional provider_timeout, payment_wait and failover_after in its timing, and IFC-01's timeout stays above the worst case of the payment path that they give, until operation shows the providers' real latencies and error rates
+why_unsure: The values rest on the latencies that provider A states (TC-04), which our own traffic has not measured yet; no input says how often a provider fails, or how long buyers wait before they give up or press again
 breadth: medium
 severity: low
 rating_note: IFC-01 and IFC-02 depend on it, and stage 4's payment router will through IFC-02's timing; tuned in operation, with IFC-01's timeout kept above the worst case whenever the others change

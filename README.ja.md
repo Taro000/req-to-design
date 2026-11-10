@@ -16,7 +16,7 @@
 |---|---|---|---|
 | 1 | `requirements-to-architecture-drivers` | 品質チェーンの成果物（`docs/quality/`。品質チェーンが入力の中で見つけた設計の判断を含む）、利用者を経由しない設計の入力（技術制約、費用・納期・体制、チームの構成、将来の変更）、既存のコード | 設計を動かす要求: 品質と変更のシナリオ、制約、全体の原則、順位 |
 | 2 | `architecture-drivers-to-architecture` | 段 1 の出力 | 案と根拠を備えた設計の決定、要素、5 つのビュー、脅威のモデル |
-| 3 | `architecture-to-high-level-design` | 段 2 の出力 | OpenAPI と AsyncAPI の記述を添えたインタフェース、遅延の予算を付けた端から端の流れ、データの実体、共通の約束事、各 SLI のイベントの出どころ |
+| 3 | `architecture-to-high-level-design` | 段 2 の出力 | インタフェース（端末、ほかのチーム、外部のシステムが使うものには OpenAPI と AsyncAPI の記述）、遅延の予算を付けた端から端の流れ、データの実体、共通の約束事、各 SLI のイベントの出どころ |
 | 4 | `high-level-design-to-detailed-design` | 段 3 の出力（1 回の実行で 1 コンポーネント） | 事前条件と事後条件を備えたモジュール、状態、判断表、物理データ、確かめ方 |
 | レビュー | `design-review` | 段 2、3、4 のどれかの出力 | 決めるべき段に宛てた指摘 |
 

@@ -79,7 +79,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 | Parameter | MOD | Decision | Budget or timeout it fits |
 |---|---|---|---|
 <!-- /generated -->
-<One row per entry of the modules' `parameters`: values inside the component only. The timeouts and waits on calls to other elements are in the IFCs' `timing`, and the modules refer to them by IFC ID. By hand: Decision, the DAS that adopts the value provisionally or the question that decided it; the last column, how the worst case follows from the stage 3 budgets and timeouts.>
+<One row per entry of the modules' `parameters`: values inside the component, and the timeouts of its calls to other elements that stage 3 handed off to it. The timeouts and waits that the IFCs' `timing` holds are stage 3's, and the modules refer to them by IFC ID. By hand: Decision, the DAS that adopts the value provisionally or the question that decided it; the last column, how the worst case follows from the stage 3 budgets and timeouts.>
 
 ## Design decisions
 <!-- generated: decisions -->

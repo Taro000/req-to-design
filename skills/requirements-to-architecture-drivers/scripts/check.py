@@ -39,8 +39,8 @@ Rules:
     debt             a debt without repay_when
     handoff          a hand-off's from, to, component, trigger, origin or resolution; a decided hand-off that
                      no item cites in basis_note
-    spec             a spec that is missing, unused or not found, or that differs from its IFC in
-                     operations, error statuses or error codes
+    spec             a spec that is missing (with no hand-off of the schema to implementation), unused
+                     or not found, or that differs from its IFC in operations, error statuses or error codes
     finding          a finding's to, raised_by, raised_in or resolution; an accepted finding that no
                      item cites in basis_note
     sli-binding      a quality-chain SLI that no IFC or DAT binds and no issue replaces
@@ -618,10 +618,12 @@ class Checker(object):
                 self.compare_spec(i, f)
             elif i.get("kind") in ("http", "event") and "spec" in i.data:
                 provider = i.get("provider")
-                if provider in components:
+                if provider in components and not p.schema_handoffs(i.id):
                     kind = "an OpenAPI" if i.get("kind") == "http" else "an AsyncAPI"
                     self.item_problem("spec", i, "spec", "an %s interface that %s provides needs %s document under"
-                                                         " ifc/specs/" % (i.get("kind"), provider, kind))
+                                                         " ifc/specs/, or a hand-off of its schema to %s that names"
+                                                         " it in origin" % (i.get("kind"), provider, kind,
+                                                                            lib.IMPLEMENTATION))
         for rel in p.specs:
             if rel not in used:
                 self.add("spec", rel, 1, "no active IFC names this spec in its spec field", S3)
