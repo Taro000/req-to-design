@@ -26,10 +26,11 @@ This stage writes documents, not code. Interfaces are written in a language-neut
 ## Inputs
 
 - The component or components to design, named by their element IDs. If the user does not name them, ask, offering the components the index shows as not started.
-- `docs/design/`: the element (`elm/`), its interfaces (`ifc/` and `ifc/specs/`), its data entities (`dat/`), the decisions that bind it (`dec/`), the drivers it carries (`drv/`), the shared conventions, read from the DEC items that record them (the "Shared conventions" table of `3-high-level-design.md` lists them), the points that stage 1's report (`1-architecture-drivers.md`) addresses to this stage under "Open gaps", and the index.
+- `docs/design/`: the element (`elm/`), its interfaces (`ifc/` and `ifc/specs/`), its data entities (`dat/`), the decisions that bind it (`dec/`), the drivers it carries (`drv/`), the shared conventions, read from the DEC items that record them (the "Shared conventions" table of `3-high-level-design.md` lists them), and the index.
 - `docs/quality/`, read only: the FRs allocated to the component, with their acceptance criteria; the QRs behind its drivers, internal quality included; and the SLIs that its interfaces and data entities bind (`sli_bindings`), for the events and fields the component must produce.
 - The open assumptions in the `premises` of the items you read: DAS under `docs/design/das/`, and the quality chain's QAS.
 - Open findings addressed to this stage for this component.
+- Open hand-offs addressed to this stage for this component: `hnd/` items with `to: high-level-design-to-detailed-design`, `status: open` and the component's element ID in `component`.
 - The component's existing code, as recorded under `as_is`: read the parts being designed in full.
 
 Essential input: the IFCs of the component. If there are none, ask for the high-level design (or suggest running `architecture-to-high-level-design`) before drafting.
@@ -72,9 +73,9 @@ For each module, write which acceptance criteria, contracts, budgets and interna
 
 Propose the remaining values inside the component (timeouts on its own data store, retry limits, pool sizes, batch sizes, cache lifetimes, schedules) with their basis. Every timeout and wait on a call that crosses an element boundary, settlement waits included, is stage 3's and lives in the IFC's `timing`: use it as it is, refer to it by the IFC's ID, and never set it here. The values set here must fit the latency budgets and timeouts of stage 3; when they cannot, or when a value in an IFC's timing must change, write a finding addressed to `architecture-to-high-level-design`. Each value is a provisional decision, rated like any other point ("Decisions" in `conventions.md`). Most stay inside one module and are tuned in operation, so they are adopted as an assumption of kind `decision`; values that hinge on the same fact share one.
 
-### 10. Points to confirm
+### 10. Hand-offs
 
-A quality-chain item's `basis_note` may leave a point for the design to confirm, and stage 1 addresses the ones it could not settle to the stage that designs the part, under "Open gaps" in its report. Confirm each point addressed to this stage for this component, citing it in the `basis_note` of the item that confirms it, or raise an issue for the quality chain when the design shows that it does not hold.
+Take up every open hand-off addressed to this stage for this component whose trigger has come, as `conventions.md` describes ("Hand-offs"): decide it within its bounds, citing it in the `basis_note` of the items that decide it, or pass it on with the reason. A point that a quality-chain item leaves for the design to confirm reaches this stage as a hand-off too: confirm it, or raise an issue for the quality chain when the design shows that it does not hold.
 
 ### 11. Findings, report, questions, items, index
 
@@ -99,7 +100,7 @@ Apply the answers to the items in place, check the exit criteria, set the report
 - Every design parameter has a value and a basis, fits the stage 3 budgets, and is either decided under "Decisions" or recorded as an assumption of kind `decision`. None is a timeout or wait on a call that crosses an element boundary: those are used from the IFCs' `timing`, by IFC ID.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
 - The index lists every component with its current status, and its header gives the date and the `Inputs as of` commit.
-- Every point that stage 1 addressed to this stage for this component, from what a quality-chain item leaves for the design to confirm, is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
+- Every open hand-off addressed to this stage for this component whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
 - Every open finding addressed to this stage for this component is accepted or rejected.
 
 ## Pitfalls
@@ -115,4 +116,4 @@ Apply the answers to the items in place, check the exit criteria, set the report
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the issues for the quality chain, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run ("Findings between design stages" in `conventions.md`); re-run the stages that this run addressed a critical or major finding to; re-run this stage for the component when a review addresses a critical or major finding to it; and run this stage for the next component. Minor findings start no run: each waits for the next run of the stage it is addressed to. Then commit the files this run wrote (the component report, the index, the MOD, DEC, DAS and FND files, and the DAS files of other stages that it re-rated or answered), with a message that names the component.
+Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the issues for the quality chain, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run ("Findings between design stages" in `conventions.md`); re-run the stages that this run addressed a critical or major finding to; re-run this stage for the component when a review addresses a critical or major finding to it; and run this stage for the next component. Minor findings start no run: each waits for the next run of the stage it is addressed to. Then commit the files this run wrote (the component report, the index, the MOD, DEC, DAS, HND and FND files, and the DAS and HND files of other stages that it re-rated, answered or took up), with a message that names the component.

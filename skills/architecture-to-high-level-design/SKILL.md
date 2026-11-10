@@ -26,9 +26,10 @@ The quality chain names an interface only by its kind and, for an external syste
 
 ## Inputs
 
-- `docs/design/`: `1-architecture-drivers.md` (for the points its "Open gaps" addresses to this stage), `2-architecture.md`, `elm/`, `dec/`, `drv/`, `design-context.yaml`, and the open assumptions in `das/`.
+- `docs/design/`: `1-architecture-drivers.md`, `2-architecture.md`, `elm/`, `dec/`, `drv/`, `design-context.yaml`, and the open assumptions in `das/`.
 - `docs/quality/`, read only: `fr/` (acceptance criteria and interface kinds), `sli/` (unit events, vantages, counting rules and existing sources), `nfr/` (targets, for the latency budgets), `qr/` (data quality and security detail), `context.yaml` (CUJ steps; external systems, EXT; operational facts, OPF, such as telemetry that already exists), and the open assumptions in `qas/`.
 - Open findings addressed to this stage.
+- Open hand-offs addressed to this stage: `hnd/` items with `to: architecture-to-high-level-design` and `status: open`.
 - The interfaces and schemas that exist in the code, as recorded under `as_is`; read the parts you need.
 - On a re-run, this stage's report and items, and what changed since the report's `Inputs as of` commit (`conventions.md`, "Re-running a stage").
 
@@ -80,9 +81,9 @@ For each entity whose life spans several elements (an order, a ride request), dr
 
 Trace every acceptance criterion of every allocated FR through the IFCs and flows. Recompute every latency budget. Check that every entity has one owner, that every interface follows the shared conventions, and that every SLI has its binding.
 
-### 12. Points to confirm
+### 12. Hand-offs
 
-A quality-chain item's `basis_note` may leave a point for the design to confirm (where a measure can be taken, how likely a failure is), and stage 1 addresses the ones it could not settle to the stage that designs the part, under "Open gaps" in its report. Confirm each point addressed to this stage, citing it in the `basis_note` of the item that confirms it, or raise an issue for the quality chain when the design shows that it does not hold.
+Take up every open hand-off addressed to this stage whose trigger has come, as `conventions.md` describes ("Hand-offs"): decide it within its bounds, citing it in the `basis_note` of the items that decide it, or pass it on with the reason. Stage 1 hands off the points that quality-chain items leave for the design to confirm (where a measure can be taken, how likely a failure is) and that it could not settle: confirm each one addressed to this stage, or raise an issue for the quality chain when the design shows that it does not hold.
 
 ### 13. Findings, report, questions, items
 
@@ -106,7 +107,7 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 - Every acceptance criterion of every allocated FR can be traced through IFCs and flows.
 - Every DAT has one owner, a store, a consistency rule, a classification, and a retention period (stated, or a placeholder).
 - The shared conventions are decided, and every IFC follows them.
-- Every point that stage 1 addressed to this stage, from what a quality-chain item leaves for the design to confirm, is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
+- Every open hand-off addressed to this stage whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
 - Every open finding addressed to this stage is accepted or rejected.
 - Each uncertain point was asked or recorded as a DAS, as `conventions.md` describes, and every provisional design parameter is either under "Decisions" or in a DAS of `kind: decision`.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.

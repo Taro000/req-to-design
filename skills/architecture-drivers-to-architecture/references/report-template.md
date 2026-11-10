@@ -27,8 +27,8 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The decisions that set the structure and the platforms, by ID, with the comparison table of their options, as in decisions.md. The views show the result.>
 
 ## Design decisions
-| DEC | Title | Addresses | Deferred | Basis |
-|---|---|---|---|---|
+| DEC | Title | Addresses | Basis |
+|---|---|---|---|
 <Under the table, one comparison table for every other decision that addresses a primary driver, as in decisions.md.>
 
 ## Design concerns
@@ -61,10 +61,10 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|---|
 <Decided in: the question under "Decisions" that settled it, or the DAS that adopted it provisionally.>
 
-## Debt and deferred decisions
-| DEC | Debt or deferral | Decided in |
+## Debt and deferrals
+| Item | Debt, or deferral of a full-depth kind | Decided in |
 |---|---|---|
-<Decided in: the question under "Decisions", or the DAS of kind decision.>
+<A debt is on its DEC; a deferral of a point of this stage's full-depth kinds, or of one that rates high, is a hand-off (HND). Decided in: the question under "Decisions", or the DAS of kind decision.>
 
 ## Cost and team
 <The running cost from stated prices or placeholders, computed with a script; the work to build it; the skills it needs; the verdict.>
@@ -109,14 +109,14 @@ Status: answers applied · Updated: 2026-11-03 · Inputs as of: 3f2a9c1 · Stage
 
 Design decisions (excerpt):
 
-| DEC | Title | Addresses | Deferred | Basis |
-|---|---|---|---|---|
-| DEC-01 | One application with enforced modules, a stock sync worker and a server-rendered storefront | DRV-09, DRV-01, DRV-03 | no | inferred |
-| DEC-02 | Fail over to a second payment provider | DRV-02, DRV-10 | no | assumed |
-| DEC-03 | Stock changes arrive as events; ELM-02 keeps a short stock cache | DRV-03 | no | assumed |
-| DEC-06 | Fraud screening inside each provider's charge | DRV-01, DRV-06 | no | inferred |
-| DEC-09 | The provider's hosted card fields | DRV-08 | no | inferred |
-| DEC-10 | Browsers the storefront supports | DRV-11 | no | confirmed |
+| DEC | Title | Addresses | Basis |
+|---|---|---|---|
+| DEC-01 | One application with enforced modules, a stock sync worker and a server-rendered storefront | DRV-09, DRV-01, DRV-03 | inferred |
+| DEC-02 | Fail over to a second payment provider | DRV-02, DRV-10 | assumed |
+| DEC-03 | Stock changes arrive as events; ELM-02 keeps a short stock cache | DRV-03 | assumed |
+| DEC-06 | Fraud screening inside each provider's charge | DRV-01, DRV-06 | inferred |
+| DEC-09 | The provider's hosted card fields | DRV-08 | inferred |
+| DEC-10 | Browsers the storefront supports | DRV-11 | confirmed |
 
 DEC-02 and DEC-03 are assumed because each depends on an open assumption (DAS-02, DAS-03). DEC-03 also lists DAS-01, which question 3 confirmed, and is not assumed on its account. DEC-10 is confirmed by question 1. DEC-01 was not a question: the stated team and deadline behind DRV-09 leave no doubt about it, so it stays inferred.
 
@@ -195,9 +195,9 @@ Design parameters (excerpt):
 | failover_after | DEC-02 | question 2 |
 | stock_cache_lifetime | DEC-03 | DAS-03 |
 
-Debt and deferred decisions (excerpt):
+Debt and deferrals (excerpt):
 
-| DEC | Debt or deferral | Decided in |
+| Item | Debt, or deferral of a full-depth kind | Decided in |
 |---|---|---|
 | DEC-02 | debt: failover ships right after the spring sale | stage 1, question 5 |
 
@@ -262,8 +262,6 @@ debt:
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
   repay_when: Right after the spring sale
-deferred: false
-revisit_when: null
 as_is: new
 ```
 

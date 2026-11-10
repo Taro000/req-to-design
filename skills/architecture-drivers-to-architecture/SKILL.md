@@ -32,6 +32,7 @@ The quality chain states requirements and leaves the design to this chain. Two k
 - `docs/quality/`, read only: `context.yaml` (users, CUJs and their steps, and the shared facts: constraints CON, external systems EXT, operational facts OPF), `qiu/` (the contexts of use: kinds of device and situations), `fr/` (the functions to allocate, and the behaviour that the mechanisms must produce), and `qr/`, `nfr/` and `sli/` for the detail behind the drivers.
 - The open assumptions that this stage's judgments depend on: stage 1's in `das/`, and the quality chain's in `docs/quality/qas/`.
 - Open findings addressed to this stage: `fnd/` items with `to: architecture-drivers-to-architecture` and `status: open`.
+- Open hand-offs addressed to this stage: `hnd/` items with `to: architecture-drivers-to-architecture` and `status: open`.
 - The existing code, as recorded under `as_is` in `design-context.yaml`; read the parts you need.
 - On a re-run, this stage's report and items. Start from what changed since the report's `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
 
@@ -88,15 +89,15 @@ A walkthrough that fails sends you back to the decisions. A gap you cannot close
 
 ### 8. Debt, deferrals and transition
 
-Record the decisions deliberately deferred and the debts accepted for the budget or the deadline, following `decisions.md`. Each one is a business decision: asked when either rating is high, otherwise adopted provisionally as a DAS of kind `decision`. For an existing system, write the order of the changes as decisions, so that the system works after each step.
+Record the debts accepted for the budget or the deadline, and the deferrals of points of this stage's full-depth kinds, following `decisions.md`. Each one is a business decision: asked when either rating is high, otherwise adopted provisionally as a DAS of kind `decision`. Handing off any other point is not a business decision ("Decision depth" in `conventions.md`). For an existing system, write the order of the changes as decisions, so that the system works after each step.
 
 ### 9. Cost and team
 
 Check the whole design against the budget, the deadline and the team: the running cost of the chosen platform and services (from stated prices only; otherwise placeholders), the work to build it, and the skills it needs. When it does not fit, say which driver must give way. That is a business decision, and it is asked whenever a primary driver gives way. Write an issue for the quality chain when a target or a priority would have to move.
 
-### 10. Points to confirm
+### 10. Hand-offs
 
-A quality-chain item's `basis_note` may leave a point for the design to confirm, and stage 1 addresses the ones it could not settle to the stage that designs the part, under "Open gaps" in its report. Confirm each point addressed to this stage, citing it in the `basis_note` of the item that confirms it, or raise an issue for the quality chain when the design shows that it does not hold.
+Take up every open hand-off addressed to this stage whose trigger has come, as `conventions.md` describes ("Hand-offs"): decide it within its bounds, citing it in the `basis_note` of the items that decide it, or pass it on with the reason. Stage 1 hands off the points that quality-chain items leave for the design to confirm and that it could not settle: confirm each one addressed to this stage, or raise an issue for the quality chain when the design shows that it does not hold.
 
 ### 11. Findings
 
@@ -117,7 +118,7 @@ Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the dra
 - Every flow that crosses a trust boundary has been walked for the six kinds of threat.
 - Every decision has at least two options (or the reason only one was possible), a rationale, gains and costs. Every provisional design parameter has its basis.
 - The five views use the same elements and IDs, and pass the consistency rules.
-- Every point that stage 1 addressed to this stage, from what a quality-chain item leaves for the design to confirm, is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
+- Every open hand-off addressed to this stage whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
 - Every open finding addressed to this stage is accepted or rejected.
 - Each uncertain point has been asked or recorded as a DAS, and every business decision is under "Decisions" or is a DAS of kind `decision`, as `conventions.md` describes.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
@@ -136,4 +137,4 @@ Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the dra
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions, without asking for answers; name what to run next; and commit the files this run wrote: the report, the DEC, ELM, DAS and FND items, and the DAS files of other stages that it re-rated or answered. Tell the user also which files were written, how many decisions and elements, the platforms decided, which drivers are met, deferred or at risk, the findings processed and raised, the issues for the quality chain, and the next steps: run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run ("Findings between design stages" in `conventions.md`); re-run this stage when a review addresses a critical or major finding to it, but not for minor ones, which wait for its next run; then run `architecture-to-high-level-design`.
+Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions, without asking for answers; name what to run next; and commit the files this run wrote: the report, the DEC, ELM, DAS, HND and FND items, and the DAS and HND files of other stages that it re-rated, answered or took up. Tell the user also which files were written, how many decisions and elements, the platforms decided, which drivers are met, deferred or at risk, the findings processed and raised, the issues for the quality chain, and the next steps: run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run ("Findings between design stages" in `conventions.md`); re-run this stage when a review addresses a critical or major finding to it, but not for minor ones, which wait for its next run; then run `architecture-to-high-level-design`.

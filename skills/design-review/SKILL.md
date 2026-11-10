@@ -33,7 +33,7 @@ The first review of a stage checks all of it. Each later review is a diff review
 ## Inputs
 
 - The stage to review: 2 (architecture), 3 (high-level design), or 4 (the detailed design of one component, named by its element ID). If the user does not say, ask.
-- The stage's report and items, and what they were built from: the items of the earlier design stages, `design-context.yaml`, the assumptions in `das/`, and the quality chain's artifacts (read only), with its shared facts and its assumptions (QAS).
+- The stage's report and items, and what they were built from: the items of the earlier design stages, `design-context.yaml`, the assumptions in `das/`, the hand-offs in `hnd/`, and the quality chain's artifacts (read only), with its shared facts and its assumptions (QAS).
 - The findings in `fnd/`, whatever their status, those of earlier reviews included, so that a finding rejected with a reason is not raised again unless its inputs changed.
 - The review report of the same stage (for stage 4, of the same component), if there is one. This review replaces it: it keeps the answers still in effect and continues the question numbering, keeps the issues for the quality chain that the quality chain has not applied yet, and takes over the open gaps. Its other results are not inputs. Whether the report exists decides the kind of review:
   - None: this is the first review of the stage, a full review. Do every activity for the whole stage.
