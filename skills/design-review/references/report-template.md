@@ -71,19 +71,21 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 
 `docs/design/reviews/3-high-level-design.md`, the first review of stage 3, with this header:
 
-Status: answers applied · Updated: 2026-11-10 · Inputs as of: 4f2c9e1 · Review: full · Context: fresh · Items reviewed: IFC-01 to IFC-05, DAT-01 to DAT-06, DEC-11 and DEC-13
+Status: answers applied · Updated: 2026-11-10 · Inputs as of: 4f2c9e1 · Review: full · Context: fresh · Items reviewed: IFC-01 to IFC-06, DAT-01 to DAT-06, DEC-11 and DEC-13, HND-04 and HND-05
 
 Activities (excerpt):
 
 | # | Activity | What was done | Result | Findings |
 |---|---|---|---|---|
-| B1 | Trace acceptance criteria | Traced the 14 criteria of FR-01 to FR-05 through IFC-01 to IFC-05 and the flows | 13 traced; FR-05's second criterion (a sold-out item is shown as unavailable in the open cart) has no interface that carries stock to the cart | FND-02 |
+| B1 | Trace acceptance criteria | Traced the 14 criteria of FR-01 to FR-05 through IFC-01 to IFC-06 and the flows | 13 traced; FR-05's second criterion (a sold-out item is shown as unavailable in the open cart) has no interface that carries stock to the cart | FND-02 |
 | B2 | Recompute latency budgets | A script added NFR-02's three serial hops inside the load balancer, where SLI-02's binding observes checkouts, each at the 99.67th percentile (1.30 s, plus a 0.20 s margin), and counted the failover path: at most 3,000 slow checkouts per provider outage at peak | The normal path fits; the failover path uses 3.6% of the error budget per outage, which holds while outages stay rare | none |
 | B3 | Check error contracts | Followed every error case of IFC-01 and IFC-02, and what each caller does | When provider A times out, the flow charges provider B at once, while A's outcome is still unknown; A's key does not cover B | FND-01 |
 | B6 | Check data entities | Checked the writers and readers of DAT-01 to DAT-06 | One writer each; ELM-02 reads DAT-04 directly under a recorded read-only decision (DEC-11); reservations are a separate entity (DAT-06) | none |
 | B7 | Check SLI bindings | Compared SLI-02's unit event (one checkout submitted), vantage (system boundary) and counting rules with the binding on IFC-01 | The vantage holds: the load balancer is the system boundary. The binding counts requests, though, and none of its fields ties a resubmitted checkout to the first, so a checkout submitted again counts twice, against SLI-02's counting rule | FND-03 |
-| E3 | Re-rate open assumptions | Counted the items whose `premises` name each open DAS and QAS | DAS-06 keeps its ratings (medium, low): IFC-01 and IFC-02 depend on it. None is high, so none was asked. DAS-01, which IFC-03 rests on, is confirmed (stage 2, question 3) and is not open | none |
-| E5 | Look for copied statements | Read IFC-01 to IFC-05 and DAT-01 to DAT-06 for quality-chain wording | None; IFC-01's timing names NFR-02's 1.5 s next to its ID, a label rather than a copy | none |
+| B10 | Compare specs with IFCs | Compared checkout.openapi.yaml with IFC-01, and checked which IFCs need a spec | They match. IFC-02 and IFC-03 link their owners' documents. IFC-06, which no device and no other team calls, has no spec: its schema is handed off to implementation (HND-04), which is not a gap | none |
+| E3 | Re-rate open assumptions | Counted the items whose `premises` name each open DAS and QAS | DAS-06 keeps its ratings (medium, low): IFC-01 and IFC-02 depend on it. DAS-07 keeps its ratings (low, low): only DEC-11 depends on it. None is high, so none was asked. DAS-01, which IFC-03 rests on, is confirmed (stage 2, question 3) and is not open | none |
+| E5 | Look for copied statements | Read IFC-01 to IFC-06 and DAT-01 to DAT-06 for quality-chain wording | None; IFC-01's timing names NFR-02's 1.5 s next to its ID, a label rather than a copy | none |
+| E7 | Check hand-offs | Read HND-04 and HND-05, which stage 3 wrote, against the full-depth kinds of stage 3 | Each names its stage, its component and its trigger, and its bounds and origin exist. Neither hands off a point of stage 3's full-depth kinds: IFC-06 is used by no device and no other team, and its calls are on no path of a time SLO and move no money | none |
 
 Findings:
 
@@ -98,6 +100,7 @@ Open assumptions (excerpt):
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
 | DAS-06 | Timeouts on the payment path adopted provisionally | decision | medium | low | IFC-01, IFC-02 |
+| DAS-07 | Stock cache lifetime adopted provisionally | decision | low | low | DEC-11 |
 
 ## Example items
 
@@ -124,21 +127,21 @@ resolution: null
 
 ## Worked example: the next review of the same stage, a diff review
 
-The review above was committed as 7e2d5a8. Stage 3 then accepted FND-01 to FND-03: it changed IFC-01, IFC-02 and IFC-05, added IFC-06 (the cart API, which returns availability with every cart read), and redrew the failure paths of the checkout flow. Its items changed to accept critical and major findings, so the stage was reviewed again, and the report at the same path now has this header:
+The review above was committed as 7e2d5a8. Stage 3 then accepted FND-01 to FND-03: it changed IFC-01, IFC-02 and IFC-05, added IFC-07 (the cart API, which the cart page calls from the buyer's browser and which returns availability with every cart read), and redrew the failure paths of the checkout flow. Its items changed to accept critical and major findings, so the stage was reviewed again, and the report at the same path now has this header:
 
-Status: answers applied · Updated: 2026-11-12 · Inputs as of: 9c41b07 · Review: diff since 7e2d5a8 · Context: fresh · Items reviewed: IFC-01, IFC-02, IFC-05 and IFC-06, DAT-04 and DAT-06, the checkout flow and the cart screen flow
+Status: answers applied · Updated: 2026-11-12 · Inputs as of: 9c41b07 · Review: diff since 7e2d5a8 · Context: fresh · Items reviewed: IFC-01, IFC-02, IFC-05 and IFC-07, DAT-04 and DAT-06, the checkout flow and the cart screen flow
 
 Activities (excerpt):
 
 | # | Activity | What was done | Result | Findings |
 |---|---|---|---|---|
-| B1 | Trace acceptance criteria | Traced the criteria of FR-01, FR-04 and FR-05, the FRs that the changed IFCs serve | All traced; FR-05's second criterion goes through IFC-06's cart read | none |
+| B1 | Trace acceptance criteria | Traced the criteria of FR-01, FR-04 and FR-05, the FRs that the changed IFCs serve | All traced; FR-05's second criterion goes through IFC-07's cart read | none |
 | B2 | Recompute latency budgets | Ran the budget script again for NFR-02, with the failover path that settles A's charge before B is tried | The normal path fits; the failover path makes at most 3,000 checkouts slow per provider outage, 3.6% of the error budget | none |
-| B3 | Check error contracts | Followed every error case of IFC-01, IFC-02, IFC-05 and IFC-06, and what each caller does, through the failure paths of the checkout flow | A timeout at A is an unknown outcome, settled at A before B is tried; while it is unsettled, IFC-01 answers that the payment is being confirmed | none |
-| B4 | Check timeouts | Checked the timeouts on every call path through IFC-01, IFC-02 and IFC-06 | The payment path's worst case, 10.3 s, is below IFC-01's 15 s timeout; the cart read path holds too | none |
+| B3 | Check error contracts | Followed every error case of IFC-01, IFC-02, IFC-05 and IFC-07, and what each caller does, through the failure paths of the checkout flow | A timeout at A is an unknown outcome, settled at A before B is tried; while it is unsettled, IFC-01 answers that the payment is being confirmed | none |
+| B4 | Check timeouts | Checked the timeouts on every call path through IFC-01, IFC-02 and IFC-07 | The payment path's worst case, 10.3 s, is below IFC-01's 15 s timeout; the cart read path holds too | none |
 | B5 | Check event IFCs | No change in scope | | |
-| B6 | Check data entities | Checked DAT-04 and DAT-06, which IFC-06's cart read uses | DAT-04 keeps one writer, ELM-03, and ELM-02 reads it under the read-only decision DEC-11; DAT-06 is ELM-02's own | none |
-| B8 | Check shared conventions | Checked IFC-01, IFC-02, IFC-05 and IFC-06, and the specs of IFC-01 and IFC-06, against the shared conventions | All followed, except one error code that IFC-06 writes in camel case | FND-04 |
+| B6 | Check data entities | Checked DAT-04 and DAT-06, which IFC-07's cart read uses | DAT-04 keeps one writer, ELM-03, and ELM-02 reads it under the read-only decision DEC-11; DAT-06 is ELM-02's own | none |
+| B8 | Check shared conventions | Checked IFC-01, IFC-02, IFC-05 and IFC-07, and the specs of IFC-01 and IFC-07, against the shared conventions | All followed, except one error code that IFC-07 writes in camel case | FND-04 |
 | E1 | Read findings | Read FND-01 to FND-03, which stage 3 accepted, and the items they changed | Each change is in the items, cited in their `basis_note` | none |
 | E6 | Check points to confirm | No change in scope | | |
 
@@ -146,6 +149,6 @@ Findings:
 
 | FND | Title | Severity | To | Targets |
 |---|---|---|---|---|
-| FND-04 | An error code of IFC-06 does not follow the error convention's case | minor | architecture-to-high-level-design | IFC-06 |
+| FND-04 | An error code of IFC-07 does not follow the error convention's case | minor | architecture-to-high-level-design | IFC-07 |
 
 B5 and E6 had nothing in scope: no event IFC is in scope, and no point to confirm is new or changed. No finding was raised about IFC-03 or the other items that did not change. FND-04 is minor, so it starts no run: stage 3 processes it the next time it runs for another reason, and no review follows from it.

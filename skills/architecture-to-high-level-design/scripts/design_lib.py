@@ -315,6 +315,11 @@ class Project(object):
                 out.append(it)
         return sorted(out, key=lambda i: id_key(i.id))
 
+    def schema_handoffs(self, ident):
+        """The hand-offs that leave the schema of an interface to implementation: addressed to implementation, not
+        retired, with the interface in their origin."""
+        return [h for h in self.of("HND") if h.get("to") == IMPLEMENTATION and ident in as_list(h.get("origin"))]
+
     def component_of_finding(self, finding):
         """The components a finding addressed to stage 4 concerns."""
         out = set()
@@ -353,7 +358,7 @@ class Project(object):
             return das_owner(item.get("stage"))
         if p == "FND":
             raised_by = item.get("raised_by")
-            return raised_by if raised_by in SKILLS else None
+            return raised_by if raised_by in SKILLS + [IMPLEMENTATION] else None
         if p == "HND":
             sender = item.get("from")
             return sender if sender in STAGE_SKILLS.values() else None

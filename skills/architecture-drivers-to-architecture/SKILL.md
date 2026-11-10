@@ -19,7 +19,7 @@ The quality chain states requirements and leaves the design to this chain. Two k
 ## Read first
 
 - `references/conventions.md`: the design chain, what the quality chain leaves to the design, findings, the working language, judgment basis marks, the question protocol, decisions and assumptions, current state only, re-runs and finishing a run. Follow it exactly.
-- `references/artifacts.md`: where files go, and the schemas for DEC, ELM, DAS and FND (and the DRV items and `design-context.yaml` you read).
+- `references/artifacts.md`: where files go, and the schemas for DEC, ELM, HND, DAS and FND (and the DRV items and `design-context.yaml` you read).
 - `references/structures-and-mechanisms.md`: overall structures, platforms and device support, design mechanisms by quality, and the eight design concerns.
 - `references/decisions.md`: how to write and compare options, sensitive points, trade-offs, business decisions, parameters, debt, deferral and transition.
 - `references/views.md`: the five views, consistency rules, walkthroughs, the threat model and teams.
@@ -53,7 +53,7 @@ For an existing system, start from its current structure. Keeping it is always a
 
 Take the drivers in rank order. For each one, decide how the design will produce the response its scenario asks for, choosing design mechanisms from `structures-and-mechanisms.md` ("Design mechanisms by quality"). Record each choice as a decision with at least two real options, following `decisions.md`. Name the points the response is sensitive to, and the trade-offs with other drivers, in the decision and in both drivers' walkthroughs.
 
-The functional requirements say what can be observed from outside ("an order is charged at most once, even when the request is sent again"), never how. Choose here the mechanisms that produce that behaviour when it is demanding or spans elements: failover, idempotency, reconciliation, events instead of polling. Stage 3 writes them into the interfaces, and stage 4 into the modules.
+The functional requirements say what can be observed from outside ("an order is charged at most once, even when the request is sent again"), never how. When that behaviour is demanding or spans elements, choose here the mechanisms that produce it (failover, idempotency, reconciliation, events instead of polling), and decide only their principles and the promises they make across elements: the principles that "Decision depth" in `conventions.md` lists for stage 2, such as which operations are idempotent and what their keys cover, or the order of the timeouts along a call path. Leave how each operation applies them (its key, its error codes, its retries) to stage 3, and the values they run with (timeouts, waits, intervals, thresholds) to the stage that "Decision depth" names, with a hand-off for each sensitive point ("Design parameters" in `decisions.md`). Stage 3 writes the mechanisms into the interfaces, and stage 4 into the modules.
 
 When no option you know meets two primary drivers together, draft the option that serves the higher-ranked one, record the conflict in the decision and in both drivers' walkthroughs, and ask the business to choose, unless it already chose in stage 1. A primary driver left unmet is high severity, and the choice may become an issue for the quality chain.
 
@@ -65,7 +65,7 @@ Draw the data flows across trust boundaries, mark the assets that the security d
 
 ### 4. The eight design concerns
 
-Walk all eight concerns in `structures-and-mechanisms.md` ("Design concerns"). For each, point to the decisions that settle it, or write "standard practice is enough" with a one-line reason. Concerns that share a reason can share a line.
+Walk all eight concerns in `structures-and-mechanisms.md` ("Design concerns"). For each, point to the decisions that settle what this stage decides of it, and name the later stage that decides the rest, with its trigger, citing the hand-off when there is one; or write "standard practice is enough" with a one-line reason. A part left to a later stage that way is an answer, not a gap. Concerns that share a reason can share a line.
 
 ### 5. Elements and allocation
 
@@ -86,11 +86,11 @@ Draw the five views in Mermaid, following `views.md`: context, runtime, deployme
 - Walk every step of every CUJ through the elements and their interactions.
 - Walk every primary driver's scenario: where the stimulus enters, which decisions shape the response, whether the response can meet the measure as far as can be judged before anything is built, and what risk remains.
 
-A walkthrough that fails sends you back to the decisions. A gap you cannot close goes under "Open gaps", or becomes an issue for the quality chain when only a change there would close it.
+A walkthrough that fails sends you back to the decisions. A risk that a later stage settles within this stage's bounds, such as a value it sets, is not a gap: name that stage in the walkthrough. A gap you cannot close goes under "Open gaps", or becomes an issue for the quality chain when only a change there would close it.
 
 ### 8. Debt, deferrals and transition
 
-Record the debts accepted for the budget or the deadline, and the deferrals of points of this stage's full-depth kinds, following `decisions.md`. Each one is a business decision: asked when either rating is high, otherwise adopted provisionally as a DAS of kind `decision`. Handing off any other point is not a business decision ("Decision depth" in `conventions.md`). For an existing system, write the order of the changes as decisions, so that the system works after each step.
+Record the debts accepted for the budget or the deadline, and the deferrals of points of this stage's full-depth kinds or of points that rate high, following `decisions.md`. Each one is a business decision: asked when either rating is high, otherwise adopted provisionally as a DAS of kind `decision`. Handing off any other point is not a business decision ("Decision depth" in `conventions.md`). For an existing system, write the order of the changes as decisions, so that the system works after each step.
 
 ### 9. Cost and team
 
@@ -106,19 +106,22 @@ Process every open finding addressed to this stage, as `conventions.md` describe
 
 ### 12. Report and questions
 
-Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards" in `conventions.md`: list the points you were unsure of, together with the open DAS and QAS that your judgments depend on ("Assumptions"); rate them; ask the ones that need asking; and write a DAS for each of the others. At this stage, an uncertain overall structure, platform, vendor or managed service the system becomes tied to, or conflict between primary drivers usually rates high and is asked. Most provisional design parameters and choices inside one component rate low or medium; each becomes a DAS, of kind `decision` for a parameter. Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied". When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run; the next run applies the answers ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
+Write the DEC, ELM, HND and FND items as you draft them in steps 1 to 11, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards" in `conventions.md`: list the points you were unsure of, together with the open DAS and QAS that your judgments depend on ("Assumptions"); rate them; ask the ones that need asking; and write a DAS for each of the others. At this stage, an uncertain overall structure, platform, vendor or managed service the system becomes tied to, or conflict between primary drivers usually rates high and is asked, and so does a design parameter that this stage sets, since it sizes something paid for or hard to change. The tables of single operations, the values of other parameters and the choices inside one component are deferred, unless one rates high as it would stand once deferred ("Deferring the rest" in `conventions.md`): they are left to the stages that decide them, and are neither asked nor recorded as a DAS here. Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied". When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run; the next run applies the answers ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
 
 ## Exit criteria
 
-- Every primary driver is addressed by at least one decision. Every other driver is met by an existing decision, has its own, or is deferred with a reason and its risk.
+- Every primary driver is addressed by at least one decision. Every other driver is met by a decision, or by what a later stage decides within this stage's decisions; one that nothing will meet is a debt or a deferral, decided as a business decision with its risk.
 - Every decision respects every non-negotiable constraint, and its rationale says how for the constraints it touches.
 - The platforms and device support are fixed by a technology constraint or settled by a decision.
 - Every FR is allocated to at least one component. Every external system comes from an EXT entry or from a decision.
+- Every mechanism that spans elements has its principles decided, the ones that `conventions.md` lists for stage 2 ("Decision depth"). No table of single operations is written here.
 - Every CUJ and every primary driver has a walkthrough with no gap left unrecorded.
-- Each of the eight design concerns has a decision or a reason.
+- Each of the eight design concerns points to the decisions that settle it, to the later stage that decides the rest with its trigger, or to a reason that standard practice is enough.
 - Every flow that crosses a trust boundary has been walked for the six kinds of threat.
-- Every decision has at least two options (or the reason only one was possible), a rationale, gains and costs. Every provisional design parameter has its basis.
+- Every decision has at least two options (or the reason only one was possible), a rationale, gains and costs.
+- Every design parameter whose value this stage sets is of its full-depth kinds or rates high, and has its basis. Every other sensitive point names its parameter, and its value is handed off with its stage and trigger.
 - The five views use the same elements and IDs, and pass the consistency rules.
+- No point of this stage's full-depth kinds, and none that rates high, is handed off unless its deferral was decided as a business decision ("Decision depth" in `conventions.md`).
 - Every open hand-off addressed to this stage whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
 - Every open finding addressed to this stage is accepted or rejected.
 - Each uncertain point has been asked or recorded as a DAS, and every business decision is under "Decisions" or is a DAS of kind `decision`, as `conventions.md` describes.
@@ -131,6 +134,7 @@ Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the dra
 - Choosing a structure because it is popular. Separate services for a team of four, or one process for a system that must keep running when one part fails, are choices the drivers should make.
 - Taking a platform for granted. When no constraint fixes native or web, or which systems and browsers, a platform picked by habit can leave out users that the quality chain counts on.
 - Decisions with one option. If there was no alternative, say what forced it; otherwise the decision is only a description.
+- Deciding here what a later stage will know better: the key and the error codes of each operation, the value of each timeout or threshold. They are redone once the interfaces and the code are designed. Decide the principle and the bounds, and hand off the rest.
 - Boxes with no decision behind them. An element is not designed until someone can say why it exists and what it is for.
 - Copying the quality chain into the design. A decision or an element that restates an FR or a constraint goes stale when the chain changes; refer to it by ID.
 - Ignoring the team. A split that makes most changes cross two teams is slower than either team alone.

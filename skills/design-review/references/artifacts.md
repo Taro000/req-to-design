@@ -11,7 +11,7 @@
 - DAT: data entity (stage 3)
 - MOD: module (stage 4)
 - HND: hand-off (stages 1 to 4)
-- FND: finding (stages 2 to 4 and the review)
+- FND: finding (stages 2 to 4, the review and implementation)
 - DAS: assumption (every stage and the review)
 - The detailed design index (stage 4)
 
@@ -24,7 +24,7 @@ docs/design/
 ├── 1-architecture-drivers.md          stage 1 report
 ├── 2-architecture.md                  stage 2 report, views included
 ├── 3-high-level-design.md             stage 3 report, flows included
-├── 4-detailed-design.md               stage 4 index: every component and its status
+├── 4-detailed-design.md               stage 4 index: every component, its status and the depth of its modules; the hand-off to implementation
 ├── 4-detailed-design/ELM-02.md        stage 4 report, one per component
 ├── reviews/3-high-level-design.md     review report, one per reviewed stage (stage 4: per component, reviews/4-detailed-design-ELM-02.md): the latest review
 ├── design-context.yaml                the design context: constraints, teams, changes, stakeholders, current structure
@@ -32,11 +32,11 @@ docs/design/
 ├── dec/DEC-01.yaml …                  stages 2–4: design decisions
 ├── elm/ELM-01.yaml …                  stage 2: elements
 ├── ifc/IFC-01.yaml …                  stage 3: interfaces
-├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents
+├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents, for the interfaces that get one
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
 ├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
-├── fnd/FND-01.yaml …                  stages 2–4 and the review: findings
+├── fnd/FND-01.yaml …                  stages 2–4, the review and implementation: findings
 └── das/DAS-01.yaml …                  every stage and the review: assumptions made without asking
 ```
 
@@ -180,8 +180,7 @@ sensitive_points: [The error threshold that opens a provider's breaker - too low
 trade_offs: [{with: DRV-07, note: A second contract raises running cost}]
 assumptions: ["The second provider works like the first: hosted card fields, and fraud screening inside its charge (DAS-02)"]   # what the decision relies on; one you were unsure of and did not ask about is a DAS in premises
 depends_on: [DEC-01]
-parameters:                              # provisional design values: decisions (see "Numbers" and "Decisions" in conventions.md)
-  - {name: failover_after, value: 5 consecutive errors or 10 s of timeouts, basis: "Provisional starting value, answered with the second provider (stage 2, question 2); tune with the providers' error rates"}
+parameters: []                           # {name, value, basis}: provisional design values that this stage sets, each a decision ("Numbers" and "Decisions" in conventions.md); DEC-02 sets none, and leaves the value of its sensitive point to stage 3 (HND-02)
 debt:                                    # {what, why_accepted, repay_when}; null when the decision accepts none
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
@@ -233,7 +232,7 @@ errors:                                  # the error contract
   - {case: The same key while the first request is still running, signal: 409 with code CHECKOUT_IN_PROGRESS, caller_does: Wait and poll the order}
   - {case: The same key with a different cart, signal: 422 with code KEY_REUSED, caller_does: Start a new checkout with a new key}
 idempotency: One Idempotency-Key per order - the storefront creates it when the buyer first submits the cart and reuses it on every retry; the same key returns the first result
-timing:
+timing:                                  # on the paths of time SLOs and of money, every timeout and wait; on other calls, only their bounds, with the values handed off to stage 4
   timeout: 15 s (provisional; above the worst case of the payment path, 10.3 s, so that a payment still running is never abandoned; the 1.5 s of NFR-02 is a target, not a timeout)
   ordering: null                         # events: the ordering guarantee and its key
   delivery: null                         # events: at-most-once | at-least-once, and how duplicates are handled
@@ -244,7 +243,7 @@ sli_bindings:                            # how this interface yields the events 
     events: Each POST /v1/checkout request that reaches the load balancer in front of ELM-02 (the SLI's vantage is the system boundary); requests with the same Idempotency-Key are one checkout, counted by the first request
     fields: [request_id, idempotency_key, status, elapsed, user_agent]
     method: The load balancer's access logs, which already exist (OPF-02), with the Idempotency-Key header added to the logged fields
-spec: ifc/specs/checkout.openapi.yaml    # null for screens, and for interfaces whose spec belongs to an external system
+spec: ifc/specs/checkout.openapi.yaml    # null for screens, files and batches, for interfaces whose spec belongs to an external system, and for those whose schema is handed off to implementation
 as_is: new
 ```
 
@@ -275,25 +274,29 @@ id: MOD-02
 # ... the other common fields ...
 component: ELM-02
 name: Order total calculator
+depth: full                              # full | bounds: full for a module that moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions or migrates data, or that would rate high at bounds depth; bounds for any other, whose inside implementation decides
+depth_reason: Applies the shipping fee rules, which have several conditions   # full: the kind, or why it would rate high at bounds depth; bounds: null, or the question or DAS that deferred a module of those kinds
 responsibility: Calculates an order's total from its lines, shipping, coupons and points
 visibility: internal                     # public: other components call it through an IFC | internal: only modules of the same component call it
-interface:
+interface:                               # full: the whole contract; bounds: a summary - the signature, post and errors of each operation, with pre only when the caller must check something the module does not
   - operation: "calculateTotal(order: OrderDraft) -> Money"
     pre: Every line has a positive quantity and a price
     post: The total is the sum of the lines plus shipping, minus discounts, and never below zero
     errors: ["CouponExpired: the coupon was valid when added and has expired since"]
-invariants: []                           # what always holds for the module's state; [] when it holds no state
+invariants: []                           # what always holds for the module's state; [] when it holds no state, and at bounds depth
 depends_on: [MOD-05]
 functions: [FR-03]
 realizes: []                             # the IFC operations this module implements, each as the IFC ID and the operation's name ("IFC-01 POST /v1/checkout"); each operation has exactly one module in each component that takes part in it (MOD-01 realizes IFC-01 in ELM-02)
 drivers: [DRV-04]
 decisions: [DEC-14]
-behaviour: "Report section: MOD-02 Order total calculator"   # where its states, decision tables and algorithms are drawn
+behaviour: "Report section: MOD-02 Order total calculator"   # where its states, decision tables and algorithms are drawn; null at bounds depth
 verification:
   - {checks: "FR-03, criteria 1 to 3", how: Unit tests generated from the decision table}
-parameters: []
+parameters: []                           # its design values, at full depth only; implementation sets those of a module at bounds depth
 as_is: new
 ```
+
+A module at full depth is designed in detail: its whole contract here, and its states, decision tables, concurrency and the physical data that keeps its invariants in the component report. A module at bounds depth gets only its responsibility, a summary of its contract, the acceptance criteria allocated to it and its verification; implementation decides its inside ("Decision depth" in `conventions.md`).
 
 ## HND: hand-off (stages 1 to 4), `hnd/HND-01.yaml`
 
@@ -318,10 +321,10 @@ trigger: The next run of stage 3         # that stage's next run, its run for a 
 resolution: "Confirmed in DAT-04: changed_at keeps the time of the change, which IFC-03's messages carry"   # written by the stage that takes it up: the items that decide it, or why it passed it on
 ```
 
-A detail that stage 4 leaves to implementation, inside a module it designs in full:
+A detail that stage 4 leaves to implementation, inside a module at full depth:
 
 ```yaml
-id: HND-02
+id: HND-06
 title: Where the coupon rules are kept
 status: open                             # a hand-off to implementation stays open: the code and its tests decide it
 basis: inferred
@@ -337,7 +340,7 @@ trigger: When MOD-05 is implemented
 resolution: null
 ```
 
-## FND: finding (stages 2 to 4 and the review), `fnd/FND-01.yaml`
+## FND: finding (stages 2 to 4, the review and implementation), `fnd/FND-01.yaml`
 
 ```yaml
 id: FND-01
@@ -346,8 +349,8 @@ status: open                             # open | accepted | rejected; a rejecti
 basis: inferred
 basis_note: null
 premises: []
-raised_by: design-review                 # or the stage skill that found it
-raised_in: reviews/3-high-level-design.md
+raised_by: design-review                 # or the stage skill that found it, or implementation
+raised_in: reviews/3-high-level-design.md   # the report it was raised in; for implementation, the path of the code where the problem shows
 to: architecture-to-high-level-design    # the skill that must decide
 targets: [IFC-02]
 severity: critical                       # critical | major | minor
@@ -355,6 +358,8 @@ evidence: The checkout flow sends the charge to provider B as soon as provider A
 suggestion: Treat A's timeout as an unknown outcome and settle it at A (look up the key and cancel it if found) before charging B; if A cannot be settled within payment_wait, keep the order pending for reconciliation and tell the buyer the payment is being confirmed
 resolution: null                         # written by the addressed stage: what changed, or why the finding is rejected
 ```
+
+A finding raised by implementation has the same fields, with `raised_by: implementation`. It concerns a decision the code cannot keep, never a detail the design leaves open (`conventions.md`, "Findings between design stages").
 
 Severity:
 
@@ -383,7 +388,7 @@ answered_in: null                        # where, e.g. "stage 3, question 4" or 
 
 ## The detailed design index (stage 4), `docs/design/4-detailed-design.md`
 
-Stage 4 keeps one row per element of kind `component`. The tables of a data store are designed by the components that own the entities stored in it; external systems and nodes get no detailed design. `scripts/tables.py` writes the table from the elements, the component reports and the modules.
+Stage 4 keeps one row per element of kind `component`, with its modules at each depth. The tables of a data store are designed by the components that own the entities stored in it; external systems and nodes get no detailed design. `scripts/tables.py` writes the table from the elements, the component reports and the modules. Under it, the hand-off to implementation is what coding agents read first: the rules for treating the design, then every open hand-off addressed to implementation, whichever stage wrote it, in a second table that `scripts/tables.py` writes from the hand-offs.
 
 ```markdown
 # Detailed design index: <system name>
@@ -391,12 +396,28 @@ Stage 4 keeps one row per element of kind `component`. The tables of a data stor
 Updated: <date> · Inputs as of: <commit, or "none">
 
 <!-- generated: components -->
-| Component | Name | Status | Report | Modules |
-|---|---|---|---|---|
-| ELM-01 | Storefront | not started | — | — |
-| ELM-02 | Store API | answers applied | 4-detailed-design/ELM-02.md | MOD-01 to MOD-10 |
-| ELM-03 | Stock sync worker | not started | — | — |
+| Component | Name | Status | Report | Full depth | Bounds depth |
+|---|---|---|---|---|---|
+| ELM-01 | Storefront | not started | — | — | — |
+| ELM-02 | Store API | answers applied | 4-detailed-design/ELM-02.md | MOD-01 to MOD-07, MOD-09 to MOD-10 | MOD-08, MOD-11 to MOD-12 |
+| ELM-03 | Stock sync worker | not started | — | — | — |
+<!-- /generated -->
+
+## Hand-off to implementation
+
+- Implement each component within its MOD items and its component report: every module within its MOD item and the report's Types, Data and Verification approach; a module at full depth also within the report section its `behaviour` names, and the caches, screens and design parameters the report gives it. Keep the interfaces (IFC), data entities (DAT) and decisions (DEC) that bind the component.
+- Decide what the design leaves open: the inside of each module at bounds depth, the tables beyond what the reports' Data sections give (within the DATs), the values the design does not set, and the hand-offs below. The code and its tests hold these decisions; do not write them back into `docs/design/`.
+- When the code cannot keep a decision the design made (a contract, an invariant, an interface or a decision that does not work as written, or two items that contradict each other), do not work around it in silence: write a finding, and tell the user which stage to re-run. A detail the design leaves open is never a finding. A finding is a new file in `docs/design/fnd/`, numbered after the highest FND there, with the fields the other files there have (`references/artifacts.md` of the design skills defines them):
+  - `raised_by: implementation`, and in `raised_in` the path of the code where the problem shows;
+  - `to`: the skill that wrote the item: `requirements-to-architecture-drivers` for a DRV, `architecture-drivers-to-architecture` for an ELM, `architecture-to-high-level-design` for an IFC or a DAT, `high-level-design-to-detailed-design` for a MOD, and for a DEC the skill of its `stage`;
+  - `severity`: `critical` when a primary driver, a non-negotiable constraint or a CUJ cannot be met as designed, `major` when something is met only in part or two items contradict each other, and `minor` otherwise.
+
+<!-- generated: implementation-handoffs -->
+| HND | Component | Title | Trigger |
+|---|---|---|---|
+| HND-04 | ELM-02 | The schemas of the interfaces between elements that ELM-02 provides | When ELM-02 is implemented |
+| HND-06 | ELM-02 | Where the coupon rules are kept | When MOD-05 is implemented |
 <!-- /generated -->
 ```
 
-Status: `not started` when the component has no report, otherwise the status in its report's header (`draft`, `waiting for answers` or `answers applied`), written with the glossary's terms in the working language.
+Status: `not started` when the component has no report, otherwise the status in its report's header (`draft`, `waiting for answers` or `answers applied`), written with the glossary's terms in the working language. A component's modules with no `depth` yet, written by an earlier version, are listed under full depth. Write the three rules of the hand-off as they stand here, in the working language, whatever else changes in the index.

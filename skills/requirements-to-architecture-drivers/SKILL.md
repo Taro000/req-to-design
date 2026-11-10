@@ -17,7 +17,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 ## Read first
 
 - `references/conventions.md`: the design chain, what the quality chain leaves to the design, the working language, judgment basis marks, the question protocol, decisions, assumptions, re-runs and how to finish a run. Follow it exactly.
-- `references/artifacts.md`: where files go, and the schemas for `design-context.yaml`, DRV and DAS.
+- `references/artifacts.md`: where files go, and the schemas for `design-context.yaml`, DRV, HND and DAS.
 - `references/reading-the-quality-chain.md`: what each quality-chain item gives this stage, including its shared facts, design inputs, SLIs and assumptions.
 - `references/drivers.md`: driver kinds, how to write scenarios, constraints and principles, and how to rank.
 - `references/report-template.md`: the report layout and a worked example.
@@ -35,7 +35,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 
   A missing one is an uncertain point, rated like any other (step 13). A missing budget or deadline usually has high breadth, because it can move the line between the primary drivers and the rest, so it is asked.
 - Code and infrastructure definitions in the repository, when there are any.
-- On a re-run: this stage's report (the diff starts from this stage's last run, as "Re-running a stage" in `conventions.md` finds it), `design-context.yaml`, `drv/`, the DAS files this stage wrote or depends on, and the open findings addressed to this stage: `fnd/` items with `to: requirements-to-architecture-drivers` and `status: open`.
+- On a re-run: this stage's report (the diff starts from this stage's last run, as "Re-running a stage" in `conventions.md` finds it), `design-context.yaml`, `drv/`, the DAS files this stage wrote or depends on, the open findings addressed to this stage (`fnd/` items with `to: requirements-to-architecture-drivers` and `status: open`), and the open hand-offs addressed to it (`hnd/` items with the same `to` and `status: open`), such as a point of its own that waits for an event.
 
 Essential inputs: at least one functional requirement and at least one quality requirement, from the quality chain or from the user. If either is missing, ask for it (or suggest running the quality chain first) before drafting.
 
@@ -102,7 +102,7 @@ Write the few rules that apply to the whole system and follow from several drive
 
 Rank every driver except principles by business priority and design difficulty, following `drivers.md` ("Ranking"). The candidates are the drivers from emphasized and minimum-line QRs, every constraint, every change scenario, and every QR excluded this cycle whose later inclusion would mean changing the structure. Check each excluded QR for that cost, and say why it is or is not a candidate.
 
-Mark the primary drivers. The ranking is a business decision ("Decisions" in `conventions.md`), and the order of the primary drivers has high breadth, so it is asked: one question that shows the primary drivers in order, with the drafted ranking as the first option (`drivers.md`, "Primary drivers").
+Mark the primary drivers, at most twelve. The ranking is a business decision ("Decisions" in `conventions.md`), and the order of the primary drivers has high breadth, so it is asked: one question that shows the primary drivers in order, with the drafted ranking as the first option. When the rules mark more than twelve and merging the scenarios that are too fine leaves more than twelve, the same question asks which to merge or which to keep primary (`drivers.md`, "Primary drivers"). How hard a driver below the line is, beyond what keeps it there, is stage 2's to judge.
 
 ### 11. Conflicts
 
@@ -114,13 +114,14 @@ Before stage 2 spends effort, check every primary driver against the budget, the
 
 ### 13. Findings, report, questions, items
 
-On a re-run, start from what changed since this stage's last run, process every open finding addressed to this stage, and apply the answers written under the report's "Unanswered questions" and those recorded in the DAS files this stage wrote ("Re-running a stage", "Findings between design stages", "Draft first, ask afterwards" and "Assumptions" in `conventions.md`).
+On a re-run, start from what changed since this stage's last run, process every open finding addressed to this stage, take up every open hand-off addressed to it whose trigger has come, and apply the answers written under the report's "Unanswered questions" and those recorded in the DAS files this stage wrote ("Re-running a stage", "Findings between design stages", "Hand-offs", "Draft first, ask afterwards" and "Assumptions" in `conventions.md`).
 
 Write `design-context.yaml`, the DRV items, the hand-offs and the findings you process as you draft them in steps 1 to 12, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards", "Decisions" and "Assumptions" in `conventions.md`: list the uncertain points, rate the breadth and severity of each, ask about the points that are high on either scale, and record every other point as a DAS item. In this stage:
 
 - Usually high, so asked: the ranking of the primary drivers; a missing budget or deadline; whether a technology constraint or a deadline can change; a quality-chain QAS that the ranking or a primary driver's measure rests on (its answer goes under "Issues for the quality chain").
 - Asked whatever the ratings: a contradiction between inputs (a DIN against a CUJ or a QR, the code against a constraint), and the content of a law, standard, contract or policy that the inputs name but do not give, when a judgment in this stage depends on it (what an external service's SLA promises).
-- Usually below the bar, so recorded as DAS: the difficulty of a driver that stays on the same side of the primary line either way; setting aside a minimum-line QR, when you are unsure whether it could decide between designs; a stakeholder's concern that the inputs imply but do not state.
+- Usually below the bar, so recorded as DAS: setting aside a minimum-line QR, when you are unsure whether it could decide between designs; a stakeholder's concern that the inputs imply but do not state.
+- Deferred, so neither asked nor recorded as DAS, unless one rates high as it would stand once deferred ("Deferring the rest" in `conventions.md`): how hard a driver below the primary line is, beyond what keeps it there, and a point that a quality-chain item leaves for the design to confirm and that this stage hands off. The stage that decides each one rates it then.
 
 Each driver lists in `premises` the design-context entries, shared facts (CON, EXT, OPF) and assumptions (DAS, QAS) it rests on, even when `sources` names them too: `sources` says what the driver is built from, and `premises` finds it when one of them changes. A chain item that rests on an open QAS passes it on to the drivers that use the part it covers (`reading-the-quality-chain.md`, "The quality chain's assumptions"). An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`. A driver that rests on a QAS that a question answered cites the answer in `basis_note` and is not `assumed` on its account.
 
@@ -136,9 +137,12 @@ Apply the answers to the items in place, check the exit criteria, set the report
 - Every excluded QR has been checked for the cost of adding it later.
 - Every quality, change, observability and security driver has a complete scenario that names shared facts by ID. Its measure names the chain's measure by ID and copies nothing of it, or uses a stated number or a named placeholder.
 - Every constraint says whether it is negotiable.
-- The ranking table marks the primary drivers, and the ranking is recorded under "Decisions".
+- The ranking table marks at most twelve primary drivers, and the ranking is recorded under "Decisions".
+- Every point that a quality-chain item leaves for the design to confirm is a driver, a constraint, a question, a DAS, or a hand-off to the stage that designs the part, with its trigger.
 - The concern inventory accounts for every input item. Every missing input of the design context was asked or recorded as a DAS, and every number still missing is a named placeholder.
 - No number appears that the inputs do not give, except provisional design parameters with their basis.
+- No point of this stage's full-depth kinds, and none that rates high, is handed off unless its deferral was decided as a business decision ("Decision depth" in `conventions.md`).
+- Every open hand-off addressed to this stage whose trigger has come is decided or passed on.
 - Every open finding addressed to this stage is accepted or rejected.
 - Every point high on either scale was asked, and so were every contradiction and the content of every law, standard, contract or policy that the inputs name but do not give, when a judgment in this stage depends on it; every other uncertain point is a DAS.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
@@ -148,6 +152,7 @@ Apply the answers to the items in place, check the exit criteria, set the report
 ## Pitfalls
 
 - Treating every QR as a driver. Most quality requirements are met by any sensible design; drivers are the ones that decide between designs.
+- Letting the primary drivers grow past twelve. Stage 2 then designs for everything first, which is the same as designing for nothing first: merge the scenarios that are too fine, or ask the business to choose.
 - Starting from a technology ("we use microservices") before the drivers exist. The technology then becomes the requirement.
 - Inferring a platform from the kinds of device in the contexts of use. "Smartphone" leaves native or web, and which systems, to stage 2, unless an input fixes them.
 - Scenarios without a measure ("the system is fast"). Nobody can check a design against them.

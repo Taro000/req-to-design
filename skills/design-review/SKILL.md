@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: Reviews the output of stage 2, 3 or 4 of the design chain (architecture-drivers-to-architecture, architecture-to-high-level-design, high-level-design-to-detailed-design) in a fresh context and writes findings addressed to the stage that must decide. Every check is an activity with a recorded result - walking drivers and CUJs through the design for risks, sensitive points and trade-offs; judging whether it fits its use, survives planned changes, can be built for its cost and is clear; checking views, allocations, decisions and platforms; tracing acceptance criteria, recomputing latency budgets, checking data ownership, error contracts, unknown outcomes and SLI bindings; checking modules for complete states, decision tables and verifiability; and, at every stage, premises, assumptions that should have been asked, and points left for the design to confirm. Never edits the design. Use it after any design stage, or when asked to review or evaluate an architecture, a high-level design or a detailed design.
+description: Reviews the output of stage 2, 3 or 4 of the design chain (architecture-drivers-to-architecture, architecture-to-high-level-design, high-level-design-to-detailed-design) in a fresh context and writes findings addressed to the stage that must decide. Every check is an activity with a recorded result - walking drivers and CUJs through the design for risks, sensitive points and trade-offs; judging whether it fits its use, survives planned changes, can be built for its cost and is clear; checking views, allocations, decisions and platforms; tracing acceptance criteria, recomputing latency budgets, checking data ownership, error contracts, unknown outcomes and SLI bindings; checking module depths, states, decision tables and verifiability; and, at every stage, premises, assumptions that should have been asked, and points left for the design to confirm. Never edits the design. Use it after any design stage, or when asked to review or evaluate an architecture, a high-level design or a detailed design.
 license: MIT
 metadata:
   version: "0.2.0"
@@ -92,6 +92,7 @@ Check the exit criteria, make the report match the items, and set the report's s
 
 - Reviewing in the conversation that wrote the design, without saying so.
 - Ticking a checklist instead of doing the work. A budget is checked by adding it up.
+- Counting a detail that the stage handed off as missing. The stage it is handed to decides it when its trigger comes; a finding about it now starts a run that decides nothing.
 - Fixing the design during the review. The stage that owns an item decides; the review's job is evidence.
 - Findings without evidence ("seems risky"). The addressed stage cannot accept or reject what it cannot check.
 - Letting minor findings bury critical ones. Order the findings by severity, and keep the minor ones short.
