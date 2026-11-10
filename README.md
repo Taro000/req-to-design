@@ -16,11 +16,11 @@ Agent skills that turn a system's requirements into its design: first the driver
 |---|---|---|---|
 | 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`), including the design decisions it found in its inputs; the design context, which never comes from users (technology constraints; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
 | 2 | `architecture-drivers-to-architecture` | Stage 1 output | Design decisions with their options and rationale, elements, five views, a threat model |
-| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces with OpenAPI and AsyncAPI documents, end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
+| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces (with OpenAPI and AsyncAPI documents for those that devices, other teams or external systems use), end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
 | 4 | `high-level-design-to-detailed-design` | Stage 3 output, one component per run | Modules with contracts and a verification approach; states, decision tables and data constraints only for the modules where a mistake in the code is costly; the hand-off to implementation |
 | Review | `design-review` | The output of stage 2, 3 or 4 | Findings addressed to the stage that must decide |
 
-Run the review in a fresh session, not in the one that wrote the design. Findings go back to the stage that owns the items; re-run that stage to accept or reject them. The skills never write to `docs/quality/`: when the design shows that a requirement should change, the report says so, and you decide whether to re-run the quality chain.
+Run the review in a fresh session, not in the one that wrote the design. Findings go back to the stage that owns the items; re-run that stage to accept or reject them when a finding is critical or major. Minor findings wait until the stage runs again for another reason. Review a stage again only after a critical or major finding has changed its items; that review looks only at what changed since the last one. The skills never write to `docs/quality/`: when the design shows that a requirement should change, the report says so, and you decide whether to re-run the quality chain.
 
 ## Install
 
@@ -43,7 +43,7 @@ Run each step in a fresh request:
 
 1. "Derive the architecture drivers from docs/quality/. Technology constraints: … Budget and deadline: … Teams: … Roadmap: …"
 2. "Design the architecture from the drivers."
-3. In a new session: "Review the architecture." If there are findings: "Re-run the architecture stage to resolve the findings."
+3. In a new session: "Review the architecture." If there are critical or major findings: "Re-run the architecture stage to resolve the findings." If that changed the architecture, review it again in a new session.
 4. "Write the high-level design." Review it in a new session, and resolve its findings the same way.
 5. "Write the detailed design of ELM-02." Repeat for every component listed in `docs/design/4-detailed-design.md`, and review each one.
 6. Implement from `docs/design/4-detailed-design.md`. Its hand-off to implementation tells the coding agent what the design decides, what the code decides, and how to raise a finding when the code cannot keep a design decision.
@@ -55,6 +55,8 @@ Each stage decides in full only what is hard to change later: the kinds of point
 Each stage is a long task. The detailed design runs once per component; it writes in detail only the modules where a mistake in the code is costly, and hands the rest to implementation. Plan time to review the documents and to answer the questions that matter most.
 
 Reports and items show only the current state; git keeps the history. Each skill ends its run by committing the files it wrote, with the reasons in the commit message, and the next run reads what changed since then.
+
+Before it commits, each skill runs two scripts from its `scripts/` directory. `tables.py` writes the index tables of the reports from the YAML items, so that no table is a hand-made copy that can drift. `check.py` checks what needs no judgment, so that reviews do not spend findings on it: that every YAML file parses and no value is cut off at an unquoted ` #`, that every ID points at an item that exists, that the basis marks match the assumptions, that functions and drivers are allocated consistently from elements to interfaces and modules, and that the OpenAPI and AsyncAPI documents have the operations, error statuses and codes of their interfaces. The skill fixes what the check reports in its own files. The scripts need Python 3.8 or later and no packages. To run the check yourself, from the project's root: `python3 <skill directory>/scripts/check.py` (for Claude Code, the skill directory is `.claude/skills/<skill>/`).
 
 Questions and artifacts follow your language and your project's documentation language. The skills themselves are written in English.
 
@@ -72,7 +74,7 @@ docs/design/
 └── ifc/specs/                                            OpenAPI and AsyncAPI documents
 ```
 
-YAML keys and IDs are fixed in English, so every stage can read every other stage's files. Views, flows and state diagrams are Mermaid diagrams inside the reports.
+YAML keys and IDs are fixed in English, so every stage can read every other stage's files. Views, flows and state diagrams are Mermaid diagrams inside the reports. The index tables of the reports, between `<!-- generated: ... -->` marks, are written from the YAML items; edit the items, not those tables.
 
 ## What the skills will not do
 
@@ -84,11 +86,12 @@ YAML keys and IDs are fixed in English, so every stage can read every other stag
 
 ## Maintaining
 
-`references/conventions.md`, `references/artifacts.md` and `references/glossary.md` are identical in every skill, because `npx skills add --skill` installs a single skill directory. Edit them in `shared/`, then run:
+`references/conventions.md`, `references/artifacts.md`, `references/glossary.md` and the scripts in `scripts/` are identical in every skill, because `npx skills add --skill` installs a single skill directory. Edit them in `shared/` and `shared/scripts/`, then run:
 
 ```sh
 scripts/sync-shared.sh          # copy shared/ into every skill
 scripts/sync-shared.sh --check  # fail if any copy differs
+python3 -m unittest discover -s tests   # test the scripts, and that the YAML examples in the skills parse
 ```
 
 ## License

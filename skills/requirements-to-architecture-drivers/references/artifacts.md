@@ -32,7 +32,7 @@ docs/design/
 ├── dec/DEC-01.yaml …                  stages 2–4: design decisions
 ├── elm/ELM-01.yaml …                  stage 2: elements
 ├── ifc/IFC-01.yaml …                  stage 3: interfaces
-├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents
+├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents, for the interfaces that get one
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
 ├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
@@ -42,11 +42,13 @@ docs/design/
 
 - One item per file. The file name is the ID: `dec/DEC-07.yaml`.
 - IDs are the prefix plus a zero-padded number (`DEC-07`, then `DEC-100` when needed). Never reuse or renumber an ID.
-- The YAML items are the source of truth. A report summarizes and indexes them and never restates what an item says; it holds what only the report records (views, flows, walkthroughs, budgets, reasons, decisions, issues for the quality chain). The items are written while the stage drafts, and answers change them in place. If the report and an item disagree, ask which one is right; do not silently pick one.
+- Write every ID in full wherever you cite it, in lists inside a text too ("FND-30, FND-31", not "FND-30, 31" or "FND-30・31"). The scripts find a citation by its full ID only.
+- The YAML items are the source of truth. A report summarizes and indexes them and never restates what an item says; it holds what only the report records (views, flows, walkthroughs, budgets, reasons, decisions, issues for the quality chain). Its index tables are written from the items by `scripts/tables.py` ("Scripts" in `conventions.md`). The items are written while the stage drafts, and answers change them in place. If the report and an item disagree, ask which one is right; do not silently pick one.
 - Items hold the current state only: no changelog, no version, no dates of changes. Git keeps the history (`conventions.md`, "Current state only").
 - `design-context.yaml` holds the design context that the other items refer to. Stage 1 writes it; later stages and reviews only add facts the user gives them (`conventions.md`, "Judgment basis"). It is the only file that holds more than one entry.
 - Views, flows, state diagrams and decision tables live in the reports, as Mermaid diagrams and tables. Items refer to them by the report's section heading.
 - Keep the YAML valid. Quote a free-text value when it contains `: ` or ` #`, or starts with one of `[ { * & ! | > ' " % @` or a backtick, and quote any value inside `[ ]` or `{ }` that contains a comma or `: `. Cite decisions and questions without `#` ("decision 12", "design stage 3, decision 4"): an unquoted ` #` starts a comment and silently cuts off the rest of the value.
+- The comments in the schemas below explain the fields; do not copy them into the items. In an item, a comment after an unquoted value is reported as a value cut off at ` #`.
 
 ## Common fields
 
@@ -160,7 +162,7 @@ id: DEC-02
 # ... the other common fields ...  (premises: [TC-01, CHG-01, DAS-02])
 stage: architecture                      # architecture | high-level-design | detailed-design
 question: How does checkout keep confirming orders when the payment provider fails?
-addresses: [DRV-02, DRV-10]              # the drivers, interfaces or findings the decision answers
+addresses: [DRV-02, DRV-10]              # the drivers, interfaces or findings the decision answers, or the FR, QR, NFR or SLI it answers directly
 options:
   - name: One provider, retries with back-off
     effect: Rides out short errors; an outage still stops checkout
@@ -178,8 +180,7 @@ sensitive_points: [The error threshold that opens a provider's breaker - too low
 trade_offs: [{with: DRV-07, note: A second contract raises running cost}]
 assumptions: ["The second provider works like the first: hosted card fields, and fraud screening inside its charge (DAS-02)"]   # what the decision relies on; one you were unsure of and did not ask about is a DAS in premises
 depends_on: [DEC-01]
-parameters:                              # provisional design values: decisions (see "Numbers" and "Decisions" in conventions.md)
-  - {name: failover_after, value: 5 consecutive errors or 10 s of timeouts, basis: "Provisional starting value, answered with the second provider (stage 2, question 2); tune with the providers' error rates"}
+parameters: []                           # {name, value, basis}: provisional design values that this stage sets, each a decision ("Numbers" and "Decisions" in conventions.md); DEC-02 sets none, and leaves the value of its sensitive point to stage 3 (HND-02)
 debt:                                    # {what, why_accepted, repay_when}; null when the decision accepts none
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
@@ -231,7 +232,7 @@ errors:                                  # the error contract
   - {case: The same key while the first request is still running, signal: 409 with code CHECKOUT_IN_PROGRESS, caller_does: Wait and poll the order}
   - {case: The same key with a different cart, signal: 422 with code KEY_REUSED, caller_does: Start a new checkout with a new key}
 idempotency: One Idempotency-Key per order - the storefront creates it when the buyer first submits the cart and reuses it on every retry; the same key returns the first result
-timing:
+timing:                                  # on the paths of time SLOs and of money, every timeout and wait; on other calls, only their bounds, with the values handed off to stage 4
   timeout: 15 s (provisional; above the worst case of the payment path, 10.3 s, so that a payment still running is never abandoned; the 1.5 s of NFR-02 is a target, not a timeout)
   ordering: null                         # events: the ordering guarantee and its key
   delivery: null                         # events: at-most-once | at-least-once, and how duplicates are handled
@@ -242,7 +243,7 @@ sli_bindings:                            # how this interface yields the events 
     events: Each POST /v1/checkout request that reaches the load balancer in front of ELM-02 (the SLI's vantage is the system boundary); requests with the same Idempotency-Key are one checkout, counted by the first request
     fields: [request_id, idempotency_key, status, elapsed, user_agent]
     method: The load balancer's access logs, which already exist (OPF-02), with the Idempotency-Key header added to the logged fields
-spec: ifc/specs/checkout.openapi.yaml    # null for screens, and for interfaces whose spec belongs to an external system
+spec: ifc/specs/checkout.openapi.yaml    # null for screens, files and batches, for interfaces whose spec belongs to an external system, and for those whose schema is handed off to implementation
 as_is: new
 ```
 
@@ -285,7 +286,7 @@ interface:                               # full: the whole contract; bounds: a s
 invariants: []                           # what always holds for the module's state; [] when it holds no state, and at bounds depth
 depends_on: [MOD-05]
 functions: [FR-03]
-realizes: []                             # the IFC operations this module implements; each operation has exactly one module in each component that takes part in it (MOD-01 realizes IFC-01 in ELM-02)
+realizes: []                             # the IFC operations this module implements, each as the IFC ID and the operation's name ("IFC-01 POST /v1/checkout"); each operation has exactly one module in each component that takes part in it (MOD-01 realizes IFC-01 in ELM-02)
 drivers: [DRV-04]
 decisions: [DEC-14]
 behaviour: "Report section: MOD-02 Order total calculator"   # where its states, decision tables and algorithms are drawn; null at bounds depth
@@ -323,7 +324,7 @@ resolution: "Confirmed in DAT-04: changed_at keeps the time of the change, which
 A detail that stage 4 leaves to implementation, inside a module at full depth:
 
 ```yaml
-id: HND-02
+id: HND-06
 title: Where the coupon rules are kept
 status: open                             # a hand-off to implementation stays open: the code and its tests decide it
 basis: inferred
@@ -349,7 +350,7 @@ basis: inferred
 basis_note: null
 premises: []
 raised_by: design-review                 # or the stage skill that found it, or implementation
-raised_in: reviews/3-high-level-design.md   # the report it was raised in; for implementation, the module and the path of the code
+raised_in: reviews/3-high-level-design.md   # the report it was raised in; for implementation, the path of the code where the problem shows
 to: architecture-to-high-level-design    # the skill that must decide
 targets: [IFC-02]
 severity: critical                       # critical | major | minor
@@ -387,31 +388,36 @@ answered_in: null                        # where, e.g. "stage 3, question 4" or 
 
 ## The detailed design index (stage 4), `docs/design/4-detailed-design.md`
 
-Stage 4 keeps one row per element of kind `component`, with its modules at each depth. The tables of a data store are designed by the components that own the entities stored in it; external systems and nodes get no detailed design. Under the table, the hand-off to implementation is what coding agents read first: the rules for treating the design, then every open hand-off addressed to implementation, whichever stage wrote it.
+Stage 4 keeps one row per element of kind `component`, with its modules at each depth. The tables of a data store are designed by the components that own the entities stored in it; external systems and nodes get no detailed design. `scripts/tables.py` writes the table from the elements, the component reports and the modules. Under it, the hand-off to implementation is what coding agents read first: the rules for treating the design, then every open hand-off addressed to implementation, whichever stage wrote it, in a second table that `scripts/tables.py` writes from the hand-offs.
 
 ```markdown
 # Detailed design index: <system name>
 
 Updated: <date> · Inputs as of: <commit, or "none">
 
+<!-- generated: components -->
 | Component | Name | Status | Report | Full depth | Bounds depth |
 |---|---|---|---|---|---|
-| ELM-01 | Storefront | not started | | | |
-| ELM-02 | Store API | answers applied | 4-detailed-design/ELM-02.md | MOD-01 to MOD-07, MOD-09, MOD-10 | MOD-08, MOD-11, MOD-12 |
-| ELM-03 | Stock sync worker | not started | | | |
+| ELM-01 | Storefront | not started | — | — | — |
+| ELM-02 | Store API | answers applied | 4-detailed-design/ELM-02.md | MOD-01 to MOD-07, MOD-09 to MOD-10 | MOD-08, MOD-11 to MOD-12 |
+| ELM-03 | Stock sync worker | not started | — | — | — |
+<!-- /generated -->
 
 ## Hand-off to implementation
 
 - Implement each component within its MOD items and its component report: every module within its MOD item and the report's Types, Data and Verification approach; a module at full depth also within the report section its `behaviour` names, and the caches, screens and design parameters the report gives it. Keep the interfaces (IFC), data entities (DAT) and decisions (DEC) that bind the component.
 - Decide what the design leaves open: the inside of each module at bounds depth, the tables beyond what the reports' Data sections give (within the DATs), the values the design does not set, and the hand-offs below. The code and its tests hold these decisions; do not write them back into `docs/design/`.
 - When the code cannot keep a decision the design made (a contract, an invariant, an interface or a decision that does not work as written, or two items that contradict each other), do not work around it in silence: write a finding, and tell the user which stage to re-run. A detail the design leaves open is never a finding. A finding is a new file in `docs/design/fnd/`, numbered after the highest FND there, with the fields the other files there have (`references/artifacts.md` of the design skills defines them):
-  - `raised_by: implementation`, and in `raised_in` the module and the path of the code;
+  - `raised_by: implementation`, and in `raised_in` the path of the code where the problem shows;
   - `to`: the skill that wrote the item: `requirements-to-architecture-drivers` for a DRV, `architecture-drivers-to-architecture` for an ELM, `architecture-to-high-level-design` for an IFC or a DAT, `high-level-design-to-detailed-design` for a MOD, and for a DEC the skill of its `stage`;
   - `severity`: `critical` when a primary driver, a non-negotiable constraint or a CUJ cannot be met as designed, `major` when something is met only in part or two items contradict each other, and `minor` otherwise.
 
+<!-- generated: implementation-handoffs -->
 | HND | Component | Title | Trigger |
 |---|---|---|---|
-| HND-02 | ELM-02 | Where the coupon rules are kept | When MOD-05 is implemented |
+| HND-04 | ELM-02 | The schemas of the interfaces between elements that ELM-02 provides | When ELM-02 is implemented |
+| HND-06 | ELM-02 | Where the coupon rules are kept | When MOD-05 is implemented |
+<!-- /generated -->
 ```
 
-Status: `not started`, `draft` or `answers applied`, written with the glossary's terms in the working language. Write the three rules of the hand-off as they stand here, in the working language, whatever else changes in the index.
+Status: `not started` when the component has no report, otherwise the status in its report's header (`draft` or `answers applied`), written with the glossary's terms in the working language. A component's modules with no `depth` yet, written by an earlier version, are listed under full depth. Write the three rules of the hand-off as they stand here, in the working language, whatever else changes in the index.

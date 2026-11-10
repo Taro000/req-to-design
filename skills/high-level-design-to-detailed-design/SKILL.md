@@ -22,6 +22,7 @@ This stage writes documents, not code. Interfaces are written in a language-neut
 - `references/behaviour-and-data.md`: what a module at full depth gets (states, decision tables, algorithms, concurrency, error handling, physical data, caches, screens), and the verification approach of every module.
 - `references/report-template.md`: the component report, the index, and a worked example.
 - `references/glossary.md`: terms for the working language.
+- `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
 
 ## Inputs
 
@@ -39,7 +40,7 @@ Essential input: the IFCs of the component. If there are none, ask for the high-
 
 ### 1. Scope
 
-Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. Add every component element to the index if it is not there yet. When the component already has a report, start from what changed since its `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
+Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. The index lists every component element; `scripts/tables.py` writes its rows. When the component already has a report, start from what changed since its `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
 
 ### 2. Modules
 
@@ -73,7 +74,7 @@ For every module, at either depth, write which acceptance criteria, contracts, b
 
 ### 9. Design parameters
 
-Propose the values inside the modules at full depth (timeouts on the component's own data store, retry limits, pool sizes, batch sizes, cache lifetimes, schedules) with their basis. Implementation sets the values inside the modules at bounds depth, within their contracts and the stage 3 budgets. The timeouts and waits that stage 3 set on calls that cross an element boundary, settlement waits included, live in the IFCs' `timing`: use them as they are, refer to them by the IFC's ID, and never set them here. A timeout or wait on such a call that stage 3 handed off to this stage is a parameter of the module that makes the call: decide it within the bounds of the hand-off when that module is at full depth, and otherwise pass the hand-off on to implementation. The values set here must fit the latency budgets and timeouts of stage 3; when they cannot, or when a value in an IFC's timing must change, write a finding addressed to `architecture-to-high-level-design`. Each value is a provisional decision, rated like any other point ("Decisions" in `conventions.md`). Most stay inside one module and are tuned in operation, so they are adopted as an assumption of kind `decision`; values that hinge on the same fact share one.
+Propose the values inside the modules at full depth (timeouts on the component's own data store, retry limits, pool sizes, batch sizes, cache lifetimes, schedules) with their basis. Implementation sets the values inside the modules at bounds depth, within their contracts and the stage 3 budgets. A timeout or wait that an IFC's `timing` holds, settlement waits included, is stage 3's: use it as it is, refer to it by the IFC's ID, and never set it here. Stage 3 sets those on the paths of time SLOs and of money. On the component's other calls to other elements, the IFC's `timing` gives only the bounds, and stage 3 hands the values to this stage (step 10): set each one here, within those bounds, as a parameter of the module that makes the call when that module is at full depth, and otherwise pass the hand-off on to implementation. The values set here must fit the latency budgets and timeouts of stage 3; when they cannot, or when a value in an IFC's timing must change, write a finding addressed to `architecture-to-high-level-design`. Each value is a provisional decision, rated like any other point ("Decisions" in `conventions.md`). Most stay inside one module and are tuned in operation, so they are adopted as an assumption of kind `decision`; values that hinge on the same fact share one.
 
 ### 10. Hand-offs
 
@@ -83,13 +84,13 @@ Write a hand-off to implementation for a point this stage leaves open inside a m
 
 ### 11. Findings, report, questions, items, index
 
-Process every open finding addressed to this stage for this component, those raised by implementation included. When an interface, an entity or an architecture decision does not work, write a finding addressed to the stage that owns it; do not change its items yourself. Write the MOD, DEC, HND and FND items as you draft them in steps 2 to 10, and the draft component report that indexes them, following `report-template.md`, and mark the component `draft` in the index.
+Process every open finding addressed to this stage for this component, those raised by implementation included. When an interface, an entity or an architecture decision does not work, write a finding addressed to the stage that owns it; do not change its items yourself. Write the MOD, DEC, HND and FND items as you draft them in steps 2 to 10, and the draft component report that indexes them, following `report-template.md`; the index shows the component as `draft` from the status in the report's header.
 
 Then list and rate the uncertain points, ask about the ones `conventions.md` says to ask about, and record the rest as assumptions ("Draft first, ask afterwards"). The rules in `modules.md` and `behaviour-and-data.md` settle most choices here; a choice they settle from what the inputs state stays `inferred` and is not a point. A point inside a module at bounds depth is implementation's and is not rated here. Most of the points that remain stay inside one module and are easy to change later, so both ratings are low and they become assumptions. The points of high severity here are typically those that move money, touch personal data, fix the shape of stored data or tie the component to a vendor; breadth is high when five or more modules depend on a point, as they do on a framework they all use.
 
 Re-rate the open assumptions this component's judgments depend on, whichever stage wrote them, and ask about one when a judgment you would ask about depends on it ("Assumptions" in `conventions.md`). Number the questions per component report and continue the numbering when the component is re-run; from elsewhere, cite one as "stage 4 ELM-02, question 3".
 
-Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied". Then update the index: the component's row, with its modules at each depth, and the hand-off to implementation, which starts with the rules for implementation and lists every open hand-off addressed to implementation ("The detailed design index" in `artifacts.md`).
+Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and update the index's header. `scripts/tables.py` updates the component's row, with its modules at each depth, and the list of open hand-offs addressed to implementation; keep the rules above that list as `artifacts.md` gives them ("The detailed design index").
 
 ## Exit criteria
 
@@ -103,11 +104,12 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 - The module dependencies have no cycles and follow the shared conventions.
 - Every invariant of stored data that a module at full depth relies on is kept by the physical data the report designs ("Physical data" in `behaviour-and-data.md`), and every migration of an existing schema keeps the running version working. Every table another component reads directly is designed in full. The rest of the physical data is left to implementation, within the DATs.
 - Every call that changes something in an external system or in another component is driven by a module at full depth, which has a state that settles its outcome after a timeout, whichever module sends the call.
-- Every design parameter of a module at full depth has a value and a basis, fits the stage 3 budgets, and is either decided under "Decisions" or recorded as an assumption of kind `decision`. None is a timeout or wait that an IFC's `timing` holds: those are used by IFC ID. The values inside modules at bounds depth are left to implementation.
+- Every design parameter of a module at full depth has a value and a basis, fits the stage 3 budgets, and is either decided under "Decisions" or recorded as an assumption of kind `decision`. None is a timeout or wait that an IFC's `timing` holds: those are used by IFC ID. A timeout that stage 3 handed off to this component keeps the bounds in its IFC's `timing`, whether this stage sets it or passes it on to implementation. The values inside modules at bounds depth are left to implementation.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
 - The index lists every component with its current status and its modules at each depth, and its header gives the date and the `Inputs as of` commit. Its hand-off to implementation starts with the rules for implementation and lists every open hand-off addressed to implementation.
 - Every open hand-off addressed to this stage for this component whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
 - Every open finding addressed to this stage for this component, those raised by implementation included, is accepted or rejected.
+- `scripts/check.py --skill high-level-design-to-detailed-design` reports no problem, except those waiting for a finding.
 
 ## Pitfalls
 
@@ -123,4 +125,4 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the issues for the quality chain, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context, re-run the stages that this run's findings are addressed to, re-run this stage for the component to resolve the findings the review addresses to it, and run this stage for the next component. Then commit the files this run wrote (the component report, the index, the MOD, DEC, DAS, HND and FND files, and the DAS and HND files of other stages that it re-rated, answered or took up), with a message that names the component.
+Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the issues for the quality chain, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run ("Findings between design stages" in `conventions.md`); re-run the stages that this run addressed a critical or major finding to; re-run this stage for the component when a review addresses a critical or major finding to it; and run this stage for the next component. Minor findings start no run: each waits for the next run of the stage it is addressed to. Then run `scripts/tables.py` and `scripts/check.py` with `--skill high-level-design-to-detailed-design`, fix what the check reports in this stage's files, and commit the files this run wrote (the component report, the index, the MOD, DEC, DAS, HND and FND files, and the DAS and HND files of other stages that it re-rated, answered or took up), with a message that names the component.

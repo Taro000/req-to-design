@@ -15,6 +15,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | finding status: open / accepted / rejected | 指摘の状態: 未解決 / 受け入れ / 退ける |
 | fresh context (for a review) | 別の文脈 |
 | review | レビュー |
+| full review / diff review (a review of the whole stage / a later review that covers only what changed since the last one) | 全体のレビュー / 差分のレビュー |
+| no change in scope (a diff review's record for an activity with nothing to check) | 対象の変更なし |
 | risk / non-risk | リスク / リスクでないもの |
 | basis: stated / inferred / assumed / confirmed | 根拠: 入力 / 推定 / 仮定 / 確認済み |
 | status: active / retired | 状態: 有効 / 廃止 |
@@ -38,11 +40,15 @@ Use these terms for the working language. For a language not listed, or a term m
 | decide a hand-off / pass it on | 申し送りを決める / 先へ送る |
 | implementation (the coding that follows stage 4) | 実装 |
 | hand-off to implementation (the section of the detailed design index that coding agents read first) | 実装への申し送り |
-| hand-offs addressed to implementation (the HND items with `to: implementation`, which that section lists) | 実装宛ての申し送り |
+| hand-offs addressed to implementation (the HND items whose `to` is implementation, which that section lists) | 実装宛ての申し送り |
 | open gaps | 未解決の点 |
 | out of scope | 範囲外 |
 | placeholder (for a number not yet decided) | 未定の値 |
 | traceability | トレーサビリティ |
+| generated table (written by scripts/tables.py) | 生成する表 |
+| problem (reported by scripts/check.py) | 検査の問題 |
+| waiting for a finding | 指摘待ち |
+| yes / no (in a table) | はい / いいえ |
 
 ## Inputs and drivers
 
@@ -53,6 +59,7 @@ Use these terms for the working language. For a language not listed, or a term m
 | concern kinds: function / quality / constraint / change / organization | 関心事の種類: 機能 / 品質 / 制約 / 変更 / 組織 |
 | technology constraint: mandated / prohibited / platform / external service | 技術制約: 使う / 使わない / 基盤 / 外部サービス |
 | project constraints (budget, deadline, team) | 費用・納期・体制の制約 |
+| project constraint kinds: budget / deadline / team / other | 費用・納期・体制の制約の種類: 費用 / 納期 / 体制 / その他 |
 | team structure | チームの構成 |
 | anticipated change | 将来の変更 |
 | current structure (of an existing system) | 今の構造 |
@@ -132,7 +139,7 @@ Use these terms for the working language. For a language not listed, or a term m
 | shared conventions | 共通の約束事 |
 | module | モジュール |
 | visibility: public / internal | 公開範囲: 公開 / 内部 |
-| module depth: full / bounds (designed in detail / its inside left to implementation) | モジュールの深さ: 確定 / 枠 |
+| module depth: full / bounds (its inside left to implementation) | モジュールの深さ: 確定 / 枠 |
 | contract summary (the contract of a module at bounds depth) | 契約の要約 |
 | dependency | 依存 |
 | precondition / postcondition / invariant | 事前条件 / 事後条件 / 不変条件 |
