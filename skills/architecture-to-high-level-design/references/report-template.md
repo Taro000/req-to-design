@@ -287,7 +287,7 @@ id: DAT-04
 title: Stock level
 status: active
 basis: inferred
-basis_note: null
+basis_note: changed_at keeps the time each count changed at the warehouse, which IFC-03's messages carry; this decides HND-01
 premises: []
 entity: Stock level
 owner: ELM-03

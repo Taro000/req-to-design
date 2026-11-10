@@ -21,7 +21,8 @@ SKILL_STAGE = dict((v, k) for k, v in STAGE_SKILLS.items())
 DEC_STAGES = {"architecture": 2, "high-level-design": 3, "detailed-design": 4}
 
 DESIGN_DIRS = [("drv", "DRV"), ("dec", "DEC"), ("elm", "ELM"), ("ifc", "IFC"), ("dat", "DAT"),
-               ("mod", "MOD"), ("fnd", "FND"), ("das", "DAS")]
+               ("mod", "MOD"), ("hnd", "HND"), ("fnd", "FND"), ("das", "DAS")]
+IMPLEMENTATION = "implementation"  # a hand-off's `to` when the code decides it
 CONTEXT_LISTS = [("technology_constraints", "TC"), ("project_constraints", "PC"), ("teams", "TEAM"),
                  ("anticipated_changes", "CHG"), ("stakeholders", "STK")]
 QUALITY_DIRS = [("qiu", "QIU"), ("kpi", "KPI"), ("fr", "FR"), ("frp", "FRP"), ("qr", "QR"),
@@ -267,6 +268,12 @@ class Project(object):
 
     def stage_items(self, stage, component=None):
         """The active items a stage writes (for stage 4, those of one component)."""
+        skill = STAGE_SKILLS.get(stage)
+        handoffs = [h for h in self.of("HND") if h.get("from") == skill
+                    and (stage != 4 or not component or h.get("component") == component)]
+        return self.stage_own_items(stage, component) + handoffs
+
+    def stage_own_items(self, stage, component=None):
         if stage == 1:
             return self.of("DRV") + [i for p in ("TC", "PC", "TEAM", "CHG", "STK") for i in self.of(p)]
         if stage == 2:
@@ -347,6 +354,9 @@ class Project(object):
         if p == "FND":
             raised_by = item.get("raised_by")
             return raised_by if raised_by in SKILLS else None
+        if p == "HND":
+            sender = item.get("from")
+            return sender if sender in STAGE_SKILLS.values() else None
         return None
 
 

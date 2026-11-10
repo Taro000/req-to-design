@@ -188,17 +188,9 @@ class Renderer(object):
 
     def t_decisions(self, ctx):
         self.need(ctx, ("stage",), (2, 3, 4))
-        rows = []
-        for d in self.decisions_of(ctx):
-            row = [d.id, self.text(d.get("title")), self.join(d.get("addresses"))]
-            if ctx.stage == 2:
-                row.append(self.term("", bool(d.get("deferred"))))
-            row.append(self.term("basis", d.get("basis")))
-            rows.append(row)
-        headers = [("DEC", "DEC"), ("Title", "名前"), ("Addresses", "対象")]
-        if ctx.stage == 2:
-            headers.append(("Deferred", "先送り"))
-        return Table(headers + [("Basis", "根拠")], rows)
+        rows = [[d.id, self.text(d.get("title")), self.join(d.get("addresses")), self.term("basis", d.get("basis"))]
+                for d in self.decisions_of(ctx)]
+        return Table([("DEC", "DEC"), ("Title", "名前"), ("Addresses", "対象"), ("Basis", "根拠")], rows)
 
     def t_elements(self, ctx):
         self.need(ctx, ("stage",), (2,))
@@ -222,20 +214,6 @@ class Renderer(object):
                 rows.append([self.text(name), m.id, Hand(), Hand()])
         return Table([("Parameter", "値"), ("MOD", "MOD"), ("Decision", "決めた所"),
                       ("Budget or timeout it fits", "収まる予算かタイムアウト")], rows, key_columns=2)
-
-    def t_debts(self, ctx):
-        self.need(ctx, ("stage",), (2,))
-        rows = []
-        for d in self.decisions_of(ctx):
-            kinds = []
-            if d.get("debt"):
-                kinds.append(self.term("", "technical debt"))
-            if d.get("deferred") is True:
-                kinds.append(self.term("", "deferred decision"))
-            if kinds:
-                rows.append([d.id, self.text(d.get("title")), self.join(kinds), Hand()])
-        return Table([("DEC", "DEC"), ("Title", "名前"), ("Debt or deferral", "負債か先送りか"),
-                      ("Decided in", "決めた所")], rows)
 
     def t_interfaces(self, ctx):
         self.need(ctx, ("stage",), (3,))

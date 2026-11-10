@@ -184,8 +184,6 @@ DESIGN = {
         parameters:
           - {name: pool_size, value: 10, basis: Library default}
         debt: null
-        deferred: false
-        revisit_when: null
         as_is: new
         """),
     "dec/DEC-02.yaml": d("""
@@ -213,8 +211,6 @@ DESIGN = {
         depends_on: [DEC-01]
         parameters: []
         debt: null
-        deferred: false
-        revisit_when: null
         as_is: new
         """),
     "das/DAS-01.yaml": d("""
@@ -331,7 +327,7 @@ DESIGN = {
         title: Checkout API
         status: active
         basis: inferred
-        basis_note: null
+        basis_note: The binding of SLI-01 decides HND-01
         premises: [OPF-01]
         kind: http
         name: Checkout API
@@ -449,6 +445,38 @@ DESIGN = {
           - {name: cart_limit, value: 50, basis: Library default}
         as_is: new
         """),
+    "hnd/HND-01.yaml": d("""
+        id: HND-01
+        title: Where checkouts can be counted
+        status: decided
+        basis: inferred
+        basis_note: The point is stated in SLI-01's basis_note
+        premises: [OPF-01]
+        from: requirements-to-architecture-drivers
+        to: architecture-to-high-level-design
+        component: null
+        origin: [SLI-01]
+        what: Where the system can see each checkout, so that SLI-01 counts it at its vantage
+        bounds: SLI-01's unit event and counting rules, unchanged
+        trigger: The next run of stage 3
+        resolution: Decided in IFC-01's sli_bindings
+        """),
+    "hnd/HND-02.yaml": d("""
+        id: HND-02
+        title: Where the cart limit is kept
+        status: open
+        basis: inferred
+        basis_note: null
+        premises: []
+        from: high-level-design-to-detailed-design
+        to: implementation
+        component: ELM-01
+        origin: [MOD-01]
+        what: Where cart_limit is kept and how MOD-01 reads it
+        bounds: MOD-01's interface
+        trigger: When MOD-01 is implemented
+        resolution: null
+        """),
     "fnd/FND-01.yaml": d("""
         id: FND-01
         title: The Store API does not say where orders live
@@ -485,7 +513,7 @@ REPORTS = {
                        "| TEAM-01 | Store team | | | |\n",
         conflicts="| Drivers | Resolved by |\n|---|---|\n| DRV-01, DRV-02 | The business (question 2) |\n"),
     "2-architecture.md": "# Architecture\n\n" + HEADER % "2 of 4" + "\n\n" + blocks(
-        "decisions", "elements", "parameters", "debts", "findings", "assumptions",
+        "decisions", "elements", "parameters", "findings", "assumptions",
         parameters="| Parameter | DEC | Decided in |\n|---|---|---|\n| pool_size | DEC-01 | question 1 |\n"),
     "3-high-level-design.md": "# High-level design\n\n" + HEADER % "3 of 4" + "\n\n" + blocks(
         "decisions", "interfaces", "sli-bindings", "data", "criteria", "findings", "assumptions",
@@ -719,6 +747,20 @@ class CheckTest(unittest.TestCase):
         self.assertFinds("legacy", "version, status: draft")
         self.assertFinds("missing-field", "retention")
 
+    def test_handoffs(self):
+        self.f.edit("hnd/HND-02.yaml", "component: ELM-01", "component: null")
+        self.f.edit("hnd/HND-02.yaml", "trigger: When MOD-01 is implemented", "trigger: null")
+        self.f.edit("ifc/IFC-01.yaml", "basis_note: The binding of SLI-01 decides HND-01", "basis_note: null")
+        self.f.edit("hnd/HND-01.yaml", "to: architecture-to-high-level-design", "to: design-review")
+        self.assertFinds("handoff", "names the component it concerns")
+        self.assertFinds("handoff", "says when it falls due")
+        self.assertFinds("handoff", "no item cites HND-01")
+        self.assertFinds("handoff", "to is 'design-review'")
+
+    def test_deferral_on_a_decision_is_legacy(self):
+        self.f.edit("dec/DEC-01.yaml", "debt: null", "debt: null\ndeferred: true\nrevisit_when: After the pilot")
+        self.assertFinds("legacy", "deferred, revisit_when")
+
     def test_module_cycle(self):
         self.f.write(os.path.join(self.f.design, "mod/MOD-02.yaml"), self.f.read("mod/MOD-01.yaml")
                      .replace("MOD-01", "MOD-02").replace("depends_on: []", "depends_on: [MOD-01]")
@@ -777,7 +819,7 @@ class TablesTest(unittest.TestCase):
     def test_every_mark_in_the_templates_works(self):
         templates = {
             "requirements-to-architecture-drivers": ("## Report template", "1-architecture-drivers.md", 6),
-            "architecture-drivers-to-architecture": ("## Report template", "2-architecture.md", 6),
+            "architecture-drivers-to-architecture": ("## Report template", "2-architecture.md", 5),
             "architecture-to-high-level-design": ("## Report template", "3-high-level-design.md", 7),
             "high-level-design-to-detailed-design": ("## Component report template", "4-detailed-design/ELM-01.md", 5),
             "design-review": ("## Report template", "reviews/2-architecture.md", 2),

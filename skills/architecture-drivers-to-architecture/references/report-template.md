@@ -9,7 +9,7 @@ Write the report in the working language. Translate the headings. Keep the IDs a
 
 The report indexes the items and never restates what an item says. Refer to decisions and elements by ID and title, and leave their options, rationales, responsibilities, parameter values and other text to the YAML. Only the report holds the summary, the comparison tables of options, the design concerns, the threat model, the views, the walkthroughs, the cost check, the issues for the quality chain, the questions and their answers, the placeholders, the open gaps and what is out of scope.
 
-`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the elements, the design parameters, the debts and deferred decisions, the findings and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: where each parameter, debt and deferral was decided, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the elements, the design parameters, the findings and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: where each parameter was decided, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -30,8 +30,8 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Design decisions
 <!-- generated: decisions -->
-| DEC | Title | Addresses | Deferred | Basis |
-|---|---|---|---|---|
+| DEC | Title | Addresses | Basis |
+|---|---|---|---|
 <!-- /generated -->
 <The decisions of stage `architecture`. Under the table, one comparison table for every other decision that addresses a primary driver, as in decisions.md.>
 
@@ -69,12 +69,10 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <One row per entry of the decisions' `parameters`. Decided in, by hand: the question under "Decisions" that settled it, or the DAS that adopted it provisionally.>
 
-## Debt and deferred decisions
-<!-- generated: debts -->
-| DEC | Title | Debt or deferral | Decided in |
-|---|---|---|---|
-<!-- /generated -->
-<The decisions with a `debt` or `deferred: true`. Decided in, by hand: the question under "Decisions", or the DAS of kind decision.>
+## Debt and deferrals
+| Item | Debt, or deferral of a full-depth kind | Decided in |
+|---|---|---|
+<By hand. A debt is on its DEC; a deferral of a point of this stage's full-depth kinds, or of one that rates high, is a hand-off (HND). Decided in: the question under "Decisions", or the DAS of kind decision.>
 
 ## Cost and team
 <The running cost from stated prices or placeholders, computed with a script; the work to build it; the skills it needs; the verdict.>
@@ -123,14 +121,14 @@ Status: answers applied · Updated: 2026-11-03 · Inputs as of: 3f2a9c1 · Stage
 
 Design decisions (excerpt):
 
-| DEC | Title | Addresses | Deferred | Basis |
-|---|---|---|---|---|
-| DEC-01 | One application with enforced modules, a stock sync worker and a server-rendered storefront | DRV-09, DRV-01, DRV-03 | no | inferred |
-| DEC-02 | Fail over to a second payment provider | DRV-02, DRV-10 | no | assumed |
-| DEC-03 | Stock changes arrive as events; ELM-02 keeps a short stock cache | DRV-03 | no | assumed |
-| DEC-06 | Fraud screening inside each provider's charge | DRV-01, DRV-06 | no | inferred |
-| DEC-09 | The provider's hosted card fields | DRV-08 | no | inferred |
-| DEC-10 | Browsers the storefront supports | DRV-11 | no | confirmed |
+| DEC | Title | Addresses | Basis |
+|---|---|---|---|
+| DEC-01 | One application with enforced modules, a stock sync worker and a server-rendered storefront | DRV-09, DRV-01, DRV-03 | inferred |
+| DEC-02 | Fail over to a second payment provider | DRV-02, DRV-10 | assumed |
+| DEC-03 | Stock changes arrive as events; ELM-02 keeps a short stock cache | DRV-03 | assumed |
+| DEC-06 | Fraud screening inside each provider's charge | DRV-01, DRV-06 | inferred |
+| DEC-09 | The provider's hosted card fields | DRV-08 | inferred |
+| DEC-10 | Browsers the storefront supports | DRV-11 | confirmed |
 
 DEC-02 and DEC-03 are assumed because each depends on an open assumption (DAS-02, DAS-03). DEC-03 also lists DAS-01, which question 3 confirmed, and is not assumed on its account. DEC-10 is confirmed by question 1. DEC-01 was not a question: the stated team and deadline behind DRV-09 leave no doubt about it, so it stays inferred.
 
@@ -209,11 +207,11 @@ Design parameters (excerpt). The script writes the first two columns:
 | failover_after | DEC-02 | question 2 |
 | stock_cache_lifetime | DEC-03 | DAS-03 |
 
-Debt and deferred decisions (excerpt). What the debt is and when it is repaid live in DEC-02's `debt`:
+Debt and deferrals (excerpt):
 
-| DEC | Title | Debt or deferral | Decided in |
-|---|---|---|---|
-| DEC-02 | Fail over to a second payment provider | technical debt | stage 1, question 5 |
+| Item | Debt, or deferral of a full-depth kind | Decided in |
+|---|---|---|
+| DEC-02 | debt: failover ships right after the spring sale | stage 1, question 5 |
 
 Decisions (excerpt):
 
@@ -276,8 +274,6 @@ debt:
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
   repay_when: Right after the spring sale
-deferred: false
-revisit_when: null
 as_is: new
 ```
 

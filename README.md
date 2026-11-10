@@ -49,6 +49,8 @@ Run each step in a fresh request:
 
 Each stage drafts everything first. It then rates every point it was unsure of by breadth (how much depends on it) and severity (the harm if the draft is wrong), and asks you only about the points where either is high. The ranking and the decisions that accept a risk, a cost or a debt are rated the same way; when they are asked, your answer is the decision. Every other point is kept as drafted and recorded as an assumption, which the skill lists at the end for you to skim and correct if you want. Every judgment is marked `stated`, `inferred`, `assumed` or `confirmed`, so you can see what came from you, what the agent decided, and what nobody has checked yet.
 
+Each stage decides in full only what is hard to change later: the kinds of point that `conventions.md` lists for it, and any point whose breadth or severity is high. It hands the rest off, with the bounds to keep, to the later stage or to the implementation that will decide it, and each stage takes up the hand-offs addressed to it.
+
 Each stage is a long task. The detailed design runs once per component and, for a mid-sized system, produces more documents than the requirements did. Plan time to review them and to answer the questions that matter most.
 
 Reports and items show only the current state; git keeps the history. Each skill ends its run by committing the files it wrote, with the reasons in the commit message, and the next run reads what changed since then.
@@ -66,6 +68,7 @@ docs/design/
 ├── reviews/                                              the latest review of each stage
 ├── design-context.yaml                                   the design context: constraints, teams, changes, stakeholders, current structure
 ├── drv/  dec/  elm/  ifc/  dat/  mod/  fnd/             one YAML file per item
+├── hnd/                                                  one YAML file per hand-off: a point a stage leaves for a later stage or the implementation to decide
 ├── das/                                                  one YAML file per assumption made without asking
 └── ifc/specs/                                            OpenAPI and AsyncAPI documents
 ```
@@ -77,7 +80,7 @@ YAML keys and IDs are fixed in English, so every stage can read every other stag
 - Write to the quality chain. Changes to the requirements that the design calls for are written in the reports as issues; you decide what to do with them.
 - Invent business numbers. Targets, deadlines, volumes and budgets come from you or from the quality chain; missing ones stay named placeholders. Design parameters such as timeouts are proposed as provisional values, with what they are based on.
 - Write code. The detailed design stops where coding starts, and uses a language-neutral notation.
-- Decide business priorities for you. The driver ranking, accepted risks and debts, deferrals and design parameters are business decisions: the ones with high breadth or severity are asked, and the rest are adopted provisionally and recorded as assumptions, never presented as decided.
+- Decide business priorities for you. The driver ranking, accepted risks and debts, deferring what a stage would otherwise decide in full, and design parameters are business decisions: the ones with high breadth or severity are asked, and the rest are adopted provisionally and recorded as assumptions, never presented as decided.
 - Write runbooks, business procedures or training. The design of the infrastructure is in scope; operating it is not.
 
 ## Maintaining

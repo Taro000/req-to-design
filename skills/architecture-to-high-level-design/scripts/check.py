@@ -36,7 +36,9 @@ Rules:
                      operations realized by modules, decisions used by modules
     conflict         a conflict recorded on one driver only
     cycle            module dependencies (depends_on) that form a cycle
-    debt             a debt without repay_when, or a deferral without revisit_when
+    debt             a debt without repay_when
+    handoff          a hand-off's from, to, component, trigger, origin or resolution; a decided hand-off that
+                     no item cites in basis_note
     spec             a spec that is missing, unused or not found, or that differs from its IFC in
                      operations, error statuses or error codes
     finding          a finding's to, raised_by, raised_in or resolution; an accepted finding that no
@@ -63,7 +65,7 @@ REQUIRED = {
                      "priority", "primary", "conflicts", "placeholders"],
     "DEC": COMMON + ["stage", "question", "addresses", "options", "chosen", "rationale", "rejected", "gains",
                      "costs", "sensitive_points", "trade_offs", "assumptions", "depends_on", "parameters", "debt",
-                     "deferred", "revisit_when", "as_is"],
+                     "as_is"],
     "ELM": COMMON + ["kind", "name", "responsibility", "functions", "drivers", "decisions", "team", "technology",
                      "runs_on", "depends_on", "as_is"],
     "IFC": COMMON + ["kind", "name", "provider", "consumers", "functions", "operations", "format", "protocol",
@@ -74,6 +76,7 @@ REQUIRED = {
     "MOD": COMMON + ["component", "name", "responsibility", "visibility", "interface", "invariants", "depends_on",
                      "functions", "realizes", "drivers", "decisions", "behaviour", "verification", "parameters",
                      "as_is"],
+    "HND": COMMON + ["from", "to", "component", "origin", "what", "bounds", "trigger", "resolution"],
     "FND": COMMON + ["raised_by", "raised_in", "to", "targets", "severity", "evidence", "suggestion",
                      "resolution"],
     "DAS": ["id", "title", "status", "stage", "kind", "statement", "why_unsure", "breadth", "severity",
@@ -96,8 +99,10 @@ ENUMS = {
     ("TC", "kind"): ["mandated", "prohibited", "platform", "external-service"],
     ("PC", "kind"): ["budget", "deadline", "team", "other"],
 }
-STATUSES = {"FND": ["open", "accepted", "rejected"], "DAS": ["open", "confirmed", "overturned", "retired"]}
+STATUSES = {"FND": ["open", "accepted", "rejected"], "DAS": ["open", "confirmed", "overturned", "retired"],
+            "HND": ["open", "decided", "retired"]}
 LEGACY_FIELDS = ["changelog", "version", "needs_agreement", "approver_candidates"]
+LEGACY_DEC_FIELDS = ["deferred", "revisit_when"]  # a deferral is a hand-off now
 PREMISE_PREFIXES = ["TC", "PC", "TEAM", "CHG", "STK", "DAS", "CON", "EXT", "OPF", "QAS"]
 REFS = {
     "DRV": [("sources", None), ("concern_of", ["USR", "STK"]), ("derived_from", ["DRV"]),
@@ -112,6 +117,7 @@ REFS = {
             ("drivers", ["DRV"]), ("sli_bindings[].sli", ["SLI"])],
     "MOD": [("component", ["ELM:component"]), ("depends_on", ["MOD"]), ("functions", ["FR"]),
             ("drivers", ["DRV"]), ("decisions", ["DEC"])],
+    "HND": [("component", ["ELM:component"]), ("origin", None)],
     "FND": [("targets", lib.DESIGN_PREFIXES)],
     "DAS": [],
 }
@@ -164,6 +170,7 @@ class Checker(object):
         self.conflicts()
         self.specs()
         self.findings()
+        self.handoffs()
         self.reports()
         self.sli_bindings()
         self.cover()
@@ -182,6 +189,9 @@ class Checker(object):
             return lib.das_owner(m.group(1))
         m = re.search(r"^raised_by:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
         if f.rel.startswith("fnd/") and m and m.group(1) in lib.SKILLS:
+            return m.group(1)
+        m = re.search(r"^from:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
+        if f.rel.startswith("hnd/") and m and m.group(1) in lib.SKILLS:
             return m.group(1)
         return None
 
@@ -240,13 +250,14 @@ class Checker(object):
             self.entry_fields(item)
             return
         status = item.get("status")
-        legacy = [k for k in LEGACY_FIELDS if k in item.data]
-        legacy_status = p not in ("FND", "DAS") and status in ("draft", "agreed")
+        legacy = [k for k in LEGACY_FIELDS + (LEGACY_DEC_FIELDS if p == "DEC" else []) if k in item.data]
+        legacy_status = p not in ("FND", "DAS", "HND") and status in ("draft", "agreed")
         if legacy or legacy_status:
             what = legacy + (["status: %s" % status] if legacy_status else [])
             self.item_problem("legacy", item, legacy[0] if legacy else "status",
-                              "fields of an earlier version of the skills: %s. Drop them, and set draft or agreed to"
-                              " active (conventions.md, 'Re-running a stage')" % ", ".join(what))
+                              "content in the form of an earlier version of the skills: %s. Move it into the current"
+                              " form (conventions.md, 'Re-running a stage'): drop the fields, write a hand-off for a"
+                              " deferral, and set draft or agreed to active" % ", ".join(what))
         missing = [k for k in REQUIRED.get(p, []) if k not in item.data]
         if missing:
             self.item_problem("missing-field", item, "id", "missing %s (write null or [] when there is no value)"
@@ -281,11 +292,6 @@ class Checker(object):
             if item.get("negotiable") not in (True, False, None):
                 self.item_problem("bad-value", item, "negotiable", "negotiable is true, false or null")
         if p == "DEC":
-            if "deferred" in item.data and not isinstance(item.get("deferred"), bool):
-                self.item_problem("bad-value", item, "deferred", "deferred is true or false")
-            if item.get("deferred") is True and not item.get("revisit_when"):
-                self.item_problem("debt", item, "revisit_when", "a deferred decision needs revisit_when: the event"
-                                  " or date that settles it")
             debt = item.get("debt")
             if debt and (not isinstance(debt, dict) or not debt.get("repay_when")):
                 self.item_problem("debt", item, "debt", "a debt needs what, why_accepted and repay_when")
@@ -322,7 +328,7 @@ class Checker(object):
         fields = list(REFS.get(item.prefix, []))
         if item.prefix != "DAS":
             fields.append(("premises", PREMISE_PREFIXES))
-        check_retired = not item.retired and item.prefix != "FND"
+        check_retired = not item.retired and item.prefix != "FND" and (item.prefix != "HND" or item.status == "open")
         for field, allowed in fields:
             for value in self.ref_values(item, field):
                 self.reference(item, field, value, allowed, check_retired)
@@ -379,7 +385,7 @@ class Checker(object):
     def basis(self, item):
         if item.is_entry or item.prefix == "DAS" or "premises" not in item.data:
             return
-        if item.prefix == "FND" and item.status != "open":
+        if item.prefix in ("FND", "HND") and item.status != "open":
             return
         if item.retired:
             return
@@ -731,6 +737,33 @@ class Checker(object):
             if fnd.status == "accepted" and not self.p.citing(fnd.id):
                 self.item_problem("finding", fnd, "status", "accepted, but no item cites %s in basis_note: cite it, in"
                                                             " full, in the items it changed" % fnd.id, owner=owner)
+
+    def handoffs(self):
+        stages = list(lib.STAGE_SKILLS.values())
+        for hnd in self.p.of("HND", active_only=False):
+            sender, to = hnd.get("from"), hnd.get("to")
+            taker = to if to in stages else None
+            if "from" in hnd.data and sender not in stages:
+                self.item_problem("handoff", hnd, "from", "from is %r; it is the stage skill that wrote the hand-off: %s"
+                                  % (sender, ", ".join(stages)))
+            if "to" in hnd.data and to not in stages + [lib.IMPLEMENTATION]:
+                self.item_problem("handoff", hnd, "to", "to is %r; it is a stage skill or %s"
+                                  % (to, lib.IMPLEMENTATION))
+            if hnd.status == "open" and to in (lib.STAGE_SKILLS[4], lib.IMPLEMENTATION) and not hnd.get("component"):
+                self.item_problem("handoff", hnd, "component", "a hand-off to %s names the component it concerns"
+                                  % to)
+            if hnd.status == "open" and "trigger" in hnd.data and not hnd.get("trigger"):
+                self.item_problem("handoff", hnd, "trigger", "a hand-off says when it falls due: a stage's next run, its"
+                                                             " run for a component, an implementation, or an event")
+            if "origin" in hnd.data and not lib.as_list(hnd.get("origin")):
+                self.item_problem("handoff", hnd, "origin", "origin names the items the point comes from")
+            if hnd.status in ("decided", "retired") and not hnd.get("resolution"):
+                self.item_problem("handoff", hnd, "resolution", "a %s hand-off says in resolution %s" % (
+                    hnd.status, "the items that decide it" if hnd.status == "decided" else "why nothing needs it"),
+                    owner=taker)
+            if hnd.status == "decided" and not self.p.citing(hnd.id):
+                self.item_problem("handoff", hnd, "status", "decided, but no item cites %s in basis_note: cite it, in"
+                                                            " full, in the items that decide it" % hnd.id, owner=taker)
 
     # reports
 

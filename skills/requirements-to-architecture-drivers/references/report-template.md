@@ -107,7 +107,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <New placeholders, and the quality chain's placeholders that the drivers use, each with the chain item it comes from.>
 
 ## Open gaps
-<What no input settles yet, each addressed to the stage that can settle it: the points that quality-chain items leave for the design to confirm and that became no driver, constraint, question or DAS (the chain item's ID, the point, and the stage that designs the part, which confirms it or raises an issue for the quality chain); blind spots no vantage can see; proposed FRPs.>
+<What no input settles and no design stage can take up: blind spots no vantage can see; proposed FRPs. A point left to a later design stage, such as one that a quality-chain item leaves for the design to confirm, is a hand-off (HND), not an open gap.>
 
 ## Out of scope
 ## Next
