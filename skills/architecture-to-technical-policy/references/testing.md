@@ -47,6 +47,7 @@ Decide the environments (`environments` in the testing POL): for each, what runs
 - Typical environments: a developer's machine, the pipeline's CI runners, a staging environment shaped like production. Name only those the layers and the gates need, within the platform that stage 2 decided and the budget.
 - Test data comes from factories and fixtures in the tests, or from a generated set. It never comes from a copy of production that holds personal or payment data; when a test needs data shaped like production, say how it is made safe.
 - Say where an environment differs from production in a way that tests can miss (a local database that serializes writes, a sandbox without the provider's fraud screening), and which layer covers that gap.
+- When nothing runs between releases (a system deployed only for set sessions or events), say where the checks that need a running system happen, such as a short deployment before the system opens that the platform's rules allow, and what must pass there before it opens.
 - An environment that costs money to keep running (a staging environment, a load-test cluster) is a cost the business decides ("Decisions" in `conventions.md`): rate it.
 
 ## What the later stages take from it

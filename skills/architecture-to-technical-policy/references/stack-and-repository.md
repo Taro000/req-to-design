@@ -22,12 +22,13 @@ Before choosing anything, list what already fixes part of the answer. The polici
 | Hand-offs addressed to this stage | A point an earlier stage left here, with its bounds | `hnd/` |
 
 - An earlier stage's decision binds this stage like any other input: list the DEC in the policy's `decisions`, and decide within it. Stage 2's decisions and views may already fix part of a policy, such as a framework, the code structure or a way to test: follow them in the same way, and decide what they leave open.
+- An earlier stage may also leave a point of this stage's scopes to a later stage (a library "chosen in stage 4", a tool "chosen at implementation"). When this stage's full-depth kinds include the point, decide it here, as you would a hand-off addressed to this stage, and cite the decision that left it.
 - When a driver calls for what one of them rules out, write a finding addressed to the stage that decided it (stage 1 for a TC, stage 2 for one of its decisions), with the driver as evidence, and keep following the decision until that stage changes it. Never decide against it silently.
 - For an existing system, keeping what the code does is always an option. A change costs the work to move every component that follows the old way, and must earn that cost against the drivers.
 
 ## One stack for each kind of component
 
-Group the components (the ELM items of kind `component`) by kind: what they are built as. Typical kinds are a server that answers requests, a worker that consumes events or a queue, a scheduled or batch job, a single-page app in the browser, a server-rendered web app, a native app. Decide one stack for each kind, never one per component: components of one kind then share their libraries, their tests and their tooling, and anyone who knows one can work on another. Data stores, external systems and nodes get no stack; stage 2's elements give their platforms.
+Group the components (the ELM items of kind `component`) by kind: what they are built as. Typical kinds are a server that answers requests, a worker that consumes events or a queue, a scheduled or batch job, a single-page app in the browser, a server-rendered web app, a native app; and, when stage 2 makes them components, the definitions of a pipeline or the scripts that people run by hand. Decide one stack for each kind, never one per component: components of one kind then share their libraries, their tests and their tooling, and anyone who knows one can work on another. Data stores, external systems and nodes get no stack; stage 2's elements give their platforms.
 
 A stack entry (`stack` in the technology POL) holds:
 
@@ -36,7 +37,7 @@ A stack entry (`stack` in the technology POL) holds:
 | `kind` | The kind, in the working language |
 | `elements` | The components of this kind (ELM IDs). Every component is in exactly one entry |
 | `language` | The language and its major version, with the settings that change what code can be written (strict typing) |
-| `runtime` | The runtime and its major version line, within what stage 2 decided |
+| `runtime` | The runtime and its major version line, within what stage 2 decided; for code that runs in a browser, the browsers of stage 2's platforms, and the runtime that builds it |
 | `framework` | The framework the components are built on, or "none" with what takes its place |
 | `libraries` | The main libraries: those that shape the code of every component of the kind, each with what it is for (data access, validation of input, rendering, the client of a message broker, logging) |
 
@@ -52,7 +53,9 @@ When no technology constraint fixes a kind's stack, compare real options and wri
 4. Prefer what will still be maintained over the life of the system, and what is cheap to leave if it is not: count the code that would have to change.
 5. Prefer fewer stacks. Each extra kind of stack doubles the tooling, the libraries to keep up to date and the knowledge to keep.
 
-A language or a framework that no constraint fixes ties every component of its kind to it: its breadth and its severity are high, and it is asked ("Draft first, ask afterwards" in `conventions.md`).
+A language or a framework that no constraint fixes ties every component of its kind to it: its breadth and its severity are high, and it is asked ("Draft first, ask afterwards" in `conventions.md`). So is a library that brings its own endpoints, tables or error format, such as an authentication library: name in its decision what it fixes, since stage 3 then designs the interfaces around it.
+
+Check what you write about a library or a tool (its current major version, what it supports, how it is configured) against its current documentation when you have a way to read it, and name in `basis_note` the facts you could not check. A version remembered from earlier work may no longer be current.
 
 ## Tools every component shares
 

@@ -47,7 +47,7 @@ Rules:
     finding          a finding's to, raised_by (a skill or implementation), raised_in or resolution; an
                      accepted finding that no item cites in basis_note
     sli-binding      a quality-chain SLI that no IFC or DAT binds and no issue replaces
-    policy           once stage 2b has run: a scope of the technical policy with no active POL, or with two; a
+    policy           once stage 2b has run (or with --skill for it): a scope with no active POL, or with two; a
                      component in no stack entry or repository of the policies, or in two; a dependency rule with
                      no check; a field of another scope's policy
     gate-binding     once stage 2b has run: a gate NFR of the quality chain that no policy binds and no issue
@@ -902,11 +902,15 @@ class Checker(object):
                                                    " quality chain that replaces the binding in the last column of the"
                                                    " report's SLI bindings table" % s.id, S3)
 
+    def stage_2b_ran(self):
+        """Stage 2b has written something, or this run is stage 2b's own."""
+        return bool(self.p.of("POL")) or "2b-technical-policy.md" in self.p.reports or self.skill == S2B
+
     def policies(self):
         """Once stage 2b has run: one active policy per scope, and every component in one stack and one repository."""
         p = self.p
         policies = p.of("POL")
-        if not policies:
+        if not self.stage_2b_ran():
             return
         by_scope = {}
         for pol in policies:
@@ -942,7 +946,7 @@ class Checker(object):
     def nfr_bindings(self):
         """Once stage 2b has run: every gate and audit of the quality chain is bound, or an issue replaces it."""
         p = self.p
-        if not p.of("POL") or not p.has_quality:
+        if not self.stage_2b_ran() or not p.has_quality:
             return
         tables = dict((name, rows) for name, line, header, rows, table, empties
                       in self.rendered.get("2b-technical-policy.md", []))

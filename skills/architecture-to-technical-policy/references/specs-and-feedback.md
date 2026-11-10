@@ -20,7 +20,7 @@ Stage 3 designs the interfaces after this stage, so decide by kind of interface,
 |---|---|---|
 | `by-hand` | The other side is implemented apart from this code: an external system that calls an interface this system provides, another team, a party that builds against a contract this system sets | Written before the code, by stage 3 under `ifc/specs/`; both sides are checked against it |
 | `from-code` | The default: the teams of this system build both sides | Generated from the code by the tool that `how` names; the IFC holds the contract that the code keeps (operations, errors and their codes, idempotency, what happens when an outcome is unknown) |
-| `owner` | The other side owns the interface: an external system's API that this system calls, a broker that another team runs | The owner's document, which the IFC links; this system's adapter is checked against it |
+| `owner` | The other side owns the interface: an external system's API that this system calls, a broker that another team runs; or a library serves it on this system's behalf, such as the endpoints of an authentication library | The owner's document, which the IFC links; this system's adapter, or its use of the library, is checked against it |
 | `none` | Screens and batch jobs | No document: the IFC is the contract |
 
 A spec written by hand for an interface whose two sides the same team writes is a second copy of the code. It drifts from the code, and its schemas and repeated error responses grow larger than the code they describe. Generate it instead, and keep the contract that consumers rely on in the IFC.

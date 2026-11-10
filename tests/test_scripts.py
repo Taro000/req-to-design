@@ -1058,6 +1058,17 @@ class CheckTest(unittest.TestCase):
         self.assertFinds("wrong-kind", "addresses holds ELM-01")
         self.f.tables()  # a malformed policy is reported, and breaks neither script
 
+    def test_stage_2b_run_that_wrote_nothing(self):
+        for n in range(1, 7):
+            os.remove(os.path.join(self.f.design, "pol/POL-%02d.yaml" % n))
+        os.remove(os.path.join(self.f.design, "2b-technical-policy.md"))
+        self.f.edit("dec/DEC-03.yaml", "stage: technical-policy", "stage: architecture")
+        os.remove(os.path.join(self.f.design, "das/DAS-02.yaml"))
+        self.f.tables()
+        self.assertEqual(summary(self.f.check()), [])  # a design made before stage 2b, or before it runs
+        self.assertFinds("policy", "no active policy of scope technology", skill="architecture-to-technical-policy")
+        self.assertFinds("gate-binding", "NFR-01", skill="architecture-to-technical-policy")
+
     def test_stage_2b_owns_its_files(self):
         self.f.edit("pol/POL-01.yaml", "decisions: [DEC-03]", "decisions: [DEC-03, DEC-99]")
         self.f.edit("dec/DEC-03.yaml", "depends_on: [DEC-01]", "depends_on: [DEC-98]")

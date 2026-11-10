@@ -124,10 +124,12 @@ Use these terms for the working language. For a language not listed, or a term m
 | directory layout: by business capability / by technical layer | ディレクトリの分け方: 業務の機能ごと / 技術の層ごと |
 | dependency rule | 依存の規則 |
 | test layer | テストの層 |
+| test layers: unit / integration / contract / end-to-end / load | テストの層の名前: 単体 / 結合 / 契約 / 端から端 / 負荷 |
 | test double (a fake that stands in for a dependency in tests) | 偽物 |
 | seam (where a test double is plugged in) | 差し替え口 |
 | environment (where the code runs or is tested) / test data | 環境 / テストデータ |
 | pipeline / pipeline step | パイプライン / パイプラインの手順 |
+| pull request / ticket (an item in the team's tracker) / lockfile | プルリクエスト / チケット / ロックファイル |
 | static checks (types, lint, format) | 静的な検査 |
 | gate binding (where and by what a gate of the quality chain is checked) | ゲートの出どころ |
 | audit binding (where an audit of the quality chain is held) | 監査の置き場所 |

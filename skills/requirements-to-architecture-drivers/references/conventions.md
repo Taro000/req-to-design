@@ -178,7 +178,7 @@ When there is no code, every item is `new`.
    A design choice you make with the skill's rules from what the inputs state is not uncertain only because the inputs did not make it for you: making it is this stage's job, and it stays `inferred`. A point you defer because the stage's full-depth kinds do not include it is not an uncertain point of this stage; the stage that decides it rates it then. Never list anything the input already states, wording, or how the method works; do list the facts that a judgment made with the method depends on. Merge points that hinge on the same fact.
 5. Rate each point on two scales:
    - Breadth, read from the structure rather than guessed:
-     - high: it changes the structure (an element, a boundary between elements, the owner of a data entity, the deployment), a technology constraint, the ranking of the primary drivers, a shared convention or a technical policy, or an interface that more than one element uses; or five or more items depend on it, counting the items of later stages through their traces once those exist;
+     - high: it changes the structure (an element, a boundary between elements, the owner of a data entity, the deployment), a technology constraint, the ranking of the primary drivers, a shared convention, the language, framework or repositories of a kind of component, or an interface that more than one element uses; or five or more items depend on it, counting the items of later stages through their traces once those exist;
      - medium: two to four items depend on it;
      - low: one item depends on it.
    - Severity, the harm if the draft is wrong and nobody notices until later:

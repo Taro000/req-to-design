@@ -33,6 +33,7 @@ Keep what the gate requires:
 - Name only what exists: the step must be in the pipeline POL, the layer in `layers`, the environment in `environments`, the double in `doubles`, the tool in the stack or the rules. A gate bound to a step that nobody builds is never checked.
 - Write one binding per gate. Several gates can share a step and a layer, but each still gets its entry, so that `scripts/check.py` finds every gate bound.
 - A gate that applies to every change of a kind (every new function, every screen) usually lives in the Definition of Done even when tests do the checking: the binding then says which tests, and who confirms that a new function has them.
+- In a team of one, nobody else ticks the Definition of Done. Say what stands in for a second person: a checklist in the pull request that the pipeline reads and fails on when an item that applies is not ticked, together with the tests that show it.
 
 ## Audit bindings
 
@@ -44,7 +45,7 @@ For every NFR of kind `audit`, write one entry in the testing POL's `audit_bindi
 | `where` | Where the audit is held, so that its cadence or deadline is kept: a scheduled job that opens it, an item of the release checklist, a recurring entry in the team's tracker; and where its record is kept (the issue, a report in the repository) |
 | `by` | What supports it, and who performs it: the tool that finds what it acts on (a dependency scan for a deadline to fix vulnerabilities, a backup job for a restore drill, an accessibility checker before a manual check), and the person or team that runs it |
 
-Place the audit where the system and its pipeline can support it. Who signs an audit off, and the procedures around it, are business procedures and out of scope ("Scope" in `conventions.md`): write in the report's "Out of scope" what only a procedure can do. When the inputs do not say who performs an audit, that is an uncertain point: rate it, and usually record it as a DAS.
+Place the audit where the system and its pipeline can support it. Keep its record where only the people allowed to read it can: the findings of a security audit, and anything that holds personal data, never go into a public repository or tracker. Who signs an audit off, and the procedures around it, are business procedures and out of scope ("Scope" in `conventions.md`): write in the report's "Out of scope" what only a procedure can do. When the inputs do not say who performs an audit, that is an uncertain point: rate it, and usually record it as a DAS.
 
 ## When a gate or an audit cannot be bound
 
