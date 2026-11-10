@@ -35,7 +35,7 @@ The quality chain states requirements and leaves the design to this chain. Two k
 - Open findings addressed to this stage: `fnd/` items with `to: architecture-drivers-to-architecture` and `status: open`.
 - Open hand-offs addressed to this stage: `hnd/` items with `to: architecture-drivers-to-architecture` and `status: open`.
 - The existing code, as recorded under `as_is` in `design-context.yaml`; read the parts you need.
-- On a re-run, this stage's report and items. Start from what changed since the report's `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
+- On a re-run, this stage's report and items. Start from what changed since this stage's last run ("Re-running a stage" in `conventions.md`).
 
 Essential input: at least one DRV. If there is none, ask for the drivers (or suggest running `requirements-to-architecture-drivers`) before drafting.
 
@@ -106,7 +106,7 @@ Process every open finding addressed to this stage, as `conventions.md` describe
 
 ### 12. Report and questions
 
-Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards" in `conventions.md`: list the points you were unsure of, together with the open DAS and QAS that your judgments depend on ("Assumptions"); rate them; ask the ones that need asking; and write a DAS for each of the others. At this stage, an uncertain overall structure, platform, vendor or managed service the system becomes tied to, or conflict between primary drivers usually rates high and is asked. Most provisional design parameters and choices inside one component rate low or medium; each becomes a DAS, of kind `decision` for a parameter. Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied".
+Write the DEC, ELM and FND items as you draft them in steps 1 to 11, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards" in `conventions.md`: list the points you were unsure of, together with the open DAS and QAS that your judgments depend on ("Assumptions"); rate them; ask the ones that need asking; and write a DAS for each of the others. At this stage, an uncertain overall structure, platform, vendor or managed service the system becomes tied to, or conflict between primary drivers usually rates high and is asked. Most provisional design parameters and choices inside one component rate low or medium; each becomes a DAS, of kind `decision` for a parameter. Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied". When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run; the next run applies the answers ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
 
 ## Exit criteria
 

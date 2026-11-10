@@ -399,4 +399,4 @@ Updated: <date> · Inputs as of: <commit, or "none">
 <!-- /generated -->
 ```
 
-Status: `not started` when the component has no report, otherwise the status in its report's header (`draft` or `answers applied`), written with the glossary's terms in the working language.
+Status: `not started` when the component has no report, otherwise the status in its report's header (`draft`, `waiting for answers` or `answers applied`), written with the glossary's terms in the working language.

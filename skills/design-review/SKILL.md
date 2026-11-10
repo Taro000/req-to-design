@@ -36,9 +36,10 @@ The first review of a stage checks all of it. Each later review is a diff review
 - The stage to review: 2 (architecture), 3 (high-level design), or 4 (the detailed design of one component, named by its element ID). If the user does not say, ask.
 - The stage's report and items, and what they were built from: the items of the earlier design stages, `design-context.yaml`, the assumptions in `das/`, the hand-offs in `hnd/`, and the quality chain's artifacts (read only), with its shared facts and its assumptions (QAS).
 - The findings in `fnd/`, whatever their status, those of earlier reviews included, so that a finding rejected with a reason is not raised again unless its inputs changed.
-- The review report of the same stage (for stage 4, of the same component), if there is one. This review replaces it: it keeps the answers still in effect and continues the question numbering, keeps the issues for the quality chain that the quality chain has not applied yet, and takes over the open gaps. Its other results are not inputs. Whether the report exists decides the kind of review:
+- The review report of the same stage (for stage 4, of the same component), if there is one. This review replaces it: it keeps the answers still in effect and continues the question numbering, keeps the issues for the quality chain that the quality chain has not applied yet, and takes over the open gaps. Its other results are not inputs. Whether the report exists, and whether it waits for answers, decides the kind of review:
   - None: this is the first review of the stage, a full review. Do every activity for the whole stage.
   - One: this is a diff review. Its scope is what changed since the last review's commit, and the items connected to a change through `premises`, trace fields or `depends_on` ("Rules for every review" in `review-procedures.md`). Do each activity for its part of that scope, and record an activity with nothing in it as "No change in scope".
+  - One whose status is "waiting for answers": this run resumes that review instead of starting a new one. It keeps the kind of review that the report's header names, with the last review's commit for a diff review, applies the answers written under "Unanswered questions" to the activities that waited for them, and does the activities for what changed since the commit that left the questions, as a diff review would.
   - Do a full review instead when the user asks for one, or when the last review's commit cannot be found (the project is not under git, or this skill never committed the report).
 
 Essential input: the report and items of the stage under review. A stage whose report is still a draft can be reviewed, but say so.
@@ -68,6 +69,8 @@ Some activities need facts that the artifacts do not give, such as a provider's 
 A judgment about the design is never a question for the user: it is a finding, which the addressed stage accepts or rejects.
 
 Apply the answers to the results, and to the FND and DAS items in place.
+
+When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run, as "Draft first, ask afterwards", step 7, in `conventions.md` describes. Write no finding that rests on a question still waiting; the run that applies the answer writes it if the answer bears it out.
 
 ### 6. Answers applied
 

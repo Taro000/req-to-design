@@ -849,6 +849,18 @@ class TablesTest(unittest.TestCase):
         self.assertIn("| ELM | 名前 | 種類 | チーム | 今の構造との差分 |", text)
         self.assertIn("| ELM-02 | Store database | データの置き場所 | TEAM-01 | 新設 |", text)
 
+    def test_index_shows_a_component_waiting_for_answers(self):
+        self.f.edit("4-detailed-design/ELM-01.md", "Status: answers applied", "Status: waiting for answers")
+        self.f.tables()
+        self.assertIn("| ELM-01 | Store API | waiting for answers | 4-detailed-design/ELM-01.md | MOD-01 |",
+                      self.f.read("4-detailed-design.md"))
+        self.f.write(os.path.join(self.f.design, "4-detailed-design.md"),
+                     "# 詳細設計の索引\n\n更新: 2026-11-10 · 入力の基準: なし\n\n<!-- generated: components -->\n<!-- /generated -->\n")
+        self.f.edit("4-detailed-design/ELM-01.md", "Status: waiting for answers", "状態: 質問待ち")
+        self.f.tables()
+        self.assertIn("| ELM-01 | Store API | 質問待ち | 4-detailed-design/ELM-01.md | MOD-01 |",
+                      self.f.read("4-detailed-design.md"))
+
 
 if __name__ == "__main__":
     unittest.main()

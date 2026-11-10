@@ -32,7 +32,7 @@ The quality chain names an interface only by its kind and, for an external syste
 - Open findings addressed to this stage.
 - Open hand-offs addressed to this stage: `hnd/` items with `to: architecture-to-high-level-design` and `status: open`.
 - The interfaces and schemas that exist in the code, as recorded under `as_is`; read the parts you need.
-- On a re-run, this stage's report and items, and what changed since the report's `Inputs as of` commit (`conventions.md`, "Re-running a stage").
+- On a re-run, this stage's report and items, and what changed since this stage's last run (`conventions.md`, "Re-running a stage").
 
 Essential input: at least one element of kind `component`. If there is none, ask for the architecture (or suggest running `architecture-drivers-to-architecture`) before drafting.
 
@@ -94,7 +94,7 @@ Process every open finding addressed to this stage; a rejection that leaves a ri
 - In this stage, a shared convention, an interface that more than one element uses and the owner of a data entity have high breadth; the shape of stored data, a published interface, the error contract or idempotency of a call that moves money, and the handling of personal or payment data have high severity. Ask about any of them that you are unsure of.
 - Most timeouts, retry counts and other provisional parameters are low or medium on both scales: adopt the drafted value and record it as a DAS of `kind: decision`.
 
-Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied".
+Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied". When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run; the next run applies the answers ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
 
 ## Exit criteria
 

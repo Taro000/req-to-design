@@ -16,7 +16,7 @@ The report indexes `design-context.yaml`, the DRV items and the DAS items, and n
 ```markdown
 # Architecture drivers: <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 1 of 4
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 1 of 4
 
 ## Summary
 <Two or three sentences: the primary drivers in a phrase each, the hardest conflict, the feasibility verdict, the inputs of the design context still missing.>
@@ -89,6 +89,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|---|---|---|
 <Answers to questions about the quality chain's assumptions go here too: the QAS, the answer, and whether it holds.>
 
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while the report waits for answers: the questions this run could not ask because nobody could answer during the run, in the order it would ask them ("Draft first, ask afterwards", step 7, in conventions.md). #: the number the question keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: empty until the user, or the agent that started the run, writes it in; the next run moves the question to "Decisions".>
+
 ## Decisions
 | # | Question | Answer | Items |
 |---|---|---|---|
@@ -111,7 +116,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Out of scope
 ## Next
-<Run `architecture-drivers-to-architecture`. If issues for the quality chain were raised, say which quality-chain stage would handle each, and that the user decides whether to re-run it first.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; no later stage runs until then. Otherwise, run `architecture-drivers-to-architecture`. If issues for the quality chain were raised, say which quality-chain stage would handle each, and that the user decides whether to re-run it first.>
 ```
 
 ## Worked example: online store

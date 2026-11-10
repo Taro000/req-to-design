@@ -20,9 +20,11 @@ Use these terms for the working language. For a language not listed, or a term m
 | risk / non-risk | リスク / リスクでないもの |
 | basis: stated / inferred / assumed / confirmed | 根拠: 入力 / 推定 / 仮定 / 確認済み |
 | status: active / retired | 状態: 有効 / 廃止 |
-| report status: draft / answers applied | 報告書の状態: 下書き / 回答反映済み |
+| report status: draft / waiting for answers / answers applied | 報告書の状態: 下書き / 質問待ち / 回答反映済み |
+| unanswered questions (the questions a run writes in its report when nobody can answer during the run) | 未回答の質問 |
+| stale stage (one that has something to process since its last run) | 古い段 |
 | inputs as of (the commit the inputs were read at) | 入力の基準 |
-| detailed design status: not started / draft / answers applied | 詳細設計の状態: 未着手 / 下書き / 回答反映済み |
+| detailed design status: not started / draft / waiting for answers / answers applied | 詳細設計の状態: 未着手 / 下書き / 質問待ち / 回答反映済み |
 | business decision | 事業の判断 |
 | decisions (the questions asked and the answers in effect) | 決めたこと |
 | assumption (a judgment made without asking) | 仮定 |

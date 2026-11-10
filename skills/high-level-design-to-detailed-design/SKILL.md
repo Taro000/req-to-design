@@ -40,7 +40,7 @@ Essential input: the IFCs of the component. If there are none, ask for the high-
 
 ### 1. Scope
 
-Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. The index lists every component element; `scripts/tables.py` writes its rows. When the component already has a report, start from what changed since its `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
+Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. The index lists every component element; `scripts/tables.py` writes its rows. When the component already has a report, start from what changed since this stage's last run for the component ("Re-running a stage" in `conventions.md`).
 
 ### 2. Modules
 
@@ -86,7 +86,7 @@ Then list and rate the uncertain points, ask about the ones `conventions.md` say
 
 Re-rate the open assumptions this component's judgments depend on, whichever stage wrote them, and ask about one when a judgment you would ask about depends on it ("Assumptions" in `conventions.md`). Number the questions per component report and continue the numbering when the component is re-run; from elsewhere, cite one as "stage 4 ELM-02, question 3".
 
-Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and update the index's header; `scripts/tables.py` updates the component's row.
+Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and update the index's header; `scripts/tables.py` updates the component's row. When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", update the index's header, and finish the run; the index then shows the component as waiting for answers, and the next run for the component applies them ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
 
 ## Exit criteria
 

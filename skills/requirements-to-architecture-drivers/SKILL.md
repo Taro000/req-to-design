@@ -35,7 +35,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 
   A missing one is an uncertain point, rated like any other (step 13). A missing budget or deadline usually has high breadth, because it can move the line between the primary drivers and the rest, so it is asked.
 - Code and infrastructure definitions in the repository, when there are any.
-- On a re-run: this stage's report (the diff starts from its `Inputs as of` commit), `design-context.yaml`, `drv/`, the DAS files this stage wrote or depends on, and the open findings addressed to this stage: `fnd/` items with `to: requirements-to-architecture-drivers` and `status: open`.
+- On a re-run: this stage's report (the diff starts from this stage's last run, as "Re-running a stage" in `conventions.md` finds it), `design-context.yaml`, `drv/`, the DAS files this stage wrote or depends on, and the open findings addressed to this stage: `fnd/` items with `to: requirements-to-architecture-drivers` and `status: open`.
 
 Essential inputs: at least one functional requirement and at least one quality requirement, from the quality chain or from the user. If either is missing, ask for it (or suggest running the quality chain first) before drafting.
 
@@ -114,7 +114,7 @@ Before stage 2 spends effort, check every primary driver against the budget, the
 
 ### 13. Findings, report, questions, items
 
-On a re-run, start from what changed since the report's `Inputs as of` commit, process every open finding addressed to this stage, and apply the answers recorded in the DAS files this stage wrote ("Re-running a stage", "Findings between design stages" and "Assumptions" in `conventions.md`).
+On a re-run, start from what changed since this stage's last run, process every open finding addressed to this stage, and apply the answers written under the report's "Unanswered questions" and those recorded in the DAS files this stage wrote ("Re-running a stage", "Findings between design stages", "Draft first, ask afterwards" and "Assumptions" in `conventions.md`).
 
 Write `design-context.yaml`, the DRV items, the hand-offs and the findings you process as you draft them in steps 1 to 12, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards", "Decisions" and "Assumptions" in `conventions.md`: list the uncertain points, rate the breadth and severity of each, ask about the points that are high on either scale, and record every other point as a DAS item. In this stage:
 
@@ -124,7 +124,7 @@ Write `design-context.yaml`, the DRV items, the hand-offs and the findings you p
 
 Each driver lists in `premises` the design-context entries, shared facts (CON, EXT, OPF) and assumptions (DAS, QAS) it rests on, even when `sources` names them too: `sources` says what the driver is built from, and `premises` finds it when one of them changes. A chain item that rests on an open QAS passes it on to the drivers that use the part it covers (`reading-the-quality-chain.md`, "The quality chain's assumptions"). An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`. A driver that rests on a QAS that a question answered cites the answer in `basis_note` and is not `assumed` on its account.
 
-Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and finish the run ("Finish").
+Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and finish the run ("Finish"). When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run; the next run applies the answers ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
 
 ## Exit criteria
 
