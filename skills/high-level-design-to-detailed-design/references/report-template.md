@@ -102,7 +102,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 ## Unanswered questions
 | # | Question | Why unsure | Options | Items | Answer |
 |---|---|---|---|---|---|
-<Only while the report waits for answers: the questions this run could not ask because nobody could answer during the run, in the order it would ask them ("Draft first, ask afterwards", step 7, in conventions.md). #: the number the question keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: empty until the user, or the agent that started the run, writes it in; the next run moves the question to "Decisions".>
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -123,7 +123,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 ## Open gaps
 ## Out of scope
 ## Next
-<While questions wait for answers: answer them under "Unanswered questions", then run this stage again for the component; its review waits until then. Otherwise, run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run the stages that this report addresses a critical or major finding to; re-run this stage for the component for the critical or major findings a review addresses to it; then design the next component in the index. Minor findings start no run.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again for the component; its review waits until then. Otherwise, run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review; re-run the stages that this report addresses a critical or major finding to; re-run this stage for the component for the critical or major findings a review addresses to it; then design the next component in the index. Minor findings start no run.>
 ```
 
 ## The index

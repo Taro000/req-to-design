@@ -51,7 +51,7 @@ Each stage drafts everything first. It then rates every point it was unsure of b
 
 When you run a stage yourself, it asks you during the run. When it cannot ask you, because it runs as a subagent of another agent or where nobody watches, it writes the questions in its report under "Unanswered questions", with the same options, sets the report's status to "waiting for answers", commits its draft and stops. Write each answer in its question's row and run the stage again: it applies the answers and moves them to "Decisions". Until then, run no later stage and no review of it.
 
-A stage needs to run again when it is stale: since its last run, something it reads changed, a critical or major finding or a hand-off was addressed to it, an answer was written to its questions, or an assumption its items rest on was overturned (`conventions.md`, "Re-running a stage").
+A stage needs to run again when it is stale: since its last run, something it reads changed, a critical or major finding was addressed to it, a hand-off to it fell due, or an assumption its items rest on was overturned; or an answer waits under its "Unanswered questions" (`conventions.md`, "Re-running a stage").
 
 Each stage decides in full only what is hard to change later: the kinds of point that `conventions.md` lists for it, and any point whose breadth or severity is high. It hands the rest off, with the bounds to keep, to the later stage or to the implementation that will decide it, and each stage takes up the hand-offs addressed to it.
 
