@@ -7,7 +7,9 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs as they are, and write the basis marks, statuses, kinds and ratings with the glossary's terms for the working language.
 
-The report indexes the items and never restates what an item says. Refer to decisions and elements by ID and title, and leave their options, rationales, responsibilities, parameter values and other text to the YAML. Only the report holds the summary, the comparison tables of options, the design concerns, the threat model, the views, the walkthroughs, the cost check, the issues for the quality chain, the questions and their answers, the open assumptions, the placeholders, the open gaps and what is out of scope.
+The report indexes the items and never restates what an item says. Refer to decisions and elements by ID and title, and leave their options, rationales, responsibilities, parameter values and other text to the YAML. Only the report holds the summary, the comparison tables of options, the design concerns, the threat model, the views, the walkthroughs, the cost check, the issues for the quality chain, the questions and their answers, the placeholders, the open gaps and what is out of scope.
+
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the elements, the design parameters, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: where each parameter was decided, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -27,9 +29,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The decisions that set the structure and the platforms, by ID, with the comparison table of their options, as in decisions.md. The views show the result.>
 
 ## Design decisions
+<!-- generated: decisions -->
 | DEC | Title | Addresses | Basis |
 |---|---|---|---|
-<Under the table, one comparison table for every other decision that addresses a primary driver, as in decisions.md.>
+<!-- /generated -->
+<The decisions of stage `architecture`. Under the table, one comparison table for every other decision that addresses a primary driver, as in decisions.md.>
 
 ## Design concerns
 | Concern | Settled by, left to a later stage, or why standard practice is enough |
@@ -40,8 +44,10 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The data flow diagram with trust boundaries, then the table of flows, threats and counters, as in views.md.>
 
 ## Elements
+<!-- generated: elements -->
 | ELM | Name | Kind | Team | As-is |
 |---|---|---|---|---|
+<!-- /generated -->
 
 ## Views
 ### Context
@@ -58,27 +64,33 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <One table, as in views.md.>
 
 ## Design parameters
-| Parameter | Decision | Decided in |
+<!-- generated: parameters -->
+| Parameter | DEC | Decided in |
 |---|---|---|
-<Only the values this stage sets: those that size something paid for or hard to change once built, and any other that rates high (decisions.md, "Design parameters"). Decided in: the question under "Decisions" that settled it, or the DAS that adopted it provisionally. A sensitive point whose value a later stage sets is under "Hand-offs".>
+<!-- /generated -->
+<One row per entry of the decisions' `parameters`: only the values this stage sets, those that size something paid for or hard to change once built, and any other that rates high (decisions.md, "Design parameters"). Decided in, by hand: the question under "Decisions" that settled it, or the DAS that adopted it provisionally. A sensitive point whose value a later stage sets is under "Hand-offs".>
 
 ## Debt and deferrals
 | Item | Debt, or deferral of a full-depth kind | Decided in |
 |---|---|---|
-<A debt is on its DEC; a deferral of a point of this stage's full-depth kinds, or of one that rates high, is a hand-off (HND). Decided in: the question under "Decisions", or the DAS of kind decision.>
+<By hand. A debt is on its DEC; a deferral of a point of this stage's full-depth kinds, or of one that rates high, is a hand-off (HND). Decided in: the question under "Decisions", or the DAS of kind decision.>
 
 ## Cost and team
 <The running cost from stated prices or placeholders, computed with a script; the work to build it; the skills it needs; the verdict.>
 
 ## Findings
-| FND | Title | Raised by | Addressed to | Status |
-|---|---|---|---|---|
-<The findings addressed to this stage, and those this stage raised for stage 1.>
+<!-- generated: findings -->
+| FND | Title | Severity | Raised by | To | Status | Items changed |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The findings addressed to this stage, and those this stage raised for stage 1. Items changed are the items whose `basis_note` cites the finding.>
 
 ## Hand-offs
-| HND | Title | From | To | Status | Items |
-|---|---|---|---|---|---|
-<The hand-offs this stage wrote, and those addressed to it that it took up, as this run left them: the values of sensitive points that a later stage sets, the deferrals under "Debt and deferrals", and any other point left to a later stage that it would not take up otherwise. To names the component as well, for stage 4 and implementation. Items: for a hand-off written here, its origin; for one decided here, the items that decide it, which cite it in their `basis_note`. The point, its bounds, its trigger and why one was passed on are in the HND file.>
+<!-- generated: handoffs -->
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The hand-offs this stage wrote, and those addressed to it: the values of sensitive points that a later stage sets, the deferrals under "Debt and deferrals", and any other point left to a later stage that it would not take up otherwise. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -91,9 +103,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <Questions asked and answers in effect, numbered per stage and continued on re-runs; an overturning answer replaces the row.>
 
 ## Open assumptions
+<!-- generated: assumptions -->
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-<The DAS this stage wrote, and the open DAS and QAS its items depend on.>
+<!-- /generated -->
+<The open DAS this stage wrote, and the open DAS and QAS its items depend on, highest first. Breadth and severity of a QAS, by hand: as this stage rates it.>
 
 ## Placeholders
 | Name | Stands for | Used in |
@@ -104,7 +118,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Out of scope
 ## Next
-<Run `design-review` on this stage in a fresh context; re-run this stage to resolve its findings; then run `architecture-to-high-level-design`.>
+<Run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `architecture-to-high-level-design`.>
 ```
 
 ## Worked example: online store
@@ -196,7 +210,7 @@ Walkthrough of DRV-01 (excerpt):
 |---|---|---|---|---|
 | DRV-01 | ELM-01's checkout script → ELM-02 | DEC-01, DEC-06, DEC-03 (cached stock) | Likely: the charge at the provider's stated 99.9th percentile (1.0 s) leaves 0.5 s for our own work and the database | During failover (DEC-02), checkouts are slower until the failing provider's breaker opens, and each one waits until the first provider's outcome is settled before the second is charged (DEC-05): stage 3 sets the threshold and checks the failover path against NFR-02's error budget (HND-02) |
 
-Design parameters: none. No value in this architecture sizes a contract or the stored data. The error threshold at which checkout fails over (DEC-02) and the lifetime of ELM-02's stock cache (DEC-03) are sensitive points whose values stage 3 sets: see "Hand-offs".
+Design parameters: none. No value in this architecture sizes a contract or the stored data, so no decision has `parameters` and the script writes an empty table. The error threshold at which checkout fails over (DEC-02) and the lifetime of ELM-02's stock cache (DEC-03) are sensitive points whose values stage 3 sets: see "Hand-offs".
 
 Debt and deferrals (excerpt):
 
@@ -206,10 +220,10 @@ Debt and deferrals (excerpt):
 
 Hand-offs (excerpt):
 
-| HND | Title | From | To | Status | Items |
-|---|---|---|---|---|---|
-| HND-02 | The error threshold at which checkout fails over | architecture-drivers-to-architecture | architecture-to-high-level-design | open | DEC-02 |
-| HND-03 | How long ELM-02 keeps a stock count it has read | architecture-drivers-to-architecture | architecture-to-high-level-design | open | DEC-03 |
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+| HND-02 | The error threshold at which checkout fails over | architecture-drivers-to-architecture | architecture-to-high-level-design | — | open | — |
+| HND-03 | How long ELM-02 keeps a stock count it has read | architecture-drivers-to-architecture | architecture-to-high-level-design | — | open | — |
 
 Both are sensitive points whose values this stage does not set, so each gets a hand-off. Both values lie on paths that stage 3 budgets: the threshold on the paths of NFR-02 and of money, the cache lifetime on the path of NFR-03, whose threshold is T_stock_lag. Deciding them here would fix numbers before the budgets they must fit exist.
 
@@ -267,7 +281,7 @@ sensitive_points: [The error threshold that opens a provider's breaker - too low
 trade_offs: [{with: DRV-07, note: A second contract raises running cost}]
 assumptions: ["The second provider works like the first: hosted card fields, and fraud screening inside its charge (DAS-02)"]
 depends_on: [DEC-01]
-parameters: []                           # the value of the failover threshold is stage 3's (HND-02)
+parameters: []
 debt:
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"

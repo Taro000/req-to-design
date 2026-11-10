@@ -7,7 +7,9 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs as they are, and write the basis marks, statuses and other enum values with the glossary's terms for the working language.
 
-The report indexes `design-context.yaml`, the DRV, HND and DAS items, and never restates them: statements, scenarios, reasons and values live in the YAML only, and the report's tables hold IDs, titles or short labels, enum values and references. What the report holds that no item does: the summary, the inputs and how each input item was classified, the boundary list, the excluded QRs checked, the ranking table and where the primary line falls, who resolves each conflict, the feasibility check, the findings addressed to this stage and how each was resolved, issues for the quality chain, decisions, open assumptions, placeholders, open gaps and what is out of scope.
+The report indexes `design-context.yaml`, the DRV, HND and DAS items, and never restates them: statements, scenarios, reasons and values live in the YAML only, and the report's tables hold IDs, titles or short labels, enum values and references. What the report holds that no item does: the summary, the inputs and how each input item was classified, the boundary list, the excluded QRs checked, where the primary line falls, who resolves each conflict, the feasibility check, issues for the quality chain, decisions, placeholders, open gaps and what is out of scope.
+
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design context, the architecture drivers, the ranking table, the conflicts, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the label of each design-context entry, who resolves each conflict, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -33,9 +35,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <For an existing system: what was read, what the code cannot tell, and the elements found, by name (the detail is under `as_is` in design-context.yaml). Otherwise one line: "No existing code; everything is new.">
 
 ## Design context
+<!-- generated: design-context -->
 | ID | Label | Kind | Source | Basis |
 |---|---|---|---|---|
-<Technology constraints (the DINs taken in included), project constraints, teams, anticipated changes, stakeholders. The label is a few words, not the statement. A missing input is a row whose label says "missing" and whose basis cell gives the question number or the DAS.>
+<!-- /generated -->
+<Technology constraints (the DINs taken in included), project constraints, teams, anticipated changes, stakeholders. Label, by hand: a few words, not the statement. A missing input is an entry too: its statement says what is missing, its source names the question or the DAS, and its label says "missing".>
 <One line on platforms and device support: the TC that fixes them, or "No input fixes them; stage 2 decides them from the kinds of device in the contexts of use.">
 
 ## Concern inventory
@@ -44,23 +48,29 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <Every FR, QR (whatever its handling), NFR, SLI, entry point, CON, DIN and design-context entry, once each; items set aside for the same reason can share a row. "Became" is a DRV ID, "inside DRV-xx", a TC ID, or "set aside: <reason>".>
 
 ## Architecture drivers
+<!-- generated: drivers -->
 | DRV | Title | Kind | Negotiable | Sources | Premises | Basis |
 |---|---|---|---|---|---|---|
-<One row per driver, grouped by kind. Negotiable is filled for constraints and principles only.>
+<!-- /generated -->
+<One row per driver, grouped by kind. Negotiable is shown for constraints and principles only.>
 
 ## Excluded quality requirements checked
 | QR | Cost to add later | Candidate | Reason |
 |---|---|---|---|
 
 ## Ranking table
+<!-- generated: ranking -->
 | Rank | DRV | Business priority | Design difficulty | Primary |
 |---|---|---|---|---|
-<The reasons are in each DRV's `priority`. Under the table: the number of primary drivers, why the line falls where it does, and the question that decided the ranking.>
+<!-- /generated -->
+<The reasons are in each DRV's `priority`. Under the table, by hand: the number of primary drivers, why the line falls where it does, and the question that decided the ranking.>
 
 ## Conflicts
+<!-- generated: conflicts -->
 | Drivers | Resolved by |
 |---|---|
-<What each conflict is lives in the DRVs' `conflicts`. "Resolved by" is stage 2 (by design, with the options it should weigh), the business (a question number), or the quality chain (an issue number).>
+<!-- /generated -->
+<One row per pair of drivers whose `conflicts` name each other; what each conflict is lives there. Resolved by, by hand: stage 2 (by design, with the options it should weigh), the business (a question number), or the quality chain (an issue number).>
 
 ## Feasibility
 | DRV | Known way with this budget, deadline and team | Why |
@@ -68,14 +78,18 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <One row per primary driver: "yes", "yes, if <condition>", or "no known way". Name a missing budget or deadline.>
 
 ## Findings
-| FND | Title | Raised by | Status | Items changed |
-|---|---|---|---|---|
-<The findings addressed to this stage, from a later stage or a review, and how each was resolved: accepted, with the items it changed (they cite it in their `basis_note`), or rejected (the reason is in its `resolution`; a rejection that leaves a risk in place is also under "Decisions"). "None" on a first run.>
+<!-- generated: findings -->
+| FND | Title | Severity | Raised by | To | Status | Items changed |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The findings addressed to this stage, from a later stage or a review, and those this stage raised. Items changed are the items whose `basis_note` cites the finding; the reason for a rejection is in its `resolution`, and a rejection that leaves a risk in place is also under "Decisions".>
 
 ## Hand-offs
-| HND | Title | From | To | Status | Items |
-|---|---|---|---|---|---|
-<The hand-offs this stage wrote, and those addressed to it that it took up, as this run left them. This stage writes one for each point that a quality-chain item leaves for the design to confirm and that becomes no driver, constraint, question or DAS here, addressed to the stage that designs the part, and one for each point of its own whose deferral waits for an event. Items: for a hand-off written here, its origin; for one decided here, the items that decide it, which cite it in their `basis_note`. The point, its bounds, its trigger and why one was passed on are in the HND file.>
+<!-- generated: handoffs -->
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The hand-offs this stage wrote, and those addressed to it. This stage writes one for each point that a quality-chain item leaves for the design to confirm and that becomes no driver, constraint, question or DAS here, addressed to the stage that designs the part, and one for each point of its own whose deferral waits for an event. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -88,9 +102,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <Questions asked and answers in effect, numbered per stage and continued on re-runs; an overturning answer replaces the row.>
 
 ## Open assumptions
+<!-- generated: assumptions -->
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-<The DAS this stage wrote, and the open DAS and QAS its items depend on, highest first, with the ratings as this stage gives them.>
+<!-- /generated -->
+<The open DAS this stage wrote, and the open DAS and QAS its items depend on, highest first. Breadth and severity of a QAS, by hand: as this stage rates it.>
 
 ## Placeholders
 | Name | Stands for | Used in |
@@ -117,7 +133,7 @@ Boundary and the outside (excerpt):
 | EXT-01 Payment provider | external system, creates data (payment records) | FR-01 |
 | EXT-02 Warehouse system | external system, creates data | FR-05 |
 
-Design context (excerpt):
+Design context (excerpt). The script writes every cell but the labels:
 
 | ID | Label | Kind | Source | Basis |
 |---|---|---|---|---|
@@ -126,7 +142,7 @@ Design context (excerpt):
 | TC-03 | Web app only this year | platform | context.yaml DIN-01 | stated |
 | PC-01 | Release before the spring sale | deadline | Kick-off notes | stated |
 | PC-02 | Four developers | team | Kick-off notes | stated |
-| PC-03 | missing | budget | — | question 3 |
+| PC-03 | missing | budget | Stage 1, question 3 | confirmed |
 | TEAM-01 | Store team | team structure | Kick-off notes | stated |
 | CHG-01 | Second payment provider | anticipated change | Roadmap 2026 | stated |
 | STK-01 | Product owner | stakeholder | Kick-off notes | stated |
@@ -137,15 +153,15 @@ Architecture drivers (excerpt):
 
 | DRV | Title | Kind | Negotiable | Sources | Premises | Basis |
 |---|---|---|---|---|---|---|
-| DRV-01 | Checkout answers without keeping buyers waiting | quality | | QR-02, NFR-02, SLI-02 | OPF-03, QAS-08 | inferred |
-| DRV-02 | Checkout survives a payment provider outage | quality | | QR-08, CHG-01 | EXT-01, CHG-01 | inferred |
-| DRV-03 | Stock changes reach buyers in time | quality | | QR-03, NFR-03 | EXT-02, QAS-09, DAS-01 | assumed |
+| DRV-01 | Checkout answers without keeping buyers waiting | quality | — | QR-02, NFR-02, SLI-02 | OPF-03, QAS-08 | inferred |
+| DRV-02 | Checkout survives a payment provider outage | quality | — | QR-08, CHG-01 | EXT-01, CHG-01 | inferred |
+| DRV-03 | Stock changes reach buyers in time | quality | — | QR-03, NFR-03, SLI-03 | EXT-02, QAS-09, DAS-01 | assumed |
 | DRV-08 | Card numbers never reach our servers | constraint | no | TC-01, QR-12 | TC-01, CON-01 | inferred |
 | DRV-09 | First release before the spring sale | constraint | no | PC-01, PC-02 | PC-01, PC-02 | confirmed |
 | DRV-11 | The storefront is a web app this year | constraint | no | TC-03 | TC-03 | confirmed |
 | DRV-13 | One region of the company cloud | constraint | yes | TC-02 | TC-02 | confirmed |
-| DRV-14 | Checkouts are visible at the system boundary | observability | | SLI-02 | OPF-02 | inferred |
-| DRV-05 | Money movement can be repeated safely | principle | no | QIU-03, FR-01, QR-04 | | inferred |
+| DRV-14 | Checkouts are visible at the system boundary | observability | — | SLI-02 | OPF-02 | inferred |
+| DRV-05 | Money movement can be repeated safely | principle | no | QIU-03, FR-01, QR-04 | — | inferred |
 
 Ranking table (excerpt):
 
@@ -193,9 +209,9 @@ The budget is missing (PC-03): the verdicts weigh only the team and the date, an
 
 Hand-offs (excerpt):
 
-| HND | Title | From | To | Status | Items |
-|---|---|---|---|---|---|
-| HND-01 | Where the time of a stock change at the warehouse can be read | requirements-to-architecture-drivers | architecture-to-high-level-design | open | SLI-03 |
+| HND | Title | From | To | Component | Status | Decided in |
+|---|---|---|---|---|---|---|
+| HND-01 | Where the time of a stock change at the warehouse can be read | requirements-to-architecture-drivers | architecture-to-high-level-design | — | open | — |
 
 SLI-03's `basis_note` leaves it to the design to confirm that the time each count changed at the warehouse can be read. No driver, constraint or ranking here turns on it, and stage 3 binds SLI-03 to its source, so the point goes there; `artifacts.md` shows HND-01 once stage 3 has decided it. The missing budget needs no hand-off: it is an input that question 3 asked for, and this stage runs again when the funding review sets it. Nor does the conflict between DRV-02 and DRV-07: stage 2 compares its options against both drivers anyway.
 
@@ -238,7 +254,7 @@ Placeholders (excerpt):
 
 ## Example items
 
-`docs/design/design-context.yaml` (excerpt):
+`docs/design/design-context.yaml` (excerpt; TC-03 takes in a design input of the quality chain as a constraint):
 
 ```yaml
 technology_constraints:
@@ -250,7 +266,7 @@ technology_constraints:
   - id: TC-03
     statement: The storefront stays a web app this year; no native app
     kind: platform
-    source: context.yaml DIN-01            # a design input of the quality chain, taken in as a constraint
+    source: context.yaml DIN-01
     basis: stated
 ```
 
@@ -273,7 +289,7 @@ scenario:
   artifact: Checkout (FR-01)
   environment: Sale peak (OPF-03); normal operation
   response: The order is confirmed and the confirmation page is shown
-  measure: NFR-02's SLO, counted by SLI-02     # name the chain's measure by ID; do not copy its statement
+  measure: NFR-02's SLO, counted by SLI-02
 negotiable: null
 derived_from: []
 priority:

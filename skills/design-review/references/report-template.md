@@ -4,19 +4,22 @@
 - Report template (`docs/design/reviews/<stage>.md`)
 - Worked example: review of the online store's high-level design
 - Example items
+- Worked example: the next review of the same stage, a diff review
 
 Write the report in the working language. Translate the headings. Keep the IDs as they are, and write the basis marks, severities and statuses with the glossary's terms for the working language.
 
-Each reviewed stage has one report at a fixed path, and the next review of the same stage replaces it: `reviews/2-architecture.md`, `reviews/3-high-level-design.md`, and one per component for stage 4, such as `reviews/4-detailed-design-ELM-02.md`. The report describes the latest review only. Earlier reviews are in git, and their findings keep their own status in `fnd/`.
+Each reviewed stage has one report at a fixed path, and the next review of the same stage replaces it: `reviews/2-architecture.md`, `reviews/3-high-level-design.md`, and one per component for stage 4, such as `reviews/4-detailed-design-ELM-02.md`. The report describes the latest review only, full or diff. Earlier reviews are in git, and their findings keep their own status in `fnd/`. A diff review records only what it did; its header names the last review's commit, where the earlier report can be read.
 
 The report holds what only the review records: the activities and their results, and for stage 2 the risks, non-risks, sensitive points and trade-offs. It indexes the findings and assumptions, and never restates their evidence or statements: those live in the FND and DAS files.
+
+`scripts/tables.py` writes the findings and the open assumptions between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`). Do not edit them by hand, except the breadth and severity of a quality-chain assumption, which the review writes as activity E3 rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
 ```markdown
 # Design review: <stage, with the component for stage 4> of <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Context: fresh | the conversation that wrote the design (weaker) · Items reviewed: <IDs>
+Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Review: full | diff since <the last review's commit> · Context: fresh | the conversation that wrote the design (weaker) · Items reviewed: <IDs; in a diff review, the items its activities covered>
 
 ## Summary
 <The number of findings by severity and by addressed skill; the most serious ones in a sentence each; the main risks.>
@@ -24,21 +27,24 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Activities and results
 | # | Activity | What was done | Result | Findings |
 |---|---|---|---|---|
-<Every activity in review-procedures.md for the stage, then those for every stage, in order, including those that found nothing. A result too long for its row (stage 2's four questions, stage 3's recomputed budgets with the script's output) goes in a subsection under the table, headed with the activity's number and name.>
+<Every activity in review-procedures.md for the stage, then those for every stage, in order, including those that found nothing. In a diff review, "What was done" says what the activity covered, from its "In a diff review" column; an activity with nothing there reads "No change in scope", and its other cells stay empty. A result too long for its row (stage 2's four questions, stage 3's recomputed budgets with the script's output) goes in a subsection under the table, headed with the activity's number and name.>
 
 ## Risks, non-risks, sensitive points and trade-offs
-<Stage 2 only: what the driver walkthroughs showed.>
+<Stage 2 only: what the driver walkthroughs showed; in a diff review, for the drivers walked in it.>
 | DRV | Risks | Non-risks | Sensitive points | Trade-offs |
 |---|---|---|---|---|
 
 ## Findings
+<!-- generated: findings -->
 | FND | Title | Severity | To | Targets |
 |---|---|---|---|---|
-<Ordered by severity: the findings this review raised, and the open findings that earlier reviews raised at this path and that still hold. Under the table, cite in one line the rejected findings not raised again.>
+<!-- /generated -->
+<The open findings raised at this report's path, by this review and by earlier ones, ordered by severity. Under the table, by hand, cite in one line the rejected findings not raised again.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
 |---|---|---|---|---|
+<The issues this review raised, and those of earlier reviews at this path that the quality chain has not applied yet.>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -46,19 +52,21 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The questions about facts the review needed, and their answers: those of this review, and those of earlier reviews at this path that are still in effect. Items: the items, findings and activities the answer bears on.>
 
 ## Open assumptions
+<!-- generated: assumptions -->
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-<The DAS this review wrote, and the open DAS and QAS that the items in scope or the findings depend on, highest first, with their ratings after activity E3.>
+<!-- /generated -->
+<The open DAS this review wrote, and the open DAS and QAS that the items of the reviewed stage or the findings raised here depend on, highest first, with their ratings after activity E3.>
 
 ## Open gaps
-<What the review could not check, and why: an input that is missing, a stage report still in draft.>
+<What the review could not check, and why: an input that is missing, a stage report still in draft. The stages that still have problems that `scripts/check.py` reports in the items in scope, with their number. A diff review lists again the gaps of the last review that it still cannot check, and notes in one line any problem that looks critical in what has not changed, for the user to decide on a full review.>
 ```
 
 ## Worked example: review of the online store's high-level design
 
-`docs/design/reviews/3-high-level-design.md`, with this header:
+`docs/design/reviews/3-high-level-design.md`, the first review of stage 3, with this header:
 
-Status: answers applied · Updated: 2026-11-10 · Inputs as of: 4f2c9e1 · Context: fresh · Items reviewed: IFC-01 to IFC-06, DAT-01 to DAT-06, DEC-11 and DEC-13, HND-04 and HND-05
+Status: answers applied · Updated: 2026-11-10 · Inputs as of: 4f2c9e1 · Review: full · Context: fresh · Items reviewed: IFC-01 to IFC-06, DAT-01 to DAT-06, DEC-11 and DEC-13, HND-04 and HND-05
 
 Activities (excerpt):
 
@@ -111,3 +119,31 @@ evidence: FR-05's second criterion says a sold-out item is shown as unavailable 
 suggestion: Return availability with every cart read (a cart IFC operation), and recheck it when the buyer starts checkout
 resolution: null
 ```
+
+## Worked example: the next review of the same stage, a diff review
+
+The review above was committed as 7e2d5a8. Stage 3 then accepted FND-01 to FND-03: it changed IFC-01, IFC-02 and IFC-05, added IFC-07 (the cart API, which the cart page calls from the buyer's browser and which returns availability with every cart read), and redrew the failure paths of the checkout flow. Its items changed to accept critical and major findings, so the stage was reviewed again, and the report at the same path now has this header:
+
+Status: answers applied · Updated: 2026-11-12 · Inputs as of: 9c41b07 · Review: diff since 7e2d5a8 · Context: fresh · Items reviewed: IFC-01, IFC-02, IFC-05 and IFC-07, DAT-04 and DAT-06, the checkout flow and the cart screen flow
+
+Activities (excerpt):
+
+| # | Activity | What was done | Result | Findings |
+|---|---|---|---|---|
+| B1 | Trace acceptance criteria | Traced the criteria of FR-01, FR-04 and FR-05, the FRs that the changed IFCs serve | All traced; FR-05's second criterion goes through IFC-07's cart read | none |
+| B2 | Recompute latency budgets | Ran the budget script again for NFR-02, with the failover path that settles A's charge before B is tried | The normal path fits; the failover path makes at most 3,000 checkouts slow per provider outage, 3.6% of the error budget | none |
+| B3 | Check error contracts | Followed every error case of IFC-01, IFC-02, IFC-05 and IFC-07, and what each caller does, through the failure paths of the checkout flow | A timeout at A is an unknown outcome, settled at A before B is tried; while it is unsettled, IFC-01 answers that the payment is being confirmed | none |
+| B4 | Check timeouts | Checked the timeouts on every call path through IFC-01, IFC-02 and IFC-07 | The payment path's worst case, 10.3 s, is below IFC-01's 15 s timeout; the cart read path holds too | none |
+| B5 | Check event IFCs | No change in scope | | |
+| B6 | Check data entities | Checked DAT-04 and DAT-06, which IFC-07's cart read uses | DAT-04 keeps one writer, ELM-03, and ELM-02 reads it under the read-only decision DEC-11; DAT-06 is ELM-02's own | none |
+| B8 | Check shared conventions | Checked IFC-01, IFC-02, IFC-05 and IFC-07, and the specs of IFC-01 and IFC-07, against the shared conventions | All followed, except one error code that IFC-07 writes in camel case | FND-04 |
+| E1 | Read findings | Read FND-01 to FND-03, which stage 3 accepted, and the items they changed | Each change is in the items, cited in their `basis_note` | none |
+| E6 | Check points to confirm | No change in scope | | |
+
+Findings:
+
+| FND | Title | Severity | To | Targets |
+|---|---|---|---|---|
+| FND-04 | An error code of IFC-07 does not follow the error convention's case | minor | architecture-to-high-level-design | IFC-07 |
+
+B5 and E6 had nothing in scope: no event IFC is in scope, and no point to confirm is new or changed. No finding was raised about IFC-03 or the other items that did not change. FND-04 is minor, so it starts no run: stage 3 processes it the next time it runs for another reason, and no review follows from it.

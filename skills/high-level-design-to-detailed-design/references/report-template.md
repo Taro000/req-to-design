@@ -8,7 +8,9 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs, type names, operation names, table and column names as they are, and write the basis marks and statuses with the glossary's terms for the working language.
 
-The report indexes the items and never restates them. A module's responsibility, contracts, invariants, checks and parameter values live in its MOD item; a decision's options and rationale live in its DEC item. The report holds what no item holds: diagrams, decision tables, algorithms, concurrency and error handling, the physical data model, caches, screens, the verification approach across modules, and the decisions, assumptions and gaps in effect.
+The report indexes the items and never restates them. A module's responsibility, contracts, invariants, checks and parameter values live in its MOD item; a decision's options and rationale live in its DEC item. The report holds what no item holds: diagrams, decision tables, algorithms, concurrency and error handling, the physical data model, caches, screens, the allocation of acceptance criteria, the verification approach across modules, and the decisions and gaps in effect.
+
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the modules, the design decisions, the design parameters, the findings, the open assumptions, and the whole index. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: where each parameter was decided and how it fits the stage 3 budgets, and the breadth and severity of a quality-chain assumption as this component rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Component report template
 
@@ -25,13 +27,16 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|
 
 ## Modules
-<The module dependency diagram in Mermaid and the dependency rule CI checks, then an index of the MOD items; for an existing component, add an As-is column:>
-| MOD | Name | Visibility | Functions | Realizes | Basis |
-|---|---|---|---|---|---|
+<The module dependency diagram in Mermaid and the dependency rule CI checks, then the index of the MOD items:>
+<!-- generated: modules -->
+| MOD | Name | Visibility | Functions | Realizes | As-is | Basis |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
 
 ## Allocation
 | FR, IFC or SLI | Criterion, operation or field | MOD |
 |---|---|---|
+<By hand: each acceptance criterion of the component's FRs, and each event and field its SLI bindings need, with the module it goes to. The operations each module realizes are in the module index.>
 
 ## Types
 <The structured types the signatures use, each with its fields and their types.>
@@ -70,19 +75,25 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <What serves several modules: test doubles for external systems, environments, load tests, checks in CI. Each module's own checks are in its MOD item.>
 
 ## Design parameters
+<!-- generated: parameters -->
 | Parameter | MOD | Decision | Budget or timeout it fits |
 |---|---|---|---|
-<Only values inside the component, and the timeouts of its calls to other elements that stage 3 handed off to it. The timeouts and waits that the IFCs' `timing` holds are stage 3's, and the modules refer to them by IFC ID. Decision: the DAS that adopts the value provisionally, or the question that decided it. The last column shows how the worst case follows from the stage 3 budgets and timeouts.>
+<!-- /generated -->
+<One row per entry of the modules' `parameters`: values inside the component, and the timeouts of its calls to other elements that stage 3 handed off to it. The timeouts and waits that the IFCs' `timing` holds are stage 3's, and the modules refer to them by IFC ID. By hand: Decision, the DAS that adopts the value provisionally or the question that decided it; the last column, how the worst case follows from the stage 3 budgets and timeouts.>
 
 ## Design decisions
+<!-- generated: decisions -->
 | DEC | Title | Addresses | Basis |
 |---|---|---|---|
-<The DEC items this stage wrote for the component, frameworks included.>
+<!-- /generated -->
+<The DEC items this stage wrote for the component, frameworks included: the decisions of stage `detailed-design` that its modules list in `decisions`.>
 
 ## Findings
-| FND | Title | Raised by | To | Status |
-|---|---|---|---|---|
-<The findings addressed to this stage for this component, and the findings this stage raised.>
+<!-- generated: findings -->
+| FND | Title | Severity | Raised by | To | Status | Items changed |
+|---|---|---|---|---|---|---|
+<!-- /generated -->
+<The findings addressed to this stage for this component (they target the component, its modules or its decisions, or were raised in its reports), and the findings this stage raised in this report. Items changed are the items whose `basis_note` cites the finding.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -94,9 +105,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The questions asked and the answers in effect, numbered per component report and continued when the component is re-run. An answer that overturns an earlier one replaces its row.>
 
 ## Open assumptions
+<!-- generated: assumptions -->
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-<The DAS this run wrote, and the open DAS and QAS that this component's items depend on, highest ratings first.>
+<!-- /generated -->
+<The open DAS this stage wrote that this component's modules and decisions depend on, and the open DAS and QAS in the `premises` of those modules and decisions, of the interfaces the component provides or consumes, and of the data entities it owns, highest ratings first. Breadth and severity of a QAS, by hand: as this component rates it.>
 
 ## Placeholders
 | Name | Stands for | Used in |
@@ -105,12 +118,12 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Open gaps
 ## Out of scope
 ## Next
-<Run `design-review` on this component in a fresh context; re-run the stages that this report's findings are addressed to; re-run this stage for the component to resolve the findings the review addresses to it; then design the next component in the index.>
+<Run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run the stages that this report addresses a critical or major finding to; re-run this stage for the component for the critical or major findings a review addresses to it; then design the next component in the index. Minor findings start no run.>
 ```
 
 ## The index
 
-Keep `docs/design/4-detailed-design.md` as `artifacts.md` shows: one row per component element, with its status, report and modules. Update it at the end of every run, with the date and the run's `Inputs as of` commit in its header.
+Keep `docs/design/4-detailed-design.md` as `artifacts.md` shows: one row per component element, with its status, report and modules, in a table that `scripts/tables.py` writes. Update its header at the end of every run, with the date and the run's `Inputs as of` commit.
 
 ## Worked example: Store API (ELM-02)
 
@@ -139,12 +152,12 @@ The provider adapters depend on the payment router's provider interface, never t
 
 Module index (excerpt):
 
-| MOD | Name | Visibility | Functions | Realizes | Basis |
-|---|---|---|---|---|---|
-| MOD-01 | Checkout orchestrator | public | FR-01 | IFC-01 POST /v1/checkout | inferred |
-| MOD-02 | Order total calculator | internal | FR-03 | | inferred |
-| MOD-03 | Payment router | internal | FR-01 | | inferred |
-| MOD-10 | Payment reconciliation | internal | FR-01 | | assumed |
+| MOD | Name | Visibility | Functions | Realizes | As-is | Basis |
+|---|---|---|---|---|---|---|
+| MOD-01 | Checkout orchestrator | public | FR-01 | IFC-01 POST /v1/checkout | new | inferred |
+| MOD-02 | Order total calculator | internal | FR-03 | — | new | inferred |
+| MOD-03 | Payment router | internal | FR-01 | — | new | inferred |
+| MOD-10 | Payment reconciliation | internal | FR-01 | — | new | assumed |
 
 MOD-10 is assumed because its reconciliation interval is a provisional decision (DAS-09). MOD-03 is not: the timing it uses is IFC-02's, and rests on stage 3's DAS-06 through IFC-02.
 
