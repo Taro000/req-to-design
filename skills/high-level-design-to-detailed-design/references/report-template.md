@@ -8,7 +8,7 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs, type names, operation names, table and column names as they are, and write the basis marks and statuses with the glossary's terms for the working language.
 
-The report indexes the items and never restates them. A module's responsibility, contracts, invariants, checks and parameter values live in its MOD item; a decision's options and rationale live in its DEC item. The report holds what no item holds: diagrams, decision tables, algorithms, concurrency and error handling, the physical data model, caches, screens, the verification approach across modules, and the decisions, assumptions and gaps in effect.
+The report indexes the items and never restates them. A module's depth, responsibility, contracts, invariants, checks and parameter values live in its MOD item; a decision's options and rationale live in its DEC item. The report holds what no item holds: for the modules at full depth, their diagrams, decision tables, algorithms, concurrency and error handling, the physical data that keeps their invariants, caches and screens; for the component, the verification approach across modules, and the decisions, assumptions and gaps in effect. A module at bounds depth has no section: its MOD item is all the design says about it.
 
 ## Component report template
 
@@ -18,7 +18,7 @@ The report indexes the items and never restates them. A module's responsibility,
 Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 4 of 4 · Component: <ELM-ID>
 
 ## Summary
-<Two or three sentences: the modules, the hardest behaviour, the questions asked, and the open assumptions with the highest ratings.>
+<Two or three sentences: the modules and which are at full depth, the hardest behaviour, the questions asked, and the open assumptions with the highest ratings.>
 
 ## Inputs
 | Source | What it gave |
@@ -26,8 +26,8 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Modules
 <The module dependency diagram in Mermaid and the dependency rule CI checks, then an index of the MOD items; for an existing component, add an As-is column:>
-| MOD | Name | Visibility | Functions | Realizes | Basis |
-|---|---|---|---|---|---|
+| MOD | Name | Depth | Visibility | Functions | Realizes | Basis |
+|---|---|---|---|---|---|---|
 
 ## Allocation
 | FR, IFC or SLI | Criterion, operation or field | MOD |
@@ -37,7 +37,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <The structured types the signatures use, each with its fields and their types.>
 
 ## Module details
-<One section per module, with only what its MOD item cannot hold. Its heading is the one the item's `behaviour` field names.>
+<One section per module at full depth, with only what its MOD item cannot hold. Its heading is the one the item's `behaviour` field names. A module at bounds depth has none.>
 ### <MOD-ID> <name>
 #### Behaviour
 <State diagram, decision tables, algorithm steps with their cost and edge cases, as they apply.>
@@ -45,26 +45,27 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <What runs at the same time, what is locked and what must be atomic; which errors are handled here, which become the module's own errors, which are passed on.>
 
 ## Data
-<The entity-relationship diagram of the data entities the component owns, then one section per table:>
-### <table>
-| Column | Type | Null | Constraint | Note |
-|---|---|---|---|---|
-| Index | Columns | For query |
+<The physical data that keeps the invariants the modules at full depth rely on, one section per table that holds such an invariant. Implementation designs the rest of the tables within the DATs.>
+### <table> (<DAT-ID>)
+| Invariant | Kept by | MOD |
 |---|---|---|
 ### Transactions
-<What each transaction writes, and which module runs it.>
+<The transactions that keep an invariant: what each writes, and which module runs it.>
 ### Readers from other components
-<Tables another component reads directly: who, with which rights, under which decision.>
+<Each table another component reads directly, designed in full: who reads it, with which rights, under which decision, and its columns.>
+| Column | Type | Null | Constraint | Note |
+|---|---|---|---|---|
 ### Migrations
 <Existing schemas only.>
 
 ## Caches
+<The caches of the modules at full depth.>
 | Cache | MOD | Holds | Key | Lifetime parameter | Invalidated by | On a miss |
 |---|---|---|---|---|---|---|
-<Then each in-memory structure, with its size bound.>
+<Then each in-memory structure of those modules, with its size bound.>
 
 ## Screens
-<Only when the component serves people.>
+<Only for screens that a module at full depth serves: the validation of each input, with its messages, and what the accessibility requirements need. The screen's states are in the module's state diagram.>
 
 ## Verification approach
 <What serves several modules: test doubles for external systems, environments, load tests, checks in CI. Each module's own checks are in its MOD item.>
@@ -72,7 +73,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Design parameters
 | Parameter | MOD | Decision | Budget or timeout it fits |
 |---|---|---|---|
-<Only values inside the component. The timeouts and waits on calls to other elements are in the IFCs' `timing`, and the modules refer to them by IFC ID. Decision: the DAS that adopts the value provisionally, or the question that decided it. The last column shows how the worst case follows from the stage 3 budgets and timeouts.>
+<Only values inside the modules at full depth; implementation sets those of the modules at bounds depth. The timeouts and waits that stage 3 set on calls to other elements are in the IFCs' `timing`, and the modules refer to them by IFC ID. Decision: the DAS that adopts the value provisionally, or the question that decided it. The last column shows how the worst case follows from the stage 3 budgets and timeouts.>
 
 ## Design decisions
 | DEC | Title | Addresses | Basis |
@@ -110,7 +111,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## The index
 
-Keep `docs/design/4-detailed-design.md` as `artifacts.md` shows: one row per component element, with its status, report and modules. Update it at the end of every run, with the date and the run's `Inputs as of` commit in its header.
+Keep `docs/design/4-detailed-design.md` as `artifacts.md` shows: one row per component element, with its status, its report and its modules at each depth, then the hand-off to implementation. The hand-off starts with the three rules for implementation, written as `artifacts.md` gives them, since coding agents read them before anything else, and lists every open hand-off addressed to implementation, whichever stage wrote it. Update the index at the end of every run, with the date and the run's `Inputs as of` commit in its header.
 
 ## Worked example: Store API (ELM-02)
 
@@ -139,14 +140,17 @@ The provider adapters depend on the payment router's provider interface, never t
 
 Module index (excerpt):
 
-| MOD | Name | Visibility | Functions | Realizes | Basis |
-|---|---|---|---|---|---|
-| MOD-01 | Checkout orchestrator | public | FR-01 | IFC-01 POST /v1/checkout | inferred |
-| MOD-02 | Order total calculator | internal | FR-03 | | inferred |
-| MOD-03 | Payment router | internal | FR-01 | | inferred |
-| MOD-10 | Payment reconciliation | internal | FR-01 | | assumed |
+| MOD | Name | Depth | Visibility | Functions | Realizes | Basis |
+|---|---|---|---|---|---|---|
+| MOD-01 | Checkout orchestrator | full | public | FR-01 | IFC-01 POST /v1/checkout | inferred |
+| MOD-02 | Order total calculator | full | internal | FR-03 | | inferred |
+| MOD-03 | Payment router | full | internal | FR-01 | | inferred |
+| MOD-08 | Orders repository | bounds | internal | FR-01 | | inferred |
+| MOD-10 | Payment reconciliation | full | internal | FR-01 | | assumed |
 
 MOD-10 is assumed because its reconciliation interval is a provisional decision (DAS-09). MOD-03 is not: the timing it uses is IFC-02's, and rests on stage 3's DAS-06 through IFC-02.
+
+Every module on the checkout path but one is at full depth: each moves money, settles an unknown outcome, shares state with checkouts that run at the same time, or applies a rule with several conditions. MOD-08 is at bounds depth: two checkouts with the same key race in MOD-01, which settles the race, and the unique key that keeps one order per key is under "Data"; MOD-08 only stores and reads what MOD-01 hands it. The catalog and the order history (MOD-11 and MOD-12) are at bounds depth too. None of the three has a section in this report.
 
 Payment attempt in MOD-03. A timeout leaves the outcome unknown, so the router settles it with the same provider (look up the order's key, and cancel it if it went through) before it tries another one. Otherwise a late success at A plus a charge at B would charge the buyer twice (DRV-05, FND-01):
 
@@ -179,25 +183,17 @@ stateDiagram-v2
 
 `Unavailable` means that every provider tried confirmed that nothing was charged; only then does IFC-01 answer PAYMENT_UNAVAILABLE. While an attempt is `Unknown`, IFC-01 answers PAYMENT_PENDING and the order waits as PaymentUnknown.
 
-Table `payment_attempts` (excerpt). One row per attempt at one provider; a second provider gets a new row. Rows are never deleted, and an attempt's state only moves forward along MOD-03's diagram.
+Table `payment_attempts` (DAT-03). One row per attempt at one provider; a second provider gets a new row. The invariants that MOD-03 and MOD-10 rely on, and what keeps each:
 
-| Column | Type | Null | Constraint | Note |
-|---|---|---|---|---|
-| attempt_id | uuid | no | primary key | |
-| order_id | uuid | no | foreign key to orders | |
-| idempotency_key | text | no | unique together with provider | The order's key from IFC-01, sent to each provider tried |
-| provider | text | no | check in (A, B) | |
-| provider_charge_id | text | yes | unique together with provider | The provider's own ID for the charge, stored when the provider returns one (question 1) |
-| state | text | no | check in the states of MOD-03 | |
-| amount_minor | bigint | no | check > 0 | Money in minor units (shared conventions) |
-| created_at | timestamptz | no | | |
-
-| Index | Columns | For query |
+| Invariant | Kept by | MOD |
 |---|---|---|
-| attempts_key | provider, idempotency_key (unique) | Find the attempt a provider already holds for a repeated checkout |
-| attempts_charge | provider, provider_charge_id (unique) | MOD-10 finds the attempt for each line of a provider's settlement report |
-| attempts_unknown | state, created_at, where state is Unknown | MOD-10's list of attempts to settle |
-| attempts_order | order_id | Every attempt of one order, for reconciliation and support |
+| A provider holds at most one attempt for an order's key | unique (provider, idempotency_key); the key is the order's key from IFC-01, sent to each provider tried | MOD-03 |
+| A line of a provider's settlement report matches at most one attempt | unique (provider, provider_charge_id) where provider_charge_id is set: the provider's own ID for the charge (question 1) | MOD-10 |
+| An attempt's state only moves forward along MOD-03's diagram | check: state in the states of MOD-03; every update names the state it moves from, and changes nothing when the row has moved on | MOD-03, MOD-10 |
+| An attempt is never deleted, and only its state and provider_charge_id change | the service's database role has no right to delete rows of the table, nor to update its other columns | MOD-03, MOD-10 |
+| The amount is positive, in minor units (shared conventions) | check amount_minor > 0 | MOD-03 |
+
+The other columns and their types, and the indexes that queries need (MOD-10's list of attempts in Unknown, the attempts of one order for support), are implementation's, within DAT-03. Table `orders` (DAT-01) holds one invariant here, MOD-01's: one order per Idempotency-Key, kept by a unique key on the order's key. The rest of it is implementation's, within DAT-01.
 
 Design parameters (excerpt):
 
@@ -243,6 +239,8 @@ basis_note: Follows DEC-02, DEC-05 and FND-01; waits and settles within the prov
 premises: []
 component: ELM-02
 name: Payment router
+depth: full
+depth_reason: Moves money and settles unknown outcomes
 responsibility: Turns each order's payment into one settled outcome, trying one provider at a time
 visibility: internal
 interface:
@@ -261,6 +259,44 @@ verification:
   - {checks: Every row of the failover policy table (MOD-07), how: Unit tests with fake providers}
   - {checks: No double charge when A times out and completes its charge later, how: An integration test with a provider stub that answers after its timeout}
 parameters: []                           # its waits are IFC-02's timing, set in stage 3; it sets none of its own
+as_is: new
+```
+
+`docs/design/mod/MOD-08.yaml`, a module at bounds depth. Its contract is a summary of what MOD-01 relies on, and it has no section in the report. How it stores orders is implementation's, within DAT-01 and the unique key under "Data":
+
+```yaml
+id: MOD-08
+title: Orders repository
+status: active
+basis: inferred
+basis_note: null
+premises: []
+component: ELM-02
+name: Orders repository
+depth: bounds
+depth_reason: null
+responsibility: Stores each order with its lines, and reads an order back by its key
+visibility: internal
+interface:                               # the summary its callers rely on
+  - operation: "createPending(draft: OrderDraft, key: IdempotencyKey) -> Order"
+    pre: null
+    post: The order and its lines are stored as pending, together (DAT-01)
+    errors: ["KeyTaken: an order with this key exists; MOD-01 reads it with findByKey"]
+  - operation: "findByKey(key: IdempotencyKey) -> Order or none"
+    pre: null
+    post: The order stored with this key, if there is one
+    errors: []
+invariants: []
+depends_on: []
+functions: [FR-01]
+realizes: []
+drivers: [DRV-05]
+decisions: []
+behaviour: null                          # no report section: implementation designs its inside
+verification:
+  - {checks: One order per key when two calls with the same key run at the same time, how: An integration test against the database}
+  - {checks: The order and its lines are stored together or not at all, how: An integration test that makes the write of a line fail}
+parameters: []
 as_is: new
 ```
 

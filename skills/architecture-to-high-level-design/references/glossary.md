@@ -37,6 +37,7 @@ Use these terms for the working language. For a language not listed, or a term m
 | hand-off status: open / decided / retired | 申し送りの状態: 未決定 / 決定済み / 廃止 |
 | decide a hand-off / pass it on | 申し送りを決める / 先へ送る |
 | implementation (the coding that follows stage 4) | 実装 |
+| hand-off to implementation (the section of the detailed design index that coding agents read first) | 実装への申し送り |
 | open gaps | 未解決の点 |
 | out of scope | 範囲外 |
 | placeholder (for a number not yet decided) | 未定の値 |
@@ -130,6 +131,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | shared conventions | 共通の約束事 |
 | module | モジュール |
 | visibility: public / internal | 公開範囲: 公開 / 内部 |
+| module depth: full / bounds (designed in detail / its inside left to implementation) | モジュールの深さ: 確定 / 枠 |
+| contract summary (the contract of a module at bounds depth) | 契約の要約 |
 | dependency | 依存 |
 | precondition / postcondition / invariant | 事前条件 / 事後条件 / 不変条件 |
 | state diagram | 状態遷移図 |

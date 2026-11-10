@@ -56,15 +56,17 @@ An SLI that no design within the constraints can bind as defined (its unit event
 | # | Activity | Result to record |
 |---|---|---|
 | C1 | Check the allocation: every acceptance criterion of the component goes to a module; each operation of an IFC the component provides or consumes has exactly one module in it, since each operation has exactly one module in each component that takes part in it; every event and field that the `sli_bindings` on its IFCs and DATs need it to produce goes to a module | Gaps; operations with two modules in the component |
-| C2 | Check every module: one responsibility, contracts with errors, behaviour, data structures, a verification approach | Missing parts |
-| C3 | Check every state diagram: every event defined in every state; a final state or a named wait reachable from each state; every timeout on a call that changes something leads to a state that settles it | Undefined events; dead ends; timeouts that skip settlement |
-| C4 | Check every decision table: count the combinations; every one covered once | Missing or overlapping rows |
+| C2 | Check every module's depth: full when it moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions or migrates data, or when a point in it rates high; bounds otherwise. Then check its parts: at full depth, one responsibility, contracts with errors, behaviour, data structures, a verification approach; at bounds depth, only its responsibility, the summary of its contract with its errors, its allocation and its verification approach | Modules of those kinds at bounds depth with no business decision to defer them; modules at full depth with no reason that holds; missing parts |
+| C3 | Check the state diagram of every module at full depth: every event defined in every state; a final state or a named wait reachable from each state; every timeout on a call that changes something leads to a state that settles it | Undefined events; dead ends; timeouts that skip settlement |
+| C4 | Check every decision table of the modules at full depth: count the combinations; every one covered once | Missing or overlapping rows |
 | C5 | Check the module dependencies: no cycles, direction toward stable modules, a CI rule written down | Cycles; inversions |
 | C6 | Check concurrency and idempotency: shared state; what must be atomic; money movement that stays idempotent with a duplicate arriving while the first request runs, with a key reused for a different request, and with failover after an unknown outcome | Races; double effects |
-| C7 | Check the data: every query has its index; constraints match the contracts; migrations keep the running version working | Missing indexes; mismatches |
-| C8 | Check that the design parameters fit the stage 3 budgets and timeouts, and that the component sets no timeout or wait on a call to another element: those are in the IFCs' `timing`, referred to by IFC ID | Overruns; timeouts or waits set in the component that belong to an IFC |
+| C7 | Check the data of the modules at full depth: every invariant of stored data they rely on is kept by a constraint, an index or a transaction; the constraints match the contracts; migrations keep the running version working; every table another component reads directly is designed in full | Invariants that nothing keeps; mismatches; tables read from outside that are not designed |
+| C8 | Check that the design parameters fit the stage 3 budgets and timeouts, and that the component sets no timeout or wait that an IFC's `timing` holds: those are referred to by IFC ID | Overruns; timeouts or waits set in the component that an IFC holds |
 | C9 | Check verifiability: every criterion and contract has a verification approach | Items that cannot be verified |
 | C10 | Check the component against the shared conventions: errors, IDs, time, money, logs | Deviations |
+
+A module at bounds depth is looked at only for its responsibility, the summary of its contract, its allocation and its verification approach (C1, C2, C5, C9, C10). Its inside is implementation's: no state, decision table, table or parameter missing from it is a finding.
 
 ## Every stage
 
