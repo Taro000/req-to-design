@@ -10,7 +10,7 @@
 
 ## Data entities
 
-Write one DAT for every entity that the FRs read or write and that more than one module or element cares about: orders, payments, stock, accounts, rides. For each: the key attributes (enough to show what it is, not every column), relations, the owner, the store, the consistency rule, retention, classification, and the bindings of data SLIs ("Data quality flows and data SLIs"). Columns, types and indexes come in stage 4. Draw the entities and their relations as a Mermaid entity-relationship diagram in the report.
+Write one DAT for every entity that the FRs read or write and that more than one module or element cares about: orders, payments, stock, accounts, rides. For each: the key attributes (enough to show what it is, not every column), relations, the owner, the store, the consistency rule, retention, classification, and the bindings of data SLIs ("Data quality flows and data SLIs"). Stage 4 designs only what keeps the invariants its modules at full depth rely on, their migrations, and the tables another component reads directly; implementation designs the rest of the tables, within the DAT. Draw the entities and their relations as a Mermaid entity-relationship diagram in the report.
 
 ## Ownership
 

@@ -287,11 +287,13 @@ class Renderer(object):
         self.need(ctx, ("stage",), (4,))
         if not ctx.component:
             raise TableError("this table belongs in a component report")
-        rows = [[m.id, self.text(m.get("name") or m.get("title")), self.term("visibility", m.get("visibility")),
-                 self.join(m.get("functions")), self.join(m.get("realizes")), self.term("as-is", m.get("as_is")),
-                 self.term("basis", m.get("basis"))] for m in self.p.modules_of(ctx.component)]
-        return Table([("MOD", "MOD"), ("Name", "名前"), ("Visibility", "公開範囲"), ("Functions", "FR"),
-                      ("Realizes", "実現する操作"), ("As-is", "今の構造との差分"), ("Basis", "根拠")], rows)
+        rows = [[m.id, self.text(m.get("name") or m.get("title")), self.term("module depth", m.get("depth")),
+                 self.term("visibility", m.get("visibility")), self.join(m.get("functions")),
+                 self.join(m.get("realizes")), self.term("as-is", m.get("as_is")), self.term("basis", m.get("basis"))]
+                for m in self.p.modules_of(ctx.component)]
+        return Table([("MOD", "MOD"), ("Name", "名前"), ("Depth", "深さ"), ("Visibility", "公開範囲"),
+                      ("Functions", "FR"), ("Realizes", "実現する操作"), ("As-is", "今の構造との差分"),
+                      ("Basis", "根拠")], rows)
 
     def findings_of(self, ctx):
         findings = self.p.of("FND", active_only=False)
@@ -395,11 +397,24 @@ class Renderer(object):
             status = "not started"
             if text is not None:
                 status = report_status(text, self.g) or "draft"
-            modules = [m.id for m in self.p.modules_of(c.id)]
+            modules = self.p.modules_of(c.id)
+            # a module with no depth was written by an earlier version, which designed every module in full
+            bounds = [m.id for m in modules if m.get("depth") == "bounds"]
+            full = [m.id for m in modules if m.get("depth") != "bounds"]
             rows.append([c.id, self.text(c.get("name") or c.get("title")), self.term("detailed design status", status),
-                         rel if text is not None else DASH, self.ranges(modules) if modules else DASH])
+                         rel if text is not None else DASH, self.ranges(full) if full else DASH,
+                         self.ranges(bounds) if bounds else DASH])
         return Table([("Component", "コンポーネント"), ("Name", "名前"), ("Status", "状態"), ("Report", "報告書"),
-                      ("Modules", "モジュール")], rows)
+                      ("Full depth", "確定のモジュール"), ("Bounds depth", "枠のモジュール")], rows)
+
+    def t_implementation_handoffs(self, ctx):
+        """The open hand-offs addressed to implementation, whichever stage wrote them, for the index."""
+        self.need(ctx, ("index",))
+        handoffs = [h for h in self.p.of("HND") if h.get("to") == lib.IMPLEMENTATION and h.status == "open"]
+        handoffs.sort(key=lambda h: (lib.id_key(h.get("component")), lib.id_key(h.id)))
+        rows = [[h.id, self.text(h.get("component")), self.text(h.get("title")), self.text(h.get("trigger"))]
+                for h in handoffs]
+        return Table([("HND", "HND"), ("Component", "コンポーネント"), ("Title", "名前"), ("Trigger", "契機")], rows)
 
 
 def report_status(text, glossary):

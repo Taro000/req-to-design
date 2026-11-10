@@ -8,7 +8,8 @@ the item concerned, the problem is shown as waiting for that finding and does
 not count.
 
 Usage:
-    python3 scripts/check.py [--skill <skill name>] [--design DIR] [--quality DIR] [--format text|json]
+    python3 scripts/check.py [--skill <skill name> | --skill implementation] [--design DIR] [--quality DIR]
+                             [--format text|json]
 
 With --skill, the exit status is 1 when that skill's files have problems that
 do not wait for a finding, and generated tables are checked only in that
@@ -36,13 +37,15 @@ Rules:
                      operations realized by modules, decisions used by modules
     conflict         a conflict recorded on one driver only
     cycle            module dependencies (depends_on) that form a cycle
+    depth            a module at full depth with no depth_reason, or a module at bounds depth with a behaviour
+                     section, invariants or parameters (its inside is implementation's)
     debt             a debt without repay_when
     handoff          a hand-off's from, to, component, trigger, origin or resolution; a decided hand-off that
                      no item cites in basis_note
     spec             a spec that is missing (with no hand-off of the schema to implementation), unused
                      or not found, or that differs from its IFC in operations, error statuses or error codes
-    finding          a finding's to, raised_by, raised_in or resolution; an accepted finding that no
-                     item cites in basis_note
+    finding          a finding's to, raised_by (a skill or implementation), raised_in or resolution; an
+                     accepted finding that no item cites in basis_note
     sli-binding      a quality-chain SLI that no IFC or DAT binds and no issue replaces
     table            a generated table is out of date, or its markers are wrong (run tables.py)
     empty-cell       a cell of a generated table that the report fills in is empty
@@ -73,9 +76,9 @@ REQUIRED = {
                      "spec", "as_is"],
     "DAT": COMMON + ["entity", "owner", "store", "key_attributes", "relations", "consistency", "retention",
                      "classification", "drivers", "sli_bindings", "as_is"],
-    "MOD": COMMON + ["component", "name", "responsibility", "visibility", "interface", "invariants", "depends_on",
-                     "functions", "realizes", "drivers", "decisions", "behaviour", "verification", "parameters",
-                     "as_is"],
+    "MOD": COMMON + ["component", "name", "depth", "depth_reason", "responsibility", "visibility", "interface",
+                     "invariants", "depends_on", "functions", "realizes", "drivers", "decisions", "behaviour",
+                     "verification", "parameters", "as_is"],
     "HND": COMMON + ["from", "to", "component", "origin", "what", "bounds", "trigger", "resolution"],
     "FND": COMMON + ["raised_by", "raised_in", "to", "targets", "severity", "evidence", "suggestion",
                      "resolution"],
@@ -91,6 +94,7 @@ ENUMS = {
     ("ELM", "kind"): ["component", "data-store", "external-system", "node"],
     ("IFC", "kind"): ["http", "event", "file", "screen", "batch"],
     ("MOD", "visibility"): ["public", "internal"],
+    ("MOD", "depth"): ["full", "bounds"],
     ("FND", "severity"): ["critical", "major", "minor"],
     ("DAS", "kind"): ["judgment", "decision"],
     ("DAS", "breadth"): RATINGS,
@@ -188,7 +192,7 @@ class Checker(object):
         if f.rel.startswith("das/") and m:
             return lib.das_owner(m.group(1))
         m = re.search(r"^raised_by:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
-        if f.rel.startswith("fnd/") and m and m.group(1) in lib.SKILLS:
+        if f.rel.startswith("fnd/") and m and m.group(1) in lib.SKILLS + [lib.IMPLEMENTATION]:
             return m.group(1)
         m = re.search(r"^from:\s*['\"]?([A-Za-z0-9-]+)", f.text, re.M)
         if f.rel.startswith("hnd/") and m and m.group(1) in lib.SKILLS:
@@ -295,6 +299,18 @@ class Checker(object):
             debt = item.get("debt")
             if debt and (not isinstance(debt, dict) or not debt.get("repay_when")):
                 self.item_problem("debt", item, "debt", "a debt needs what, why_accepted and repay_when")
+        if p == "MOD":
+            depth = item.get("depth")
+            if depth == "full" and not item.get("depth_reason"):
+                self.item_problem("depth", item, "depth_reason", "a module at full depth says in depth_reason which"
+                                                                 " kind it is, or why it would rate high at bounds"
+                                                                 " depth")
+            if depth == "bounds":
+                kept = [k for k in ("behaviour", "invariants", "parameters") if item.get(k)]
+                if kept:
+                    self.item_problem("depth", item, kept[0], "a module at bounds depth leaves its inside to"
+                                                              " implementation: write %s as null or []"
+                                                              % ", ".join(kept))
 
     def entry_fields(self, item):
         for key in ("basis",):
@@ -724,12 +740,14 @@ class Checker(object):
             if "to" in fnd.data and to not in stage_skills:
                 self.item_problem("finding", fnd, "to", "to is %r; a finding is addressed to the stage skill that must"
                                                         " decide: %s" % (to, ", ".join(stage_skills)))
-            if "raised_by" in fnd.data and fnd.get("raised_by") not in lib.SKILLS:
+            raisers = lib.SKILLS + [lib.IMPLEMENTATION]
+            if "raised_by" in fnd.data and fnd.get("raised_by") not in raisers:
                 self.item_problem("finding", fnd, "raised_by", "raised_by is %r; it is one of %s"
-                                  % (fnd.get("raised_by"), ", ".join(lib.SKILLS)))
+                                  % (fnd.get("raised_by"), ", ".join(raisers)))
             raised_in = fnd.get("raised_in")
-            if isinstance(raised_in, str) and raised_in and not os.path.exists(os.path.join(self.p.design_dir,
-                                                                                            raised_in)):
+            # implementation names the path of the code, which is not under the design directory
+            if fnd.get("raised_by") != lib.IMPLEMENTATION and isinstance(raised_in, str) and raised_in and \
+                    not os.path.exists(os.path.join(self.p.design_dir, raised_in)):
                 self.item_problem("finding", fnd, "raised_in", "raised_in names %s, which is not under %s"
                                   % (raised_in, self.p.design_dir))
             owner = to if to in stage_skills else None
@@ -977,7 +995,7 @@ def main(argv):
     parser = argparse.ArgumentParser(description="Check the design items, specs and reports.")
     parser.add_argument("--design", default="docs/design")
     parser.add_argument("--quality", default=None)
-    parser.add_argument("--skill", default=None, choices=lib.SKILLS)
+    parser.add_argument("--skill", default=None, choices=lib.SKILLS + [lib.IMPLEMENTATION])
     parser.add_argument("--format", default="text", choices=("text", "json"))
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):

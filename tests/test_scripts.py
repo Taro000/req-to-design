@@ -428,6 +428,8 @@ DESIGN = {
         premises: []
         component: ELM-01
         name: Checkout handler
+        depth: full
+        depth_reason: Moves money - it turns the cart into an order that is charged
         responsibility: Turns a cart into an order
         visibility: public
         interface:
@@ -536,7 +538,8 @@ REPORTS = {
         "decisions", "interfaces", "sli-bindings", "data", "criteria", "findings", "handoffs", "assumptions",
         criteria="| FR | Criterion | IFCs | Flow |\n|---|---|---|---|\n| FR-01 | 1 | | Checkout |\n"
                  "| FR-01 | 2 | | Checkout, declined card |\n| FR-02 | 1 | | Order history |\n"),
-    "4-detailed-design.md": "# Detailed design index\n\nUpdated: 2026-11-10 · Inputs as of: none\n\n" + blocks("components"),
+    "4-detailed-design.md": "# Detailed design index\n\nUpdated: 2026-11-10 · Inputs as of: none\n\n" + blocks(
+        "components") + "\n## Hand-off to implementation\n\n" + blocks("implementation-handoffs"),
     "4-detailed-design/ELM-01.md": "# Detailed design of the Store API\n\n" + HEADER % "4 of 4" + "\n\n" + blocks(
         "modules", "decisions", "parameters", "findings", "assumptions",
         parameters="| Parameter | MOD | Decision | Budget or timeout it fits |\n|---|---|---|---|\n"
@@ -755,6 +758,44 @@ class CheckTest(unittest.TestCase):
         self.assertFinds("finding", "no item cites FND-01")
         self.assertFinds("finding", "to is 'design-review'")
 
+    def test_finding_raised_by_implementation(self):
+        self.f.write(os.path.join(self.f.design, "fnd/FND-02.yaml"), d("""
+            id: FND-02
+            title: The checkout cannot keep its postcondition when the card is declined
+            status: open
+            basis: inferred
+            basis_note: null
+            premises: []
+            raised_by: implementation
+            raised_in: src/checkout/handler.ts
+            to: high-level-design-to-detailed-design
+            targets: [MOD-01]
+            severity: major
+            evidence: An order exists only after the charge, and a declined card leaves none
+            suggestion: Say in MOD-01's postcondition that an order exists once the charge is authorized
+            resolution: null
+            """))
+        self.f.tables()
+        self.assertEqual(summary(self.f.check()), [])
+        self.assertIn("| major | implementation | high-level-design-to-detailed-design | open |",
+                      self.f.read("4-detailed-design/ELM-01.md"))
+        self.f.edit("fnd/FND-02.yaml", "severity: major", "severity: urgent")
+        problems = self.assertFinds("bad-value", "severity")
+        self.assertEqual(problems[0].owner, "implementation")
+        self.f.edit("fnd/FND-02.yaml", "raised_by: implementation", "raised_by: the code")
+        self.assertFinds("finding", "raised_by is 'the code'")
+
+    def test_module_depth(self):
+        self.f.edit("mod/MOD-01.yaml", "depth_reason: Moves money - it turns the cart into an order that is charged",
+                    "depth_reason: null")
+        self.assertFinds("depth", "says in depth_reason")
+        self.f.edit("mod/MOD-01.yaml", "depth: full", "depth: bounds")
+        self.assertFinds("depth", "write behaviour, parameters as null or []")
+        self.f.edit("mod/MOD-01.yaml", "depth: bounds", "depth: deep")
+        self.assertFinds("bad-value", "depth is 'deep'")
+        self.f.edit("mod/MOD-01.yaml", "depth: deep\n", "")
+        self.assertFinds("missing-field", "depth")
+
     def test_allocation_gaps(self):
         self.f.edit("elm/ELM-05.yaml", "functions: [FR-01, FR-02]", "functions: [FR-01]")
         self.f.edit("elm/ELM-01.yaml", "functions: [FR-01, FR-02]", "functions: [FR-01]")
@@ -846,8 +887,10 @@ class TablesTest(unittest.TestCase):
 
     def test_index_and_assumptions(self):
         index = self.f.read("4-detailed-design.md")
-        self.assertIn("| ELM-01 | Store API | answers applied | 4-detailed-design/ELM-01.md | MOD-01 |", index)
-        self.assertIn("| ELM-05 | Storefront | not started | — | — |", index)
+        self.assertIn("| ELM-01 | Store API | answers applied | 4-detailed-design/ELM-01.md | MOD-01 | — |", index)
+        self.assertIn("| ELM-05 | Storefront | not started | — | — | — |", index)
+        self.assertIn("| HND-02 | ELM-01 | Where the cart limit is kept | When MOD-01 is implemented |", index)
+        self.assertIn("| MOD-01 | Checkout handler | full | public |", self.f.read("4-detailed-design/ELM-01.md"))
         stage1 = self.f.read("1-architecture-drivers.md")
         self.assertIn("| QAS-01 | Target of checkout latency | decision | low | high | DRV-01 |", stage1)
         stage2 = self.f.read("2-architecture.md")
@@ -875,7 +918,7 @@ class TablesTest(unittest.TestCase):
         body = re.search(r"```markdown\n(# Detailed design index.*?)\n```", text, re.S).group(1)
         new_text, problems, written = tables.render_report(lib.Project(self.f.design, self.f.quality), lib.Glossary(),
                                                            "4-detailed-design.md", body)
-        self.assertEqual((problems, len(written)), ([], 1))
+        self.assertEqual((problems, len(written)), ([], 2))
         self.assertIn("| ELM-01 | Store API | answers applied |", new_text)
 
     def test_japanese_report(self):

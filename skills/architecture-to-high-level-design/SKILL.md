@@ -68,7 +68,7 @@ For every SLO with a time threshold, start from where its SLI's binding observes
 
 ### 8. Screens
 
-For every FR whose interface is a screen, list the screens, and draw per CUJ how the person moves between them, including the error and empty states the acceptance criteria name. The detailed design of each screen is stage 4.
+For every FR whose interface is a screen, list the screens, and draw per CUJ how the person moves between them, including the error and empty states the acceptance criteria name. Stage 4 designs a screen in detail when the module that serves it is at full depth; implementation designs the others, within the screen's IFC.
 
 ### 9. Data
 
