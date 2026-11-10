@@ -8,7 +8,7 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs, type names, operation names, table and column names as they are, and write the basis marks and statuses with the glossary's terms for the working language.
 
-The report indexes the items and never restates them. A module's depth, responsibility, contracts, invariants, checks and parameter values live in its MOD item; a decision's options and rationale live in its DEC item. The report holds what no item holds: for the modules at full depth, their diagrams, decision tables, algorithms, concurrency and error handling, the physical data that keeps their invariants, caches and screens; for the component, the verification approach across modules, and the decisions, assumptions and gaps in effect. A module at bounds depth has no section: its MOD item is all the design says about it.
+The report indexes the items and never restates them. A module's depth, responsibility, contracts, invariants, checks and parameter values live in its MOD item; a decision's options and rationale live in its DEC item. The report holds what no item holds: for the modules at full depth, their diagrams, decision tables, algorithms, concurrency and error handling, the physical data that keeps their invariants, caches and screens; for the component, the types, the verification approach across modules, and the decisions, assumptions and gaps in effect. A module at bounds depth has no section of its own; the types, data and verification approach of the report still bind it.
 
 ## Component report template
 

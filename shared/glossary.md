@@ -38,6 +38,7 @@ Use these terms for the working language. For a language not listed, or a term m
 | decide a hand-off / pass it on | 申し送りを決める / 先へ送る |
 | implementation (the coding that follows stage 4) | 実装 |
 | hand-off to implementation (the section of the detailed design index that coding agents read first) | 実装への申し送り |
+| hand-offs addressed to implementation (the HND items with `to: implementation`, which that section lists) | 実装宛ての申し送り |
 | open gaps | 未解決の点 |
 | out of scope | 範囲外 |
 | placeholder (for a number not yet decided) | 未定の値 |

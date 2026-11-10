@@ -11,7 +11,7 @@
 - DAT: data entity (stage 3)
 - MOD: module (stage 4)
 - HND: hand-off (stages 1 to 4)
-- FND: finding (stages 2 to 4 and the review)
+- FND: finding (stages 2 to 4, the review and implementation)
 - DAS: assumption (every stage and the review)
 - The detailed design index (stage 4)
 
@@ -36,7 +36,7 @@ docs/design/
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
 ├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
-├── fnd/FND-01.yaml …                  stages 2–4 and the review: findings
+├── fnd/FND-01.yaml …                  stages 2–4, the review and implementation: findings
 └── das/DAS-01.yaml …                  every stage and the review: assumptions made without asking
 ```
 
@@ -273,8 +273,8 @@ id: MOD-02
 # ... the other common fields ...
 component: ELM-02
 name: Order total calculator
-depth: full                              # full | bounds: full for a module that moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions or migrates data, or in which a point rates high; bounds for any other, whose inside implementation decides
-depth_reason: Applies the shipping fee rules, which have several conditions   # full: the kind, or the point that rates high; null at bounds depth
+depth: full                              # full | bounds: full for a module that moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions or migrates data, or that would rate high at bounds depth; bounds for any other, whose inside implementation decides
+depth_reason: Applies the shipping fee rules, which have several conditions   # full: the kind, or why it would rate high at bounds depth; bounds: null, or the question or DAS that deferred a module of those kinds
 responsibility: Calculates an order's total from its lines, shipping, coupons and points
 visibility: internal                     # public: other components call it through an IFC | internal: only modules of the same component call it
 interface:                               # full: the whole contract; bounds: a summary - the signature, post and errors of each operation, with pre only when the caller must check something the module does not
@@ -339,7 +339,7 @@ trigger: When MOD-05 is implemented
 resolution: null
 ```
 
-## FND: finding (stages 2 to 4 and the review), `fnd/FND-01.yaml`
+## FND: finding (stages 2 to 4, the review and implementation), `fnd/FND-01.yaml`
 
 ```yaml
 id: FND-01
@@ -402,9 +402,12 @@ Updated: <date> · Inputs as of: <commit, or "none">
 
 ## Hand-off to implementation
 
-- Implement each module within its MOD item, and a module at full depth also within the section of its component report that its `behaviour` names. Keep the interfaces (IFC), data entities (DAT) and decisions (DEC) that bind the component.
-- Decide what the design leaves open: the inside of each module at bounds depth, the tables beyond the constraints the component reports give (within the DATs), the values the design does not set, and the hand-offs below. The code and its tests hold these decisions; do not write them back into `docs/design/`.
-- When the code cannot keep a decision the design made (a contract, an invariant, an interface or a decision that does not work as written, or two items that contradict each other), do not work around it in silence. Write a finding (FND) in `docs/design/fnd/`, in the form that `references/artifacts.md` of the design skills gives, with `raised_by: implementation`, addressed to the skill that wrote the item, and tell the user which stage to re-run. A detail the design leaves open is never a finding.
+- Implement each component within its MOD items and its component report: every module within its MOD item and the report's Types, Data and Verification approach; a module at full depth also within the report section its `behaviour` names, and the caches, screens and design parameters the report gives it. Keep the interfaces (IFC), data entities (DAT) and decisions (DEC) that bind the component.
+- Decide what the design leaves open: the inside of each module at bounds depth, the tables beyond what the reports' Data sections give (within the DATs), the values the design does not set, and the hand-offs below. The code and its tests hold these decisions; do not write them back into `docs/design/`.
+- When the code cannot keep a decision the design made (a contract, an invariant, an interface or a decision that does not work as written, or two items that contradict each other), do not work around it in silence: write a finding, and tell the user which stage to re-run. A detail the design leaves open is never a finding. A finding is a new file in `docs/design/fnd/`, numbered after the highest FND there, with the fields the other files there have (`references/artifacts.md` of the design skills defines them):
+  - `raised_by: implementation`, and in `raised_in` the module and the path of the code;
+  - `to`: the skill that wrote the item: `requirements-to-architecture-drivers` for a DRV, `architecture-drivers-to-architecture` for an ELM, `architecture-to-high-level-design` for an IFC or a DAT, `high-level-design-to-detailed-design` for a MOD, and for a DEC the skill of its `stage`;
+  - `severity`: `critical` when a primary driver, a non-negotiable constraint or a CUJ cannot be met as designed, `major` when something is met only in part or two items contradict each other, and `minor` otherwise.
 
 | HND | Component | Title | Trigger |
 |---|---|---|---|

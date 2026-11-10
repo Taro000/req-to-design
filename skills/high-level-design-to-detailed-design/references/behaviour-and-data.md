@@ -49,18 +49,17 @@ Say what runs at the same time inside the component (requests, workers, schedule
 
 ## Error handling
 
-For each module: which errors it handles itself and how, which it turns into its own errors for its caller, and which it passes on. Where the component meets the outside, errors become the IFC's error contract. Every error caught is either recovered from or logged with the request ID; none is swallowed.
+For each module at full depth: which errors it handles itself and how, which it turns into its own errors for its caller, and which it passes on. Where the component meets the outside, errors become the IFC's error contract. Every error caught is either recovered from or logged with the request ID; none is swallowed.
 
 ## Physical data
 
 Design only the physical data that keeps the invariants the modules at full depth rely on, in the data entities the component owns (the DAT items whose owner is this component), wherever they are stored:
 
-- the constraint or index that keeps each invariant: a key, a uniqueness (partial, when the invariant holds only in some states), a check, a foreign key, or the rights that keep records from being deleted or rewritten;
+- what keeps each invariant: a constraint (a key, a uniqueness, partial when the invariant holds only in some states, a check, a foreign key), an index, a transaction that keeps what must be atomic and the module that runs it, a conditional update that changes a row only from the state it names, or the rights of a database role that keep records from being deleted or rewritten;
 - one row per event for records of money and other records that must never be rewritten (one row per payment attempt, not one row per order that is updated);
-- the transactions that keep what must be atomic, and the module that runs each;
 - for an existing schema, the migrations, in an order that keeps the running version working.
 
-Name the table and the columns each constraint covers, and nothing more of the table. A table that another component reads directly is part of an interface: design it in full, whichever module writes it, with its columns, types and constraints, the read-only rights the reader gets, the decision that allows the read, and the rule that it changes only with a new version.
+Name the table and the columns that each of these covers, and nothing more of the table. A table that another component reads directly is part of an interface: design it in full, whichever module writes it, with its columns, types and constraints, the read-only rights the reader gets, the decision that allows the read, and the rule that it changes only with a new version.
 
 Implementation designs the rest: the tables and their other columns and types, the indexes that queries need, and the tables that only modules at bounds depth write. The DATs bound it: their attributes and relations, owner, consistency rule, classification and retention.
 
