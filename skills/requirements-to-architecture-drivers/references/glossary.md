@@ -29,6 +29,14 @@ Use these terms for the working language. For a language not listed, or a term m
 | breadth / severity of a point: high / medium / low | 影響の広さ / 重大さ: 高 / 中 / 低 |
 | premises (what an item depends on) | 前提 |
 | design input (a design decision the quality chain found in its input and passed on: DIN) | 設計への申し送り |
+| decision depth: full / bounds / hand-off | 決める深さ: 確定 / 枠 / 申し送り |
+| full-depth kinds (what a stage decides in full) | 確定の種類 |
+| deferral (leaving a point for a later stage, implementation or an event to decide) | 先送り |
+| hand-off (HND: a point a design stage leaves to a later stage or to implementation) | 申し送り |
+| hand-off parts: what / to / trigger / bounds / origin | 申し送りの中身: 何を / 宛先 / 契機 / 守る枠 / 由来の項目 |
+| hand-off status: open / decided / retired | 申し送りの状態: 未決定 / 決定済み / 廃止 |
+| decide a hand-off / pass it on | 申し送りを決める / 先へ送る |
+| implementation (the coding that follows stage 4) | 実装 |
 | open gaps | 未解決の点 |
 | out of scope | 範囲外 |
 | placeholder (for a number not yet decided) | 未定の値 |
@@ -75,7 +83,6 @@ Use these terms for the working language. For a language not listed, or a term m
 | design mechanism | 設計の手立て |
 | design parameter | 設計上の値 |
 | technical debt | 技術的負債 |
-| deferred decision | 先送りした決定 |
 | overall structure | 全体の構造 |
 | design concerns (the eight) | 設計の観点 |
 | concurrency | 並行性 |
