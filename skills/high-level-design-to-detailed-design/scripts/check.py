@@ -86,7 +86,7 @@ REQUIRED = {
     "MOD": COMMON + ["component", "name", "depth", "depth_reason", "responsibility", "visibility", "interface",
                      "invariants", "depends_on", "functions", "realizes", "drivers", "decisions", "behaviour",
                      "verification", "parameters", "as_is"],
-    "POL": COMMON + ["scope", "decisions", "rules", "as_is"],
+    "POL": COMMON + ["scope", "addresses", "decisions", "rules", "as_is"],
     "HND": COMMON + ["from", "to", "component", "origin", "what", "bounds", "trigger", "resolution"],
     "FND": COMMON + ["raised_by", "raised_in", "to", "targets", "severity", "evidence", "suggestion",
                      "resolution"],
@@ -138,7 +138,8 @@ REFS = {
             ("drivers", ["DRV"]), ("sli_bindings[].sli", ["SLI"])],
     "MOD": [("component", ["ELM:component"]), ("depends_on", ["MOD"]), ("functions", ["FR"]),
             ("drivers", ["DRV"]), ("decisions", ["DEC"])],
-    "POL": [("decisions", ["DEC"]), ("stack[].elements", ["ELM:component"]), ("repositories[].holds", ["ELM"]),
+    "POL": [("addresses", ["DRV", "QR"]), ("decisions", ["DEC"]), ("stack[].elements", ["ELM:component"]),
+            ("repositories[].holds", ["ELM"]),
             ("gate_bindings[].nfr", ["NFR:gate"]), ("audit_bindings[].nfr", ["NFR:audit"])],
     "HND": [("component", ["ELM:component"]), ("origin", None)],
     "FND": [("targets", lib.DESIGN_PREFIXES)],
@@ -338,7 +339,7 @@ class Checker(object):
 
     def policy_fields(self, item):
         scope = item.get("scope")
-        if scope not in SCOPE_FIELDS:
+        if not isinstance(scope, str) or scope not in SCOPE_FIELDS:
             return  # reported as a bad value of scope
         own = SCOPE_FIELDS[scope]
         missing = [k for k in own if k not in item.data]
@@ -909,7 +910,8 @@ class Checker(object):
             return
         by_scope = {}
         for pol in policies:
-            by_scope.setdefault(pol.get("scope"), []).append(pol)
+            scope = pol.get("scope")
+            by_scope.setdefault(scope if isinstance(scope, str) else None, []).append(pol)
         for scope in lib.POL_SCOPES:
             found = by_scope.get(scope, [])
             if not found:
@@ -928,7 +930,8 @@ class Checker(object):
                 for entry in lib.as_list(pol.get(field)):
                     if isinstance(entry, dict):
                         for ident in lib.as_list(entry.get(child)):
-                            count[ident] = count.get(ident, 0) + 1
+                            if isinstance(ident, str):
+                                count[ident] = count.get(ident, 0) + 1
             for c in p.components():
                 n = count.get(c.id, 0)
                 if n != 1:

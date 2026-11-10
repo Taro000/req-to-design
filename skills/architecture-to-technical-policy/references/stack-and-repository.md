@@ -21,7 +21,7 @@ Before choosing anything, list what already fixes part of the answer. The polici
 | The existing code | Its languages, frameworks, package manager, lint, type and test configuration, directory layout and pipeline | `as_is` in `design-context.yaml`, then the code itself |
 | Hand-offs addressed to this stage | A point an earlier stage left here, with its bounds | `hnd/` |
 
-- An earlier stage's decision binds this stage like any other input: list the DEC in the policy's `decisions`, and decide within it. A design made before this stage existed may hold in stage 2's decisions and views a framework, a code structure or a test strategy; treat them the same way.
+- An earlier stage's decision binds this stage like any other input: list the DEC in the policy's `decisions`, and decide within it. Stage 2's decisions and views may already fix part of a policy, such as a framework, the code structure or a way to test: follow them in the same way, and decide what they leave open.
 - When a driver calls for what one of them rules out, write a finding addressed to the stage that decided it (stage 1 for a TC, stage 2 for one of its decisions), with the driver as evidence, and keep following the decision until that stage changes it. Never decide against it silently.
 - For an existing system, keeping what the code does is always an option. A change costs the work to move every component that follows the old way, and must earn that cost against the drivers.
 

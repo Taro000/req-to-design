@@ -226,14 +226,15 @@ Stage 2b writes one POL for each scope of the technical policy: the rules that t
 | `specs` | For each kind of interface, how its spec is made | `specs`: `{interfaces, made, how}`; `made` is `by-hand` (written in stage 3 before the code), `from-code` (generated from the code), `owner` (the other side's document) or `none` (no document: screens, batch jobs) |
 | `implementation-feedback` | How coding agents find the design and the policies, and how implementation's findings come back | none |
 
-Every POL has the common fields, then `scope`, `decisions`, `rules` and `as_is`, and the fields of its own scope; it leaves out the fields of the other scopes. The testing policy of the online store:
+Every POL has the common fields, then `scope`, `addresses`, `decisions`, `rules` and `as_is`, and the fields of its own scope; it leaves out the fields of the other scopes. The testing policy of the online store:
 
 ```yaml
 id: POL-03
-# ... the other common fields ...  (premises: [PC-02, TC-02, DAS-03, DAS-04]; so basis: assumed)
+# ... the other common fields ...  (premises: [PC-02, TC-02, DAS-03, DAS-04, DAS-05]; so basis: assumed)
 scope: testing                           # technology | repository | testing | pipeline-and-code | specs | implementation-feedback
+addresses: [DRV-02, DRV-05]              # the drivers and the quality chain's QRs that the policy serves; gates and audits are traced by their bindings
 decisions: [DEC-02]                      # the decisions that set the policy: this stage's, and an earlier stage's that it follows
-rules:                                   # every scope: what the code and the later stages keep, each with how a breach is found (null when only reading finds it)
+rules:                                   # every scope: what the code and the later stages keep, each with how a breach is found (a pipeline step, a test or the review of a pull request; null when nothing finds it)
   - rule: Every acceptance criterion allocated to a module is checked at the lowest layer that can check it
     check: The review of the pull request, against the module's verification approach
 layers:
@@ -245,6 +246,10 @@ layers:
     covers: One component through its interfaces, with its own tables in PostgreSQL
     replaces: The external systems, with the doubles below
     runs: In the pipeline's check step, against PostgreSQL in a container
+  - layer: Contract
+    covers: The adapters of the payment providers against the providers' sandboxes
+    replaces: Nothing
+    runs: In the pipeline's release step, from the staging environment
   - layer: End-to-end
     covers: CUJ-01 and its failure paths, through the storefront's screens
     replaces: The payment providers and the warehouse, with the doubles below
@@ -253,6 +258,9 @@ doubles:
   - replaces: ELM-05 and ELM-06, the payment providers
     with: A fake provider that can decline, time out, answer late, and report a charge it took after a timeout
     seam: The payment adapter's interface in ELM-02 (DEC-02)
+  - replaces: ELM-07, the warehouse system
+    with: Stock events that the test publishes to a local broker, late, twice or out of order
+    seam: The broker client of ELM-03
   - replaces: The clock and the generation of IDs
     with: A clock the test sets and moves, and IDs from a generator the test seeds
     seam: A clock and an ID generator handed to every module that reads the time or makes an ID
@@ -260,14 +268,17 @@ environments:
   - name: CI
     runs: The check step, with PostgreSQL in a container and the doubles
     data: Built by factories in each test; no copy of production data
+  - name: Staging
+    runs: The release step's end-to-end and contract tests, on the platform of ELM-08, started for the step and stopped after it (DAS-05)
+    data: Seeded by a script with fictional buyers and items; the providers' sandboxes hold no real card
 gate_bindings:                           # one entry per NFR of kind gate in the quality chain
   - nfr: NFR-06
     where: "The Definition of Done in the pull request template: the reviewer ticks it, and a pull request that changes the payment path cannot merge until it is ticked"
     by: An integration test for each payment path that fails a payment and checks that the log lines of the order and of the charge carry the same request_id; the reviewer checks that a new payment path has one
 audit_bindings:                          # one entry per NFR of kind audit in the quality chain
   - nfr: NFR-05
-    where: "Its fix deadline: an issue that the dependency scan of the pipeline's check step opens, with the deadline as its due date. Its yearly audit: an issue that a scheduled job opens from a template once a year, which keeps the audit's record"
-    by: The dependency scan of the check step (POL-04) finds the vulnerabilities; the security team performs the yearly audit (DAS-03)
+    where: "Its fix deadline: an issue that the dependency scan of the pipeline's check step opens, with the deadline as its due date. Its audit: an issue that a scheduled job opens from a template at the cadence NFR-05 sets, which keeps the audit's record"
+    by: The dependency scan of the check step (POL-04) finds the vulnerabilities; the security team performs the audit (DAS-03)
 as_is: new
 ```
 
@@ -474,7 +485,7 @@ Updated: <date> · Inputs as of: <commit, or "none">
 
 ## Hand-off to implementation
 
-- Implement each component within its MOD items and its component report: every module within its MOD item and the report's Types, Data and Verification approach; a module at full depth also within the report section its `behaviour` names, and the caches, screens and design parameters the report gives it. Keep the interfaces (IFC), data entities (DAT) and decisions (DEC) that bind the component.
+- Implement each component within its MOD items and its component report: every module within its MOD item and the report's Types, Data and Verification approach; a module at full depth also within the report section its `behaviour` names, and the caches, screens and design parameters the report gives it. Keep the interfaces (IFC), data entities (DAT) and decisions (DEC) that bind the component, and the technical policies (POL) that bind every component: its stack, its directories and dependency rules, its test layers, the pipeline and the conventions inside the code, which `2b-technical-policy.md` indexes.
 - Decide what the design leaves open: the inside of each module at bounds depth, the tables beyond what the reports' Data sections give (within the DATs), the values the design does not set, and the hand-offs below. The code and its tests hold these decisions; do not write them back into `docs/design/`.
 - When the code cannot keep a decision the design made (a contract, an invariant, an interface, a policy or a decision that does not work as written, or two items that contradict each other), do not work around it in silence: write a finding, and tell the user which stage to re-run. A detail the design leaves open is never a finding. A finding is a new file in `docs/design/fnd/`, numbered after the highest FND there, with the fields the other files there have (`references/artifacts.md` of the design skills defines them):
   - `raised_by: implementation`, and in `raised_in` the path of the code where the problem shows;

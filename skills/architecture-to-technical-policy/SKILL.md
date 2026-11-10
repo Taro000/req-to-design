@@ -30,7 +30,7 @@ The policies are written for coding agents first. Each rule says what the code d
 ## Inputs
 
 - `docs/design/`: `1-architecture-drivers.md`, `2-architecture.md`, `design-context.yaml` (technology constraints, the organization's engineering standards among them; project constraints, the team's size and skills among them; teams; anticipated changes; and, for an existing system, its current structure and the conventions its code follows), `drv/`, `elm/`, `dec/`, and the open assumptions in `das/`.
-- `docs/quality/`, read only: `nfr/` (every NFR of kind `gate` or `audit`, to bind or place), `qr/` (the quality requirements of maintainability and portability: modularity, analysability, modifiability, testability, installability), `context.yaml` (the constraints CON and operational facts OPF that bind tools or environments), and the open assumptions in `qas/`.
+- `docs/quality/`, read only: `nfr/` (every NFR of kind `gate` or `audit`, to bind or place), `qr/` (the quality requirements of maintainability and portability: modularity, analysability, modifiability, testability, installability), `fr/` (the acceptance criteria that depend on time, IDs or an external system, which the test doubles must reach), `context.yaml` (the constraints CON and operational facts OPF that bind tools or environments), and the open assumptions in `qas/`.
 - Open findings addressed to this stage: `fnd/` items with `to: architecture-to-technical-policy` and `status: open`, those raised by implementation included.
 - Open hand-offs addressed to this stage: `hnd/` items with `to: architecture-to-technical-policy` and `status: open`.
 - The existing code, as recorded under `as_is` in `design-context.yaml`: its manifests, its lint, type and test configuration, its directory layout and its pipeline. Read the parts you need.
@@ -44,7 +44,7 @@ Essential input: at least one element of kind `component`. If there is none, ask
 
 ### 1. What is already decided
 
-List what already fixes part of the policy, following "What is already decided" in `stack-and-repository.md`: the technology constraints, the organization's engineering standards among them; the runtime, platform and deployment of each element, and the mechanisms that stage 2 decided; the conventions of the existing code; the hand-offs addressed to this stage. The policies follow them and decide only what they leave open, and each POL names in `decisions` the decisions it follows. When a driver calls for something they rule out, write a finding addressed to the stage that decided it (stage 1 for a technology constraint, stage 2 for one of its decisions), and follow the decision until that stage changes it. For an existing system, keeping its conventions is always an option, and every change must earn its cost against the drivers.
+List what already fixes part of the policy, following "What is already decided" in `stack-and-repository.md`: the technology constraints, the organization's engineering standards among them; the runtime, platform and deployment of each element, and the mechanisms that stage 2 decided; the conventions of the existing code; the hand-offs addressed to this stage. The policies follow them and decide only what they leave open, and each POL names in `decisions` the decisions it follows. Read also the drivers and the quality requirements of maintainability and portability: each POL names in `addresses` the drivers and QRs it serves. When a driver calls for something they rule out, write a finding addressed to the stage that decided it (stage 1 for a technology constraint, stage 2 for one of its decisions), and follow the decision until that stage changes it. For an existing system, keeping its conventions is always an option, and every change must earn its cost against the drivers.
 
 ### 2. Technology
 
@@ -94,13 +94,13 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 
 ## Exit criteria
 
-- Every scope has one active POL: technology, repository, testing, pipeline and code, specs, implementation feedback.
-- Every component is in exactly one stack entry. Every stack keeps the technology constraints and the runtime and platform that stage 2 decided, and components of one kind share one stack.
+- Every scope has one active POL: technology, repository, testing, pipeline and code, specs, implementation feedback. Each POL names in `addresses` the drivers and QRs it serves, and in `decisions` the decisions it follows.
+- Every component is in exactly one stack entry. Every stack keeps the technology constraints and the runtime and platform that stage 2 decided, and components of one kind share one stack. The technology POL names the package manager, the build, the tool that changes database schemas, and how each component runs on a developer's machine.
 - Every component is held by exactly one repository, and the split fits stage 2's deployment and the teams.
 - Every dependency rule names what it constrains and the check in CI that fails on a breach.
-- Every external system that a component calls has a test double and its seam, or a reason it needs none. The clock and IDs can be replaced wherever a driver or an acceptance criterion depends on time or IDs.
+- Every external system that a component calls has a test double and its seam, or a reason it needs none. The clock and IDs can be replaced wherever a driver or an acceptance criterion depends on time or IDs. Every layer and environment that a binding or a rule names is in the testing POL, and an environment that costs money is a business decision.
 - Every NFR of kind `gate` in the quality chain has a gate binding that keeps its `where`, check and threshold, or an issue for the quality chain replaces it. Every NFR of kind `audit` has an audit binding, or an issue replaces it. Every step, layer, environment and tool that a binding names exists in the policies.
-- The pipeline says when each step runs and what it blocks, and a merge requires the static checks.
+- The pipeline says when each step runs and what it blocks, and a merge requires the static checks. The policy says how a release is deployed and rolled back, within stage 2's deployment, and how the code handles errors, writes logs and reads settings and secrets, each rule with its check.
 - Every kind of interface that stage 2's views show has its spec rule, with its tool and the check that keeps the code and the spec together.
 - The implementation-feedback POL says what coding agents read first, what they run before they finish, and how a finding comes back.
 - No convention that interfaces show to their consumers is decided here: those are stage 3's.

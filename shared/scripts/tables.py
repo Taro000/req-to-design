@@ -218,11 +218,12 @@ class Renderer(object):
     def t_policies(self, ctx):
         self.need(ctx, ("stage",), ("2b",))
         order = dict((s, n) for n, s in enumerate(lib.POL_SCOPES))
-        policies = sorted(self.p.of("POL"), key=lambda x: (order.get(x.get("scope"), 99), lib.id_key(x.id)))
-        rows = [[x.id, self.text(x.get("title")), self.term("policy scope", x.get("scope")),
+        scope = lambda x: x.get("scope") if isinstance(x.get("scope"), str) else None  # noqa: E731
+        policies = sorted(self.p.of("POL"), key=lambda x: (order.get(scope(x), 99), lib.id_key(x.id)))
+        rows = [[x.id, self.text(x.get("title")), self.term("policy scope", scope(x)), self.join(x.get("addresses")),
                  self.join(x.get("decisions")), self.term("basis", x.get("basis"))] for x in policies]
-        return Table([("POL", "POL"), ("Title", "名前"), ("Scope", "範囲"), ("Decisions", "決定"), ("Basis", "根拠")],
-                     rows)
+        return Table([("POL", "POL"), ("Title", "名前"), ("Scope", "範囲"), ("Addresses", "対象"), ("Decisions", "決定"),
+                      ("Basis", "根拠")], rows)
 
     def t_gate_bindings(self, ctx):
         self.need(ctx, ("stage",), ("2b",))

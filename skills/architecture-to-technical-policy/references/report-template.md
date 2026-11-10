@@ -32,8 +32,8 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Technical policies
 <!-- generated: policies -->
-| POL | Title | Scope | Decisions | Basis |
-|---|---|---|---|---|
+| POL | Title | Scope | Addresses | Decisions | Basis |
+|---|---|---|---|---|---|
 <!-- /generated -->
 <One POL per scope. Its rules, stacks, repositories, layers, doubles, environments, bindings, steps and spec rules are in its file.>
 
@@ -127,6 +127,7 @@ What was already decided (excerpt):
 | DEC-01 | One application with enforced modules, a stock sync worker and a server-rendered storefront | POL-01, POL-02 |
 | DEC-04 | TypeScript on Node.js | POL-01 |
 | DEC-02 | An adapter for each payment provider | POL-03 |
+| DEC-09 | The providers' hosted card fields | POL-01 |
 | PC-02 | A team of four that knows TypeScript and PostgreSQL | POL-01 |
 | TC-02 | The company's cloud account, in one region | POL-04 |
 
@@ -134,16 +135,16 @@ The store has no code yet, so no convention of existing code binds a policy, and
 
 Technical policies:
 
-| POL | Title | Scope | Decisions | Basis |
-|---|---|---|---|---|
-| POL-01 | Stacks of the store's components | technology | DEC-04, DEC-11 | inferred |
-| POL-02 | One repository, laid out by business capability | repository | DEC-01, DEC-12 | inferred |
-| POL-03 | Test strategy, gates and audits | testing | DEC-02 | assumed |
-| POL-04 | Pipeline and the conventions inside the code | pipeline-and-code | — | assumed |
-| POL-05 | How specs are made | specs | DEC-11 | inferred |
-| POL-06 | How coding agents find the design and bring findings back | implementation-feedback | — | inferred |
+| POL | Title | Scope | Addresses | Decisions | Basis |
+|---|---|---|---|---|---|
+| POL-01 | Stacks of the store's components | technology | DRV-09, DRV-01 | DEC-01, DEC-04, DEC-09, DEC-11 | inferred |
+| POL-02 | One repository, laid out by business capability | repository | DRV-10, DRV-12 | DEC-01, DEC-12 | inferred |
+| POL-03 | Test strategy, gates and audits | testing | DRV-02, DRV-05 | DEC-02 | assumed |
+| POL-04 | Pipeline and the conventions inside the code | pipeline-and-code | DRV-08, DRV-09 | — | assumed |
+| POL-05 | How specs are made | specs | DRV-09 | DEC-11 | inferred |
+| POL-06 | How coding agents find the design and bring findings back | implementation-feedback | — | — | inferred |
 
-POL-01 is inferred although question 1 confirmed its frameworks: its libraries and shared tools are this stage's own judgment, and the weakest judgment gives the basis. POL-03 rests on DAS-03 (who performs NFR-05's yearly audit) and DAS-04, POL-04 on DAS-04 (the CI that runs the pipeline), so both are assumed.
+POL-01 is inferred although question 1 confirmed its frameworks: its libraries and shared tools are this stage's own judgment, and the weakest judgment gives the basis. POL-03 rests on DAS-03 (who performs NFR-05's audit), DAS-04 (the CI) and DAS-05 (the staging environment), and POL-04 on DAS-04, so both are assumed. POL-06 serves no driver: it serves the chain's own rule for findings from implementation.
 
 Design decisions:
 
@@ -156,8 +157,8 @@ DEC-11 was asked (question 1): no technology constraint fixes the frameworks, an
 
 | Driver (rank) | Fastify, no framework for the worker, Next.js | NestJS for both services, Next.js | Next.js for everything |
 |---|---|---|---|
-| DRV-09 release date (3) | meets: close to what PC-02's team knows | in part: a large framework to learn before the sale | meets |
 | DRV-01 checkout latency (1) | meets | meets | in part: the API scales with the pages, against DEC-01 |
+| DRV-09 release date (3) | meets: close to what PC-02's team knows | in part: a large framework to learn before the sale | meets |
 
 Repositories and directories:
 
@@ -185,7 +186,7 @@ flowchart LR
   check -- blocks the merge --> main([main])
   main -- a tag --> release[release]
   release -- blocks the deployment --> prod([production])
-  schedule([once a year]) --> reminder[audit-reminder]
+  schedule([NFR-05's cadence]) --> reminder[audit-reminder]
 ```
 
 Gate bindings:
@@ -224,10 +225,11 @@ Open assumptions:
 
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
-| DAS-03 | The security team performs the yearly audit of card payments | judgment | low | medium | POL-03 |
+| DAS-03 | The security team performs NFR-05's audit of card payments | judgment | low | medium | POL-03 |
 | DAS-04 | The code host's CI runs the pipeline | judgment | medium | low | POL-03, POL-04 |
+| DAS-05 | A staging environment started only for the release step | decision | low | low | POL-03 |
 
-Out of scope (excerpt): who signs off NFR-05's yearly audit, and how its findings are followed to closure. That is a business procedure; POL-03 only places the audit where the pipeline can support it.
+DAS-05 is a cost in money, a business decision: its ratings are low, since the environment runs only while a release is checked and is easy to keep running later, so it is adopted provisionally. Out of scope (excerpt): who signs off NFR-05's audit, and how its findings are followed to closure. That is a business procedure; POL-03 only places the audit where the pipeline can support it.
 
 ## Example items
 
@@ -241,14 +243,17 @@ basis: inferred
 basis_note: The frameworks are confirmed in question 1 (DEC-11); TypeScript on Node.js follows DEC-04 and PC-02; the libraries and the shared tools are inferred
 premises: [PC-02]
 scope: technology
-decisions: [DEC-04, DEC-11]
+addresses: [DRV-09, DRV-01]
+decisions: [DEC-01, DEC-04, DEC-09, DEC-11]
 rules:
   - rule: One package manager, pnpm, with one workspace per repository and one lockfile at its root
     check: The pipeline installs with the lockfile frozen, and fails when it would change
+  - rule: Each component is compiled with tsc, the storefront with next build, and runs from its build output; the release step builds each component's image once
+    check: The check step builds every component
   - rule: Every change to the database's schema is a Drizzle migration, which the release step runs before the new version starts
     check: The check step fails when the schema in the code differs from what the migrations build
   - rule: Every component runs on a developer's machine with PostgreSQL in a container, at the major version of ELM-04, and with the test doubles of POL-03
-    check: null
+    check: The review of the pull request that changes how the components run locally
 stack:
   - kind: HTTP service
     elements: [ELM-02]
@@ -281,16 +286,17 @@ basis: inferred
 basis_note: One repository follows TEAM-01, which builds and releases every component, and DEC-01; the layout follows DEC-12
 premises: [TEAM-01]
 scope: repository
+addresses: [DRV-10, DRV-12]
 decisions: [DEC-01, DEC-12]
 rules:
   - rule: Each component is a workspace package under apps/ - apps/storefront for ELM-01, apps/store-api for ELM-02, apps/stock-sync for ELM-03
-    check: null
+    check: The review of the pull request
   - rule: Inside a component, the code is grouped by business capability under src/<capability>/, each with domain/, application/ and adapters/
     check: The dependency rules below
   - rule: Code that two components share lives in a package under packages/, whose README names its owner and why it is shared
     check: The review of the pull request
   - rule: Tests live next to the code they test. Generated files live under generated/ in their package; the generated API spec is committed, so that its changes show in review
-    check: null
+    check: The review of the pull request
 repositories:
   - name: store
     holds: [ELM-01, ELM-02, ELM-03]
@@ -316,6 +322,7 @@ basis: assumed
 basis_note: The CI that runs the steps is assumed (DAS-04); the secret store follows TC-02; the rest is inferred
 premises: [TC-02, DAS-04]
 scope: pipeline-and-code
+addresses: [DRV-08, DRV-09]
 decisions: []
 rules:
   - rule: A failure the caller must handle is returned as a value of a result type; one the module cannot handle is thrown with its cause, and each component turns it into the error format of stage 3's conventions in one handler at its boundary
@@ -334,8 +341,8 @@ pipeline:
     runs: Builds each component's image once, runs the migrations and then the end-to-end and contract tests on staging, and deploys the same images to production
     blocks: The deployment to production
   - step: audit-reminder
-    when: Once a year, on a schedule
-    runs: Opens the issue of NFR-05's yearly audit from its template
+    when: On a schedule, at the cadence that NFR-05 sets
+    runs: Opens the issue of NFR-05's audit from its template
     blocks: Nothing
 as_is: new
 ```
@@ -350,6 +357,7 @@ basis: inferred
 basis_note: That no interface of the store is built by another party against a contract the store sets follows the context view and TEAM-01; the generation follows DEC-11
 premises: [TEAM-01]
 scope: specs
+addresses: [DRV-09]
 decisions: [DEC-11]
 rules: []
 specs:
@@ -378,6 +386,7 @@ basis: inferred
 basis_note: Follows the hand-off to implementation that stage 4 writes in the detailed design index
 premises: []
 scope: implementation-feedback
+addresses: []
 decisions: []
 rules:
   - rule: AGENTS.md at the root of the store repository tells coding agents to read, before any change, docs/design/2b-technical-policy.md and the POL files, then the hand-off to implementation in docs/design/4-detailed-design.md and the report of the component they change. Implementation writes and keeps the file
@@ -433,11 +442,11 @@ as_is: new
 
 ```yaml
 id: DAS-03
-title: The security team performs the yearly audit of card payments
+title: The security team performs NFR-05's audit of card payments
 status: open
 stage: 2b
 kind: judgment
-statement: The company's security team performs NFR-05's yearly audit, from the issue that POL-03 opens for it
+statement: The company's security team performs NFR-05's audit, from the issue that POL-03 opens for it
 why_unsure: NFR-05 names the audit and its cadence but not who performs it; the security team's memo is the only input about card payments
 breadth: low
 severity: medium

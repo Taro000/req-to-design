@@ -63,7 +63,7 @@ Write one finding per problem as an FND item, as you draft it, following `artifa
 
 ### 5. Questions
 
-Some activities need facts that the artifacts do not give, such as a provider's SLA or a team's experience. Rate each such point as `conventions.md` describes ("Draft first, ask afterwards"): ask the user when its breadth or severity is high; otherwise write a DAS with `stage` set to the review of the stage under review (`review-2`, `review-3` or `review-4`), keep the drafted judgment, and cite the DAS in the activity's result and in the `premises` of the findings that rest on it. Record a question about an existing assumption as "Assumptions" in `conventions.md` describes. Number the questions per review report, continuing from earlier reviews at the same path, and cite them as "review of stage 3, question 2" or "review of stage 4 ELM-02, question 1".
+Some activities need facts that the artifacts do not give, such as a provider's SLA or a team's experience. Rate each such point as `conventions.md` describes ("Draft first, ask afterwards"): ask the user when its breadth or severity is high; otherwise write a DAS with `stage` set to the review of the stage under review (`review-2`, `review-2b`, `review-3` or `review-4`), keep the drafted judgment, and cite the DAS in the activity's result and in the `premises` of the findings that rest on it. Record a question about an existing assumption as "Assumptions" in `conventions.md` describes. Number the questions per review report, continuing from earlier reviews at the same path, and cite them as "review of stage 3, question 2" or "review of stage 4 ELM-02, question 1".
 
 A judgment about the design is never a question for the user: it is a finding, which the addressed stage accepts or rejects.
 

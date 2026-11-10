@@ -290,6 +290,7 @@ DESIGN = {
         basis_note: null
         premises: []
         scope: technology
+        addresses: [DRV-02]
         decisions: [DEC-03]
         rules:
           - {rule: One lockfile for the repository, check: The pipeline installs with the lockfile frozen}
@@ -306,6 +307,7 @@ DESIGN = {
         basis_note: null
         premises: [TEAM-01]
         scope: repository
+        addresses: [DRV-01]
         decisions: [DEC-01]
         rules:
           - {rule: Code is grouped by business capability, check: The dependency rules}
@@ -323,6 +325,7 @@ DESIGN = {
         basis_note: Who performs the audit is assumed (DAS-02)
         premises: [DAS-02]
         scope: testing
+        addresses: [DRV-01]
         decisions: []
         rules: []
         layers:
@@ -345,6 +348,7 @@ DESIGN = {
         basis_note: null
         premises: []
         scope: pipeline-and-code
+        addresses: []
         decisions: []
         rules:
           - {rule: Settings come from the environment, check: A test that starts without one}
@@ -360,6 +364,7 @@ DESIGN = {
         basis_note: null
         premises: []
         scope: specs
+        addresses: []
         decisions: []
         rules: []
         specs:
@@ -375,6 +380,7 @@ DESIGN = {
         basis_note: null
         premises: []
         scope: implementation-feedback
+        addresses: []
         decisions: []
         rules:
           - {rule: AGENTS.md points coding agents to the design, check: The review of the pull request}
@@ -1045,6 +1051,12 @@ class CheckTest(unittest.TestCase):
         self.f.edit("pol/POL-04.yaml", "scope: pipeline-and-code", "scope: pipeline")
         self.assertFinds("bad-value", "scope is 'pipeline'")
         self.assertFinds("policy", "no active policy of scope pipeline-and-code")
+        self.f.edit("pol/POL-04.yaml", "scope: pipeline", "scope: [pipeline-and-code]")
+        self.f.edit("pol/POL-01.yaml", "elements: [ELM-01]", "elements: [[ELM-01]]")
+        self.f.edit("pol/POL-02.yaml", "addresses: [DRV-01]", "addresses: [ELM-01]")
+        self.assertFinds("bad-value", "scope is ['pipeline-and-code']")
+        self.assertFinds("wrong-kind", "addresses holds ELM-01")
+        self.f.tables()  # a malformed policy is reported, and breaks neither script
 
     def test_stage_2b_owns_its_files(self):
         self.f.edit("pol/POL-01.yaml", "decisions: [DEC-03]", "decisions: [DEC-03, DEC-99]")
@@ -1180,7 +1192,8 @@ class TablesTest(unittest.TestCase):
         self.assertIn("| DEC-03 | Frameworks of the components | DRV-02 | inferred |", stage2b)
         self.assertNotIn("DEC-01", stage2b.split("<!-- generated: decisions -->")[1].split("<!-- /generated -->")[0])
         self.assertNotIn("DEC-03", self.f.read("2-architecture.md"))
-        self.assertIn("| POL-04 | Pipeline and code conventions | pipeline and code | — | inferred |", stage2b)
+        self.assertIn("| POL-04 | Pipeline and code conventions | pipeline and code | — | — | inferred |", stage2b)
+        self.assertIn("| POL-01 | Stacks of the components | technology | DRV-02 | DEC-03 | inferred |", stage2b)
         self.assertIn("| NFR-01 | Payment tests stop the merge | CI | POL-03 | — |", stage2b)
         self.assertIn("| NFR-02 | Yearly audit of card payments | POL-03 | — |", stage2b)
         self.assertIn("| DAS-02 | The security team performs the audit | judgment | low | medium | POL-03 |", stage2b)
@@ -1188,8 +1201,8 @@ class TablesTest(unittest.TestCase):
                      "# 技術方針\n\n状態: 下書き · 更新: 2026-11-10\n\n" + blocks("policies", "gate-bindings"))
         self.f.tables()
         text = self.f.read("2b-technical-policy.md")
-        self.assertIn("| POL | 名前 | 範囲 | 決定 | 根拠 |", text)
-        self.assertIn("| POL-03 | Tests, gates and audits | テスト戦略とゲート | — | 仮定 |", text)
+        self.assertIn("| POL | 名前 | 範囲 | 対象 | 決定 | 根拠 |", text)
+        self.assertIn("| POL-03 | Tests, gates and audits | テスト戦略とゲート | DRV-01 | — | 仮定 |", text)
         self.assertIn("| NFR-01 | Payment tests stop the merge | CI | POL-03 | — |", text)
 
     def test_japanese_report(self):
