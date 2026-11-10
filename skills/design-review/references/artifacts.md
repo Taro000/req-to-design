@@ -5,8 +5,9 @@
 - Common fields
 - design-context.yaml (stage 1)
 - DRV: architecture driver (stage 1)
-- DEC: design decision (stages 2 to 4)
+- DEC: design decision (stages 2, 2b, 3 and 4)
 - ELM: element (stage 2)
+- POL: technical policy (stage 2b)
 - IFC: interface (stage 3)
 - DAT: data entity (stage 3)
 - MOD: module (stage 4)
@@ -23,14 +24,16 @@ All design skills write under `docs/design/`, unless the project already keeps i
 docs/design/
 ├── 1-architecture-drivers.md          stage 1 report
 ├── 2-architecture.md                  stage 2 report, views included
+├── 2b-technical-policy.md             stage 2b report
 ├── 3-high-level-design.md             stage 3 report, flows included
 ├── 4-detailed-design.md               stage 4 index: every component, its status and the depth of its modules; the hand-off to implementation
 ├── 4-detailed-design/ELM-02.md        stage 4 report, one per component
 ├── reviews/3-high-level-design.md     review report, one per reviewed stage (stage 4: per component, reviews/4-detailed-design-ELM-02.md): the latest review
 ├── design-context.yaml                the design context: constraints, teams, changes, stakeholders, current structure
 ├── drv/DRV-01.yaml …                  stage 1: architecture drivers
-├── dec/DEC-01.yaml …                  stages 2–4: design decisions
+├── dec/DEC-01.yaml …                  stages 2, 2b, 3 and 4: design decisions
 ├── elm/ELM-01.yaml …                  stage 2: elements
+├── pol/POL-01.yaml …                  stage 2b: technical policies, one per scope
 ├── ifc/IFC-01.yaml …                  stage 3: interfaces
 ├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents, for the interfaces that get one
 ├── dat/DAT-01.yaml …                  stage 3: data entities
@@ -155,12 +158,12 @@ placeholders: []                         # named placeholders from the quality c
 
 A principle is a rule for the whole system that follows from several drivers ("every operation that moves money can be repeated without moving it twice"). It has a `statement`, `derived_from` and `negotiable`, and no scenario and no priority.
 
-## DEC: design decision (stages 2 to 4), `dec/DEC-02.yaml`
+## DEC: design decision (stages 2, 2b, 3 and 4), `dec/DEC-02.yaml`
 
 ```yaml
 id: DEC-02
 # ... the other common fields ...  (premises: [TC-01, CHG-01, DAS-02])
-stage: architecture                      # architecture | high-level-design | detailed-design
+stage: architecture                      # architecture | technical-policy | high-level-design | detailed-design
 question: How does checkout keep confirming orders when the payment provider fails?
 addresses: [DRV-02, DRV-10]              # the drivers, interfaces or findings the decision answers, or the FR, QR, NFR or SLI it answers directly
 options:
@@ -209,6 +212,72 @@ as_is: new
 ```
 
 For an external system, `responsibility` says what the design assumes it does and `functions` stays empty; what it promises (an SLA, a rate limit) goes in `assumptions` of the decisions that rely on it.
+
+## POL: technical policy (stage 2b), `pol/POL-03.yaml`
+
+Stage 2b writes one POL for each scope of the technical policy: the rules that the code of every component follows and that the later stages keep, each decided once for the whole system. Coding agents read them before they change code.
+
+| Scope | What it decides | Fields of its own |
+|---|---|---|
+| `technology` | The language, framework and main libraries of each kind of component, and the tools every component shares | `stack`: one entry per kind of component, `{kind, elements, language, runtime, framework, libraries}`; every component is in exactly one |
+| `repository` | The repositories, the layout of their directories, and the dependency rules | `repositories`: `{name, holds}`, every component held by exactly one; `dependency_rules`: `{rule, check}`, each naming the check in CI that enforces it |
+| `testing` | The test layers, the test doubles, the environments and their test data; where the quality chain's gates are checked and its audits held | `layers`: `{layer, covers, replaces, runs}`; `doubles`: `{replaces, with, seam}`; `environments`: `{name, runs, data}`; `gate_bindings` and `audit_bindings` (below) |
+| `pipeline-and-code` | The pipeline, deployment and rollback, the static checks, and the conventions inside the code: errors, logs, settings and secrets | `pipeline`: the steps in order, `{step, when, runs, blocks}` |
+| `specs` | For each kind of interface, how its spec is made | `specs`: `{interfaces, made, how}`; `made` is `by-hand` (written in stage 3 before the code), `from-code` (generated from the code), `owner` (the other side's document) or `none` (no document: screens, batch jobs) |
+| `implementation-feedback` | How coding agents find the design and the policies, and how implementation's findings come back | none |
+
+Every POL has the common fields, then `scope`, `decisions`, `rules` and `as_is`, and the fields of its own scope; it leaves out the fields of the other scopes. The testing policy of the online store:
+
+```yaml
+id: POL-03
+# ... the other common fields ...  (premises: [PC-02, TC-02, DAS-03, DAS-04]; so basis: assumed)
+scope: testing                           # technology | repository | testing | pipeline-and-code | specs | implementation-feedback
+decisions: [DEC-02]                      # the decisions that set the policy: this stage's, and an earlier stage's that it follows
+rules:                                   # every scope: what the code and the later stages keep, each with how a breach is found (null when only reading finds it)
+  - rule: Every acceptance criterion allocated to a module is checked at the lowest layer that can check it
+    check: The review of the pull request, against the module's verification approach
+layers:
+  - layer: Unit
+    covers: The rules of one module - decision tables, calculations, state transitions
+    replaces: Everything outside the module
+    runs: In the pipeline's check step, on every push
+  - layer: Integration
+    covers: One component through its interfaces, with its own tables in PostgreSQL
+    replaces: The external systems, with the doubles below
+    runs: In the pipeline's check step, against PostgreSQL in a container
+  - layer: End-to-end
+    covers: CUJ-01 and its failure paths, through the storefront's screens
+    replaces: The payment providers and the warehouse, with the doubles below
+    runs: In the pipeline's release step, against the staging environment
+doubles:
+  - replaces: ELM-05 and ELM-06, the payment providers
+    with: A fake provider that can decline, time out, answer late, and report a charge it took after a timeout
+    seam: The payment adapter's interface in ELM-02 (DEC-02)
+  - replaces: The clock and the generation of IDs
+    with: A clock the test sets and moves, and IDs from a generator the test seeds
+    seam: A clock and an ID generator handed to every module that reads the time or makes an ID
+environments:
+  - name: CI
+    runs: The check step, with PostgreSQL in a container and the doubles
+    data: Built by factories in each test; no copy of production data
+gate_bindings:                           # one entry per NFR of kind gate in the quality chain
+  - nfr: NFR-06
+    where: "The Definition of Done in the pull request template: the reviewer ticks it, and a pull request that changes the payment path cannot merge until it is ticked"
+    by: An integration test for each payment path that fails a payment and checks that the log lines of the order and of the charge carry the same request_id; the reviewer checks that a new payment path has one
+audit_bindings:                          # one entry per NFR of kind audit in the quality chain
+  - nfr: NFR-05
+    where: "Its fix deadline: an issue that the dependency scan of the pipeline's check step opens, with the deadline as its due date. Its yearly audit: an issue that a scheduled job opens from a template once a year, which keeps the audit's record"
+    by: The dependency scan of the check step (POL-04) finds the vulnerabilities; the security team performs the yearly audit (DAS-03)
+as_is: new
+```
+
+A gate binding is to a gate what an SLI binding is to an SLI: it decides where and by what the gate is checked, never what passes.
+
+- `nfr`: the ID of the gate, an NFR of kind `gate`.
+- `where`: the place that realizes the gate's `where` in the quality chain: for `CI`, the pipeline step and what a failure there blocks; for `release-check`, the step or the checklist that a release passes before it goes out; for `definition-of-done`, the checklist that holds the item, and who ticks it.
+- `by`: what runs the gate's check and judges its threshold: a test layer and its tests, a tool, or a person and what they look at; and what it needs (an environment, test data, a double).
+
+An audit binding places an NFR of kind `audit`, with the same fields: `where` it is held, so that its cadence or deadline is kept, and where its record is kept; `by` what supports it and who performs it. Neither binding copies the NFR's check, threshold, criterion or cadence: they stay in the NFR. A gate or an audit that no design within the constraints can realize as the quality chain defines it is an issue for the quality chain, which the stage 2b report names in place of the binding.
 
 ## IFC: interface (stage 3), `ifc/IFC-01.yaml`
 
@@ -288,7 +357,7 @@ depends_on: [MOD-05]
 functions: [FR-03]
 realizes: []                             # the IFC operations this module implements, each as the IFC ID and the operation's name ("IFC-01 POST /v1/checkout"); each operation has exactly one module in each component that takes part in it (MOD-01 realizes IFC-01 in ELM-02)
 drivers: [DRV-04]
-decisions: [DEC-14]
+decisions: [DEC-16]
 behaviour: "Report section: MOD-02 Order total calculator"   # where its states, decision tables and algorithms are drawn; null at bounds depth
 verification:
   - {checks: "FR-03, criteria 1 to 3", how: Unit tests generated from the decision table}
@@ -375,7 +444,7 @@ One judgment made without asking, because neither of its ratings was high (`conv
 id: DAS-02
 title: The second payment provider works like the first
 status: open                             # open | confirmed | overturned | retired
-stage: 2                                 # 1 | 2 | 3 | 4 | review-2 | review-3 | review-4: the stage, or the review of a stage, that wrote it
+stage: 2                                 # 1 | 2 | 2b | 3 | 4 | review-2 | review-2b | review-3 | review-4: the stage, or the review of a stage, that wrote it
 kind: judgment                           # judgment | decision (a business decision adopted provisionally, such as a design parameter)
 statement: The second provider offers hosted card fields, so card numbers still never reach our servers (TC-01), and screens for fraud inside its charge, as the first does (DRV-06)
 why_unsure: CHG-01 names a second provider but not which one; most providers offer hosted fields, not all
@@ -407,9 +476,9 @@ Updated: <date> · Inputs as of: <commit, or "none">
 
 - Implement each component within its MOD items and its component report: every module within its MOD item and the report's Types, Data and Verification approach; a module at full depth also within the report section its `behaviour` names, and the caches, screens and design parameters the report gives it. Keep the interfaces (IFC), data entities (DAT) and decisions (DEC) that bind the component.
 - Decide what the design leaves open: the inside of each module at bounds depth, the tables beyond what the reports' Data sections give (within the DATs), the values the design does not set, and the hand-offs below. The code and its tests hold these decisions; do not write them back into `docs/design/`.
-- When the code cannot keep a decision the design made (a contract, an invariant, an interface or a decision that does not work as written, or two items that contradict each other), do not work around it in silence: write a finding, and tell the user which stage to re-run. A detail the design leaves open is never a finding. A finding is a new file in `docs/design/fnd/`, numbered after the highest FND there, with the fields the other files there have (`references/artifacts.md` of the design skills defines them):
+- When the code cannot keep a decision the design made (a contract, an invariant, an interface, a policy or a decision that does not work as written, or two items that contradict each other), do not work around it in silence: write a finding, and tell the user which stage to re-run. A detail the design leaves open is never a finding. A finding is a new file in `docs/design/fnd/`, numbered after the highest FND there, with the fields the other files there have (`references/artifacts.md` of the design skills defines them):
   - `raised_by: implementation`, and in `raised_in` the path of the code where the problem shows;
-  - `to`: the skill that wrote the item: `requirements-to-architecture-drivers` for a DRV, `architecture-drivers-to-architecture` for an ELM, `architecture-to-high-level-design` for an IFC or a DAT, `high-level-design-to-detailed-design` for a MOD, and for a DEC the skill of its `stage`;
+  - `to`: the skill that wrote the item: `requirements-to-architecture-drivers` for a DRV, `architecture-drivers-to-architecture` for an ELM, `architecture-to-technical-policy` for a POL, `architecture-to-high-level-design` for an IFC or a DAT, `high-level-design-to-detailed-design` for a MOD, and for a DEC the skill of its `stage`;
   - `severity`: `critical` when a primary driver, a non-negotiable constraint or a CUJ cannot be met as designed, `major` when something is met only in part or two items contradict each other, and `minor` otherwise.
 
 <!-- generated: implementation-handoffs -->

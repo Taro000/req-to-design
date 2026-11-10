@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: Reviews the output of stage 2, 3 or 4 of the design chain (architecture-drivers-to-architecture, architecture-to-high-level-design, high-level-design-to-detailed-design) in a fresh context and writes findings addressed to the stage that must decide. Every check is an activity with a recorded result - walking drivers and CUJs through the design for risks, sensitive points and trade-offs; judging whether it fits its use, survives planned changes, can be built for its cost and is clear; checking views, allocations, decisions and platforms; tracing acceptance criteria, recomputing latency budgets, checking data ownership, error contracts, unknown outcomes and SLI bindings; checking module depths, states, decision tables and verifiability; and, at every stage, premises, assumptions that should have been asked, and points left for the design to confirm. Never edits the design. Use it after any design stage, or when asked to review or evaluate an architecture, a high-level design or a detailed design.
+description: Reviews the output of stage 2, 2b, 3 or 4 of the design chain in a fresh context and writes findings addressed to the stage that must decide. Every check is an activity with a recorded result - walking drivers and CUJs through the design for risks, sensitive points and trade-offs; judging whether it fits its use, survives planned changes, can be built for its cost and is clear; checking views, allocations, decisions and platforms; checking stacks, repositories against the deployment, dependency rules, gate bindings and spec rules; tracing acceptance criteria, recomputing latency budgets, checking data ownership, error contracts, unknown outcomes and SLI bindings; checking module depths, states, decision tables and verifiability; and, at every stage, premises, assumptions that should have been asked, and points left for the design to confirm. Never edits the design. Use it after any design stage, or when asked to review or evaluate an architecture, a technical policy, a high-level design or a detailed design.
 license: MIT
 metadata:
   version: "0.2.0"
@@ -20,7 +20,7 @@ The first review of a stage checks all of it. Each later review is a diff review
 
 - `references/conventions.md`: the design chain, findings, the working language, judgment basis marks, the question protocol, assumptions and how a run finishes. Follow it exactly.
 - `references/artifacts.md`: where files go, the schemas for FND and DAS, and the items under review.
-- `references/review-procedures.md`: the activities for each stage and for every stage, the scope of a diff review, and how to classify what they find.
+- `references/review-procedures.md`: the activities for each stage (2, 2b, 3 and 4) and for every stage, the scope of a diff review, and how to classify what they find.
 - `references/report-template.md`: the report layout, and worked examples of a full review and a diff review.
 - `references/glossary.md`: terms for the working language.
 - `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
@@ -33,7 +33,7 @@ The first review of a stage checks all of it. Each later review is a diff review
 
 ## Inputs
 
-- The stage to review: 2 (architecture), 3 (high-level design), or 4 (the detailed design of one component, named by its element ID). If the user does not say, ask.
+- The stage to review: 2 (architecture), 2b (technical policy), 3 (high-level design), or 4 (the detailed design of one component, named by its element ID). If the user does not say, ask.
 - The stage's report and items, and what they were built from: the items of the earlier design stages, `design-context.yaml`, the assumptions in `das/`, the hand-offs in `hnd/`, and the quality chain's artifacts (read only), with its shared facts and its assumptions (QAS).
 - The findings in `fnd/`, whatever their status, those of earlier reviews included, so that a finding rejected with a reason is not raised again unless its inputs changed.
 - The review report of the same stage (for stage 4, of the same component), if there is one. This review replaces it: it keeps the answers still in effect and continues the question numbering, keeps the issues for the quality chain that the quality chain has not applied yet, and takes over the open gaps. Its other results are not inputs. Whether the report exists decides the kind of review:
@@ -47,7 +47,7 @@ Essential input: the report and items of the stage under review. A stage whose r
 
 ### 1. Scope
 
-Name the stage (and the component, for stage 4); whether this is a full review or a diff review, and for a diff review the last review's commit; the items in scope, found for a diff review as "Rules for every review" in `review-procedures.md` describes; and the commit they were read at (`Inputs as of`: the commit current when the review starts, or "none" outside git). When a diff review finds that nothing has changed since the last review, say so and stop: the last report still holds. The report has one fixed path per reviewed stage and replaces the report already there: `docs/design/reviews/2-architecture.md`, `3-high-level-design.md`, or `4-detailed-design-<element ID>.md`.
+Name the stage (and the component, for stage 4); whether this is a full review or a diff review, and for a diff review the last review's commit; the items in scope, found for a diff review as "Rules for every review" in `review-procedures.md` describes; and the commit they were read at (`Inputs as of`: the commit current when the review starts, or "none" outside git). When a diff review finds that nothing has changed since the last review, say so and stop: the last report still holds. The report has one fixed path per reviewed stage and replaces the report already there: `docs/design/reviews/2-architecture.md`, `2b-technical-policy.md`, `3-high-level-design.md`, or `4-detailed-design-<element ID>.md`.
 
 ### 2. Do the activities
 

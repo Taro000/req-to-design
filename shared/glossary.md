@@ -110,6 +110,31 @@ Use these terms for the working language. For a language not listed, or a term m
 | threat model | 脅威のモデル |
 | trust boundary | 信頼の境界 |
 
+## Technical policy
+
+| English | 日本語 |
+|---|---|
+| technical policy (POL: rules that the code of every component follows) | 技術方針 |
+| policy scope: technology / repository / testing / pipeline and code / specs / implementation feedback | 方針の範囲: 技術の選定 / リポジトリとディレクトリ / テスト戦略とゲート / CI/CD とコードの約束事 / 仕様書の作り方 / 実装からの戻り |
+| rule (of a policy) / check (how a breach of a rule is found) | 規則 / 検査 |
+| kind of component (what a component is built as: a server, a web app, a batch job) | コンポーネントの種類 |
+| stack (the language, runtime, framework and main libraries of one kind of component) | 技術の組み合わせ |
+| main library | 主なライブラリ |
+| repository | リポジトリ |
+| directory layout: by business capability / by technical layer | ディレクトリの分け方: 業務の機能ごと / 技術の層ごと |
+| dependency rule | 依存の規則 |
+| test layer | テストの層 |
+| test double (a fake that stands in for a dependency in tests) | 偽物 |
+| seam (where a test double is plugged in) | 差し替え口 |
+| environment (where the code runs or is tested) / test data | 環境 / テストデータ |
+| pipeline / pipeline step | パイプライン / パイプラインの手順 |
+| static checks (types, lint, format) | 静的な検査 |
+| gate binding (where and by what a gate of the quality chain is checked) | ゲートの出どころ |
+| audit binding (where an audit of the quality chain is held) | 監査の置き場所 |
+| spec made: by hand / from code / owner / none | 仕様書の作り方: 手で書く / コードから生成する / 相手の文書 / 作らない |
+| coding agent | コーディングエージェント |
+| agent instructions (the file in the repository that coding agents read first) | エージェントへの指示書 |
+
 ## High-level and detailed design
 
 | English | 日本語 |
@@ -164,6 +189,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | entry point (a requirement that does not come from users) | 入口 |
 | conflict (between quality requirements) | 競合 |
 | non-functional requirement | 非機能要件 |
+| kinds of NFR: slo / gate / audit / monitor | 非機能要件の種類: SLO / ゲート / 監査 / 監視 |
+| where a gate runs: CI / release check / Definition of Done | ゲートを確かめる所: CI / リリース前の確認 / 完成の定義 |
 | SLI / SLO / error budget | SLI / SLO / エラーバジェット |
 | vantage (where an SLI's events are observed): user-side / system-boundary / synthetic / data | 見る位置: 利用者の側 / システムの境界 / 模擬の利用 / データ |
 | SLI binding (where an SLI's events come from) | SLI の出どころ |
