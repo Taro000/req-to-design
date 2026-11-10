@@ -48,7 +48,7 @@ Record the chosen option, the rationale (which drivers decided it), each rejecte
 
 ## Business decisions
 
-These are business decisions as much as technical ones: a decision that accepts a risk, a cost in money or contracts, a weaker driver or a debt; a deferral; a provisional design parameter; and the rejection of a finding that leaves a risk in place. Every decision lists its costs; that alone does not make it a business decision. Rate each one like any uncertain point ("Decisions" in `conventions.md`):
+These are business decisions as much as technical ones: a decision that accepts a risk, a cost in money or contracts, a weaker driver or a debt; the deferral of a point of this stage's full-depth kinds, or of one that rates high ("Deferral"); a provisional design parameter; and the rejection of a finding that leaves a risk in place. Every decision lists its costs; that alone does not make it a business decision. Rate each one like any uncertain point ("Decisions" in `conventions.md`):
 
 - If either rating is high, ask. The answer is the decision: the judgment becomes `confirmed`, and the question and its answer go under "Decisions" in the report.
 - Otherwise, adopt the drafted decision provisionally: write a DAS of kind `decision`, list it in the `premises` of the decision and of every item that depends on it, and mark those items `assumed`.
@@ -67,13 +67,9 @@ When a decision knowingly takes a cheaper option that weakens a driver, to meet 
 
 ## Deferral
 
-Defer a decision only when all of these hold:
+Deferring is the default for what this stage need not decide in full: "Decision depth" and "Hand-offs" in `conventions.md` give the rule for every stage, and the full-depth kinds of stage 2. A point outside those kinds that does not rate high gets its bounds here when several elements or later stages must keep one promise about it, and its detail is left to the stage that decides it, with a hand-off where `conventions.md` asks for one. That is not a business decision, and it is neither asked nor recorded as an assumption. For example, decide here the order of the timeouts along a call path and what idempotency keys cover, and leave to later stages the values of the timeouts and the key of each operation.
 
-- no primary driver depends on it now;
-- deferring it does not make it more expensive to change later: it does not leak into stored data or published interfaces;
-- the event or date that will settle it is named (`revisit_when`).
-
-Otherwise, decide now. A deferral is a business decision.
+Deferring a point of stage 2's full-depth kinds, or one that rates high, is a business decision ("Business decisions"): a vendor chosen only once its contract is signed, or a structure settled only after a pilot. Address its hand-off to this stage, with the event that settles it as the trigger.
 
 ## Existing systems and transition
 

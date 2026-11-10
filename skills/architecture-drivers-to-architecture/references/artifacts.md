@@ -10,6 +10,7 @@
 - IFC: interface (stage 3)
 - DAT: data entity (stage 3)
 - MOD: module (stage 4)
+- HND: hand-off (stages 1 to 4)
 - FND: finding (stages 2 to 4 and the review)
 - DAS: assumption (every stage and the review)
 - The detailed design index (stage 4)
@@ -34,6 +35,7 @@ docs/design/
 ├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
+├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
 ├── fnd/FND-01.yaml …                  stages 2–4 and the review: findings
 └── das/DAS-01.yaml …                  every stage and the review: assumptions made without asking
 ```
@@ -53,9 +55,9 @@ Every item file except `design-context.yaml` and the assumption files (DAS, whic
 ```yaml
 id: DEC-07
 title: Short name, in the working language
-status: active             # active | retired   (FND: open | accepted | rejected; DAS: open | confirmed | overturned | retired)
+status: active             # active | retired   (HND: open | decided | retired; FND: open | accepted | rejected; DAS: open | confirmed | overturned | retired)
 basis: inferred            # stated | inferred | assumed | confirmed: the weakest basis of the judgments in the item
-basis_note: null           # which parts are stated, inferred, assumed or confirmed, when they differ; findings accepted
+basis_note: null           # which parts are stated, inferred, assumed or confirmed, when they differ; findings accepted and hand-offs decided
 premises: []               # what the item depends on that could change under it: TC, PC, TEAM, CHG, STK, DAS, and the quality chain's CON, EXT, OPF, QAS
 # ... the fields of the item type ...
 ```
@@ -182,10 +184,10 @@ debt:                                    # {what, why_accepted, repay_when}; nul
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
   repay_when: Right after the spring sale
-deferred: false
-revisit_when: null                       # required when deferred is true: the event or date that settles it
 as_is: new
 ```
+
+What a decision leaves to a later stage, or to an event, is a hand-off (HND) whose `origin` names the decision.
 
 ## ELM: element (stage 2), `elm/ELM-02.yaml`
 
@@ -289,6 +291,48 @@ verification:
   - {checks: "FR-03, criteria 1 to 3", how: Unit tests generated from the decision table}
 parameters: []
 as_is: new
+```
+
+## HND: hand-off (stages 1 to 4), `hnd/HND-01.yaml`
+
+A stage decides each point at one of three depths: full (every detail), bounds (only the promise later stages keep) or hand-off (none of it) (`conventions.md`, "Decision depth"). A hand-off carries one point that a stage defers, whole or in its detail, to the stage that will decide it or to implementation ("Hand-offs" there). The stage that writes it owns `what`, `bounds` and `origin`; the stage it is addressed to records `status`, `to`, `component`, `trigger` and `resolution` as it takes it up.
+
+A point that a quality-chain item leaves for the design to confirm, which stage 1 hands to the stage that designs the part:
+
+```yaml
+id: HND-01
+title: Where the time of a stock change at the warehouse can be read
+status: decided                          # open | decided | retired
+basis: inferred
+basis_note: The point is stated in SLI-03's basis_note; the stage it goes to is inferred
+premises: [EXT-02]
+from: requirements-to-architecture-drivers   # the skill that wrote it
+to: architecture-to-high-level-design    # the skill that decides it, or implementation; a stage that passes it on changes it
+component: null                          # for a hand-off to stage 4 or to implementation: the component (ELM ID) it concerns
+origin: [SLI-03]                         # the items the point comes from; for stage 1, the quality-chain item that leaves it to the design
+what: Whether the store learns when each stock count changed at the warehouse, so that SLI-03 can compare that time with the time buyers see the change
+bounds: SLI-03's unit event and counting rules, unchanged; DRV-03   # what the decision must keep, by the IDs of the items that set it
+trigger: The next run of stage 3         # that stage's next run, its run for a component, the implementation of a named part, or an event outside the chain (a measurement in operation, a signed contract, a date)
+resolution: "Confirmed in DAT-04: changed_at keeps the time of the change, which IFC-03's messages carry"   # written by the stage that takes it up: the items that decide it, or why it passed it on
+```
+
+A detail that stage 4 leaves to implementation, inside a module it designs in full:
+
+```yaml
+id: HND-02
+title: Where the coupon rules are kept
+status: open                             # a hand-off to implementation stays open: the code and its tests decide it
+basis: inferred
+basis_note: null
+premises: []
+from: high-level-design-to-detailed-design
+to: implementation
+component: ELM-02
+origin: [MOD-05]
+what: Where the coupon rules are kept (a table, a file or code) and how MOD-05 reads them
+bounds: MOD-05's interface, and the decision table in its report section
+trigger: When MOD-05 is implemented
+resolution: null
 ```
 
 ## FND: finding (stages 2 to 4 and the review), `fnd/FND-01.yaml`

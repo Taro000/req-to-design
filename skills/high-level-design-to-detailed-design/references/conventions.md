@@ -4,13 +4,13 @@ Five skills turn a system's requirements into its design. Four are stages that r
 
 | Stage | Skill | Reads | Writes |
 |---|---|---|---|
-| 1 | `requirements-to-architecture-drivers` | the quality chain's artifacts, the design context the user gives (technology, budget, deadline, team, anticipated changes), existing code | `design-context.yaml`, architecture drivers (DRV), assumptions (DAS) |
-| 2 | `architecture-drivers-to-architecture` | DRV, the design context, functional requirements and CUJs | design decisions (DEC), elements (ELM), views, DAS |
-| 3 | `architecture-to-high-level-design` | ELM, DEC, DRV, acceptance criteria, SLI definitions | interfaces (IFC) and their specs, data entities (DAT), DEC, DAS |
-| 4 | `high-level-design-to-detailed-design` | one component per run, with its IFC, DAT, DEC, DRV and functions | modules (MOD), DEC, DAS, the detailed design index |
+| 1 | `requirements-to-architecture-drivers` | the quality chain's artifacts, the design context the user gives (technology, budget, deadline, team, anticipated changes), existing code | `design-context.yaml`, architecture drivers (DRV), assumptions (DAS), hand-offs (HND) |
+| 2 | `architecture-drivers-to-architecture` | DRV, the design context, functional requirements and CUJs, the hand-offs addressed to it | design decisions (DEC), elements (ELM), views, DAS, HND |
+| 3 | `architecture-to-high-level-design` | ELM, DEC, DRV, acceptance criteria, SLI definitions, the hand-offs addressed to it | interfaces (IFC) and their specs, data entities (DAT), DEC, DAS, HND |
+| 4 | `high-level-design-to-detailed-design` | one component per run, with its IFC, DAT, DEC, DRV, functions and the hand-offs addressed to it | modules (MOD), DEC, DAS, HND, the detailed design index |
 | Review | `design-review` | the output of stage 2, 3 or 4, and what it was built from | a review report, findings (FND), DAS |
 
-Each stage turns the decisions of the stage above into obligations for the stage below: an architecture decision binds the high-level design, and an interface binds the modules that realize it. Every item traces up to what it serves, so anyone can walk from a module back to the driver, the quality requirement and the user behind it.
+Each stage turns the decisions of the stage above into obligations for the stage below: an architecture decision binds the high-level design, and an interface binds the modules that realize it. Every item traces up to what it serves, so anyone can walk from a module back to the driver, the quality requirement and the user behind it. What a stage leaves undecided, it hands off to the stage that will decide it ("Decision depth", "Hand-offs").
 
 ## The quality chain
 
@@ -28,13 +28,79 @@ Rules for using it:
 - Read it; never write to it. Do not edit, add or retire anything under `docs/quality/`, do not write function proposals there, and do not record answers in its QAS files.
 - When the design shows that something in the quality chain should change, write it in the report's "Issues for the quality chain" section: the issue, the chain items it concerns, the change you suggest, and which quality-chain stage would make it. Typical issues: a target that no design within the budget can meet, a conflict between quality requirements that no design resolves, a missing function, a CUJ step that no element can perform, a limit of the chosen technology that changes what users can do. The user decides whether to re-run that quality-chain stage; afterwards, the design stages that the change reaches are re-run.
 - Refer to chain items by their IDs, including its shared facts (CON, EXT, OPF). Do not copy their statements into design items; trace to them.
-- A chain item's `basis_note` may say what the design must confirm. Stage 1 turns each such point into a driver, a constraint, a question, an assumption (DAS), or an open gap addressed to the stage that designs the part. That stage confirms the point, citing it in `basis_note`, or raises an issue for the quality chain.
+- A chain item's `basis_note` may say what the design must confirm. Stage 1 turns each such point into a driver, a constraint, a question, an assumption (DAS), or a hand-off (HND) to the stage that designs the part. That stage decides the hand-off by confirming the point, citing it in `basis_note`, or raises an issue for the quality chain.
 - An issue for the quality chain stays in the report until the quality chain has applied it, which shows in `docs/quality/` on a later run; then remove its row.
 - When `docs/quality/` does not exist, accept the same information from the user (users, CUJs and their steps, functional requirements with acceptance criteria, quality requirements with their priority, targets that can be measured) and record where it came from in the report's "Inputs" table. In trace fields, write the source instead of an ID ("PRD, section 3").
 
+## Decision depth
+
+Details settled early are redone whenever a later stage, or the code, learns what the early stage could not know. Each stage therefore decides in full only what is hard to change once other work builds on it, and leaves the rest to the stage that will know enough to decide it.
+
+A stage decides each point that its workflow meets at one of three depths:
+
+| Depth | The stage | Example |
+|---|---|---|
+| Full | Decides it in every detail, in its items | The owner of a data entity; the contract of an interface with an external system; a vendor |
+| Bounds | Decides only the promise that later stages keep, and defers the detail | "Every operation that moves money is idempotent, with one key per order", and no table of the key of each operation |
+| Hand-off | Decides none of it, and hands it off: to whom, when, and within which bounds ("Hand-offs") | The timeout values inside a component, to stage 4; the details of a library, to implementation |
+
+Implementation, the coding that follows stage 4, decides whatever no stage does; the code and its tests hold what it decides.
+
+### Full-depth kinds
+
+Each stage decides the kinds of point in its row in full, whatever their ratings. The last column names what it typically leaves to others, and to whom.
+
+| Stage | Decides in full | Leaves to others |
+|---|---|---|
+| 1 | The ranking of the drivers and where the primary line falls; the non-negotiable constraints | How hard each driver below the primary line is, beyond what places it there (stage 2 checks whether its decisions meet it); the points that quality-chain items leave for the design to confirm, to the stage that designs the part |
+| 2 | The overall structure; the platforms and device support; the deployment: where each element runs; where each kind of data lives and which element owns it; the shape of each integration with an external system, behind an adapter of its own; the trust boundaries; the principles of the mechanisms that span elements: which parts hold state, no transaction across a call to another element, which operations are idempotent and what their keys cover, how an unknown outcome is held and settled (from when its wait counts, and what is undone when it is treated as not having happened), where events are delivered from and that none is lost, and the order of the timeouts along each call path | The tables of single operations (their keys, error codes and retries), to stage 3; the values of timeouts, waits, intervals and thresholds, within that order: to stage 3 on the paths of time SLOs and of money, otherwise to stage 4 |
+| 3 | Every interface with an external system, called from the users' devices, or used by another team: its whole contract, schema included. Every other interface between elements: its operations, its errors and their codes, what its idempotency keys mean, and the states and events its consumers see. The shared conventions, the codes for errors in fields included; how a call whose outcome is unknown sorts its results and answers its caller (the pending answer and its code); the states across elements of every entity that holds money, a booking or an unknown outcome; the consistency rules, retention and classification of every data entity; the latency budget of every SLO with a time threshold, and the timeouts and waits on its path and on every path that moves money; where every SLI's events come from | The schema of every other interface between elements, to implementation, which generates it from the code; the timeouts of other calls, within the order stage 2 decides, to stage 4; the attributes of data entities beyond what shows what each one is, and the lists and mechanisms kept inside one element (the types of its records, how it tracks what it has delivered), within the promise its consumers see: to stage 4 where it decides them in full, otherwise to implementation |
+| 4 | For every module that moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions, or migrates data: its states, its decision tables (the one that settles each unknown outcome included), its concurrency, the constraints and indexes that keep the invariants of its data, and its migrations | The inside of every other module, to implementation, within its responsibility, its contract and its checks; the rest of the physical data (tables, columns, types, indexes for queries), to implementation, within the invariants and classification of the data entities |
+
+### Deferring the rest
+
+A point outside the stage's full-depth kinds is still decided in full when it rates high on breadth or severity ("Draft first, ask afterwards", step 5). Rate it as it would stand once deferred, within the bounds this stage decides: most details rate low once the bounds hold what is hard to undo, such as the key of one operation once the scope of keys is decided, or the type of a column once the entity's invariants are.
+
+Every other point is deferred; that is the default.
+
+- Decide its bounds when later stages, or several elements, must keep one promise about it, and defer the detail. State the bounds in the terms of what crosses the boundary: a promise that copies a list kept inside one element (the types of its records, the attributes it stores) changes whenever that list does.
+- Leave what is deferred to the stage that will decide it, with a hand-off where "Hand-offs" asks for one. Deferring a point outside the stage's full-depth kinds is how the chain divides its work: it is not a business decision, it is not asked, and it needs no assumption. The stage that decides the point rates it then.
+- Deferring a point of the stage's full-depth kinds, or one that rates high, is a business decision ("Decisions"), such as waiting for a contract before choosing a vendor. Ask about it when either rating is high; otherwise adopt it provisionally as a DAS of kind `decision`. Its hand-off goes to the stage that decides the point once its trigger comes.
+
+A point that no step of the stage's workflow designs is not deferred by it: it is the work of the stage that designs it, as the schema of an interface is stage 3's while stage 2 decides the structure.
+
+## Hand-offs
+
+A hand-off (HND) carries one deferred point to the stage that will decide it, or to implementation. Each one is a file in `hnd/` (`artifacts.md`), so that a stage, or a script, finds the open hand-offs addressed to it by their `to` and `status`.
+
+Write a hand-off for a point this stage defers when the stage it goes to would not take the point up otherwise, or when one of this stage's exit criteria asks for the point ("Exit criteria"). A point that a later stage's workflow designs anyway needs none: stage 3 gives every interface its idempotency, within what stage 2 decided the keys cover, without a hand-off. Stage 1 writes one for each point that quality-chain items leave for the design to confirm and that it does not settle itself ("The quality chain").
+
+- `what`: the point, not an answer to it.
+- `to`: the stage that will decide it: the first later stage whose full-depth kinds include it, otherwise the stage that designs the part it belongs to, otherwise `implementation`. When only an event outside the chain can settle it (a measurement in operation, a signed contract, a date), address it to the stage that decides it once the event comes, which may be this stage.
+- `component`: for a hand-off to stage 4 or to implementation, the component it concerns; write one hand-off per component. A stage that cannot name the component yet (stage 1) addresses the point to the next stage, which passes it on.
+- `trigger`: when it falls due: that stage's next run, its run for the component, the implementation of a named part, or the event. An event has come when the inputs show it or the user says so.
+- `bounds`: what the decision must keep, by the IDs of the items that set it, each with a short label and never a copy of its content. `origin`: the items the point comes from.
+
+Every stage reads the open hand-offs addressed to it on every run (stage 4: those for its component), and takes up each one whose trigger has come:
+
+- Decide it: decide the point in this stage's items, within its bounds, and cite the hand-off in their `basis_note`; set `status: decided` and name the items in `resolution`. A point that a quality-chain item leaves for the design to confirm is decided by confirming it, or by raising an issue for the quality chain when the design shows that it does not hold.
+- Or pass it on, when the point is not of this stage's full-depth kinds and does not rate high here: set `to`, `component` and `trigger` as for a new hand-off, and write why in `resolution`. Bounds this stage adds go in its own items, which `resolution` names.
+- When the point cannot be decided within its bounds, write a finding addressed to the stage that set them ("Findings between design stages").
+
+The stage that writes a hand-off owns `what`, `bounds` and `origin`. The stage it is addressed to records only `status`, `to`, `component`, `trigger` and `resolution`, as it would on a finding. When nothing needs a hand-off any more (its origin was retired, or a later decision made it moot), either of them sets `status: retired` and says why in `resolution`.
+
+A hand-off addressed to implementation stays open in the design: whoever implements the part reads it, and the code and its tests decide it.
+
+## Exit criteria
+
+A stage's exit criteria check that what is hard to change was decided at the right stage, not that every detail was written down.
+
+- A criterion that asks for a detail takes the form "every X has Y, or Y is handed off with its stage and trigger". A Y handed off that way is not missing: no later stage and no review counts it as a gap.
+- Every stage also meets these, whether or not its skill lists them: no point of its full-depth kinds, and none that rates high, is handed off unless its deferral was decided as a business decision ("Deferring the rest"); and every open hand-off addressed to it whose trigger has come is decided or passed on ("Hand-offs").
+
 ## Findings between design stages
 
-A later stage, or a review, that finds a problem in an earlier design stage's items writes a finding (FND) addressed to that stage. It never edits that stage's items itself, so that every item has exactly one stage that writes its content. (Assumption files and findings also record answers and statuses from other stages, as described in "Assumptions" and below.)
+A later stage, or a review, that finds a problem in an earlier design stage's items writes a finding (FND) addressed to that stage. It never edits that stage's items itself, so that every item has exactly one stage that writes its content. (Assumption files, hand-offs and findings also record answers and statuses from other stages, as described in "Assumptions", "Hand-offs" and below.)
 
 - A finding names the skill it is addressed to, the items it concerns, its severity, the evidence and a suggested resolution.
 - Every stage reads the open findings addressed to it, on every run. For each one, it accepts (changes its items and cites the finding in their `basis_note`) or rejects (writes why in `resolution`), and sets the finding's status. A rejection that leaves a risk in place is a business decision ("Decisions").
@@ -77,7 +143,7 @@ An item lists in `premises` what it relies on directly that could change under i
 ## Numbers
 
 - Business numbers (targets, deadlines, thresholds, volumes, budgets) come from the inputs: the quality chain's items, the design context or the user. Never invent one. Use the chain's values and the names of its placeholders as they are. A number the design needs that no input gives is a gap: ask for the fact that would settle it, or write a named placeholder whose name no other placeholder uses, and list it in the report under "Placeholders".
-- Design parameters (timeouts, retry counts and back-off, pool and batch sizes, cache lifetimes, partition counts) are design decisions. Propose a provisional value and say what it is based on (a stated number it derives from, a calculation, the default of a named library or service). A provisional parameter is a decision ("Decisions").
+- Design parameters (timeouts, retry counts and back-off, pool and batch sizes, cache lifetimes, partition counts) are design decisions. Propose a provisional value and say what it is based on (a stated number it derives from, a calculation, the default of a named library or service). A provisional parameter is a decision ("Decisions"). A stage sets a parameter's value only when the parameter is of its full-depth kinds or rates high; otherwise it leaves the value to a later stage, within the bounds the value must keep ("Decision depth").
 - Show in the report how every derived number (a latency budget, a capacity estimate, a storage estimate) follows from stated numbers. Compute with a script, not by hand.
 
 ## Existing systems
@@ -92,9 +158,9 @@ When there is no code, every item is `new`.
 
 ## Draft first, ask afterwards
 
-1. Read every input: the quality chain's artifacts (or what the user gave instead), `design-context.yaml`, this stage's existing items and the items of the stages above it, the open findings addressed to this stage, and the code the stage needs. On a re-run, start from what changed ("Re-running a stage").
+1. Read every input: the quality chain's artifacts (or what the user gave instead), `design-context.yaml`, this stage's existing items and the items of the stages above it, the open findings and hand-offs addressed to this stage, and the code the stage needs. On a re-run, start from what changed ("Re-running a stage").
 2. If an essential input is missing, so that no meaningful draft is possible (each skill names its essential inputs), ask only for that input before drafting. This is a request for input, not a judgment question.
-3. Draft the whole stage without stopping. Make every judgment yourself, using the rules in the skill. Write the items as you draft them, and the draft report that indexes them. Work in parts small enough to write as you go (one group of related items at a time, such as the interfaces of one element), and write each part's items before you start the next: a stage worked out in full before the first file is written saves nothing if the run stops.
+3. Draft the whole stage without stopping. Make every judgment yourself, using the rules in the skill. Decide each point at the depth "Decision depth" gives it, and write the hand-offs for what you defer. Write the items as you draft them, and the draft report that indexes them. Work in parts small enough to write as you go (one group of related items at a time, such as the interfaces of one element), and write each part's items before you start the next: a stage worked out in full before the first file is written saves nothing if the run stops.
 4. List every point you were unsure of. A point is uncertain when:
    - the input is silent or ambiguous about a fact the choice depends on, and the choice changes this stage or a later one;
    - two or more reasonable options exist, and the wrong one would cause rework downstream;
@@ -102,7 +168,7 @@ When there is no code, every item is `new`.
    - it depends on facts that only the user's organization knows: budgets, contracts, team skills, existing systems, operating practice, volumes;
    - it is a business decision ("Decisions").
 
-   A design choice you make with the skill's rules from what the inputs state is not uncertain only because the inputs did not make it for you: making it is this stage's job, and it stays `inferred`. Never list anything the input already states, wording, or how the method works; do list the facts that a judgment made with the method depends on. Merge points that hinge on the same fact.
+   A design choice you make with the skill's rules from what the inputs state is not uncertain only because the inputs did not make it for you: making it is this stage's job, and it stays `inferred`. A point you defer because the stage's full-depth kinds do not include it is not an uncertain point of this stage; the stage that decides it rates it then. Never list anything the input already states, wording, or how the method works; do list the facts that a judgment made with the method depends on. Merge points that hinge on the same fact.
 5. Rate each point on two scales:
    - Breadth, read from the structure rather than guessed:
      - high: it changes the structure (an element, a boundary between elements, the owner of a data entity, the deployment), a technology constraint, the ranking of the primary drivers, a shared convention, or an interface that more than one element uses; or five or more items depend on it, counting the items of later stages through their traces once those exist;
@@ -123,12 +189,12 @@ When there is no code, every item is `new`.
 
 ## Decisions
 
-The driver ranking, provisional design parameters, decisions that accept a risk, a cost in money or contracts, a weaker driver or a debt, deferred decisions, and rejections of findings that leave a risk in place are business decisions as much as technical ones. A design nobody decided on is reopened at the first incident or the first budget review. Rate such a decision like any other point:
+The driver ranking, provisional design parameters, decisions that accept a risk, a cost in money or contracts, a weaker driver or a debt, the deferral of a point of the stage's full-depth kinds or of one that rates high, and rejections of findings that leave a risk in place are business decisions as much as technical ones. A design nobody decided on is reopened at the first incident or the first budget review. Rate such a decision like any other point:
 
 - If either rating is high, ask the user to decide. The answer is the decision: mark the judgment `confirmed` and record the question and its answer under "Decisions" in the report.
 - Otherwise, adopt the drafted decision provisionally: write a DAS item with `kind: decision`, and mark the judgments that depend on it `assumed`.
 
-Never present a provisional decision as decided.
+Never present a provisional decision as decided. Deferring a point outside the stage's full-depth kinds that does not rate high is not a business decision ("Decision depth").
 
 ## Assumptions
 
@@ -151,14 +217,20 @@ Reports and items describe what holds now. They never record how they got there:
 ## Re-running a stage
 
 - Find what changed since this stage last ran. Its last run is the last commit whose first line names this skill (`git log -1 --format=%h --grep='^<skill name>' -- <report>`). List the files under `docs/quality/`, `docs/design/` and the code the stage reads that changed after that commit, and read their diffs (`git diff --name-status <commit> -- docs/quality/ docs/design/`, then `git diff <commit> -- <file>`), together with any uncommitted changes. Do not diff from `Inputs as of`: that header records which inputs the report reflects, and a diff from it shows this stage's own last output as changes too. If someone else committed between `Inputs as of` and the skill's commit (`git log --oneline <inputs as of>..<commit>`), read those changes as well. If the project is not under git, or the commits cannot be found, read every input again and compare it with this stage's items.
-- A re-run handles what changed: new or changed upstream items (in the quality chain or in an earlier design stage), the open findings addressed to this stage, and the answers recorded in the assumptions this stage wrote. Leave the other items as they are unless a change reaches them. A change that only rewords an upstream item, without changing its meaning, needs nothing here. Keep changes the user made by hand to this stage's items, unless they contradict an input; then ask. To find them, look at the changes to this stage's own files after its last run: one that no skill's commit made, including one not committed yet, is a hand edit; a change made by another skill's commit (its first line names the skill) is an input. An answer given in another stage that changes this stage's items is cited where it is used ("design stage 3, decision 4"); it gets no row under this stage's "Decisions".
+- A re-run handles what changed: new or changed upstream items (in the quality chain or in an earlier design stage), the open findings addressed to this stage, the open hand-offs addressed to it whose trigger has come, and the answers recorded in the assumptions this stage wrote. Leave the other items as they are unless a change reaches them. A change that only rewords an upstream item, without changing its meaning, needs nothing here. Keep changes the user made by hand to this stage's items, unless they contradict an input; then ask. To find them, look at the changes to this stage's own files after its last run: one that no skill's commit made, including one not committed yet, is a hand edit; a change made by another skill's commit (its first line names the skill) is an input. An answer given in another stage that changes this stage's items is cited where it is used ("design stage 3, decision 4"); it gets no row under this stage's "Decisions".
 - Update in place. Keep existing IDs and never renumber. A new item takes the number after the highest one in use, retired items included.
 - When an item is no longer needed, set `status: retired`. Do not delete the file: other items may trace to it. When a retired item is needed again for the same purpose, set it back to `active` instead of writing a new one.
-- Artifacts written by an earlier version of these skills may carry `changelog`, `version`, `needs_agreement` and `approver_candidates` fields, statuses `draft` or `agreed`, sections about earlier runs, and reports with no `Inputs as of`. On the first re-run that touches such a file, drop those fields and sections, set `draft` and `agreed` to `active` (an agreement the file records counts as `confirmed` for what it covered), and read every input again, since there is no commit to diff from.
+- Artifacts written by an earlier version of these skills may hold content in a form this version no longer uses. On the first re-run that touches such a file, move the content into the current form and drop the old form, keeping no second copy:
+  - `changelog`, `version`, `needs_agreement` and `approver_candidates` fields, and sections about earlier runs: drop them. Set the statuses `draft` and `agreed` to `active`; an agreement the file records counts as `confirmed` for what it covered.
+  - A report with no `Inputs as of`: read every input again, since there is no commit to diff from.
+  - A DEC with `deferred` and `revisit_when`: when `deferred` is true, write a hand-off for what the decision leaves open, with `revisit_when` as its trigger. Then drop both fields.
+  - A point under "Open gaps" that is addressed to a later stage, such as a point a quality-chain item leaves for the design to confirm: write a hand-off for it, and remove it from "Open gaps".
+
+  Only the stage that wrote a file moves its content. A later stage that finds such content addressed to it, before that stage has run again, takes it up as it would a hand-off.
 - Keep the decisions in effect. Do not ask the same question again unless the inputs it depended on have changed. Number the rows of "Decisions" per stage, and in stage 4 per component report, questions and corrections in one sequence, and continue the numbering on a re-run, so that `basis_note` can cite them ("decision 7", or "question 7" for a question); when citing another stage's, name the stage ("stage 2, decision 4", "stage 4 ELM-02, decision 3").
 
 ## Finishing a run
 
 1. List the open assumptions that this run wrote or depends on (DAS and QAS), one line each with their ratings, highest first. Say that no answer is needed, and that any correction the user gives is applied like an answer. Record a correction under "Decisions" with the next number, and set a DAS to `overturned` or `confirmed` as the user says. Silence, or "no corrections", leaves an assumption `open`. When applying the corrections creates new assumptions, list them in the closing message as well.
-2. Tell the user which later stages to re-run and for which items, which reviews to repeat, and which issues for the quality chain are still open.
+2. Tell the user which later stages to re-run and for which items, which reviews to repeat, the hand-offs this run wrote, decided or passed on, and which issues for the quality chain are still open.
 3. Check that every YAML file this run wrote, and every item file of this stage, still parses and that no value is cut off at ` #`, with a YAML parser when one is available; fix any that is, whichever run wrote it. List a value cut off in another stage's file under "Open gaps" for that stage. If the project is under git, commit the files this run wrote, and only those, to the current branch. Add the new files, then commit with the paths named, so that nothing else the user has staged is included (`git add -- <paths>`, then `git commit -m "<message>" -- <paths>`). Write the message in the language of the project's recent commit messages, or in the working language when there are none. The first line names the skill and what the run did; the body says what triggered the run, which items were added, changed or retired and why, and which stages to re-run. Never push. If the commit fails, say so and leave the files as they are.
