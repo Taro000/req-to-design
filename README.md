@@ -16,7 +16,7 @@ Agent skills that turn a system's requirements into its design: first the driver
 |---|---|---|---|
 | 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`), including the design decisions it found in its inputs; the design context, which never comes from users (technology constraints; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
 | 2 | `architecture-drivers-to-architecture` | Stage 1 output | Design decisions with their options and rationale, elements, five views, a threat model |
-| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces with OpenAPI and AsyncAPI documents, end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
+| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces (with OpenAPI and AsyncAPI documents for those that devices, other teams or external systems use), end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
 | 4 | `high-level-design-to-detailed-design` | Stage 3 output, one component per run | Modules with contracts, states, decision tables, physical data and a verification approach |
 | Review | `design-review` | The output of stage 2, 3 or 4 | Findings addressed to the stage that must decide |
 

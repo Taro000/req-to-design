@@ -80,6 +80,7 @@ Check the exit criteria, make the report match the items, and set the report's s
 
 - Reviewing in the conversation that wrote the design, without saying so.
 - Ticking a checklist instead of doing the work. A budget is checked by adding it up.
+- Counting a detail that the stage handed off as missing. The stage it is handed to decides it when its trigger comes; a finding about it now starts a run that decides nothing.
 - Fixing the design during the review. The stage that owns an item decides; the review's job is evidence.
 - Findings without evidence ("seems risky"). The addressed stage cannot accept or reject what it cannot check.
 - Letting minor findings bury critical ones. Order the findings by severity, and keep the minor ones short.

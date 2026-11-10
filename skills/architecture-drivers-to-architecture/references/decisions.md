@@ -21,9 +21,9 @@ A decision answers one question the design must settle ("how does checkout survi
 - the platforms and device support are not all fixed by a technology constraint (`structures-and-mechanisms.md`, "Platforms and device support");
 - a design concern has more than one sensible answer;
 - a constraint leaves a choice open (which managed database the platform offers);
-- a later stage would otherwise make the choice silently.
+- a later stage would otherwise make a choice of stage 2's full-depth kinds silently.
 
-Do not write decisions for what any competent implementation would do the same way. Those go in the "standard practice is enough" lines.
+Do not write decisions for what any competent implementation would do the same way. Those go in the "standard practice is enough" lines. Nor write them for what a later stage decides, such as the key or the error codes of one operation, or the value of a timeout ("Deferral").
 
 ## Options
 
@@ -43,12 +43,12 @@ Record the chosen option, the rationale (which drivers decided it), each rejecte
 
 ## Sensitive points and trade-offs
 
-- A sensitive point is a property of the decision that the response depends on strongly: a timeout, a threshold, a cache lifetime, the number of instances. Name it, so that later stages treat it as a design parameter, and so that the people who run the system know what to tune.
+- A sensitive point is a property of the decision that the response depends on strongly: a timeout, a threshold, a cache lifetime, the number of instances. Name it, so that later stages treat it as a design parameter, and so that the people who run the system know what to tune. Set its value here only as "Design parameters" allows; otherwise hand the value off, so that the stage that sets it knows that the response depends on it.
 - A trade-off is a decision that helps one driver and hurts another. Record it on the decision (`trade_offs`) and in both drivers' walkthroughs, with the size of the effect as far as you can judge it ("adds up to 0.2 s to checkout").
 
 ## Business decisions
 
-These are business decisions as much as technical ones: a decision that accepts a risk, a cost in money or contracts, a weaker driver or a debt; the deferral of a point of this stage's full-depth kinds, or of one that rates high ("Deferral"); a provisional design parameter; and the rejection of a finding that leaves a risk in place. Every decision lists its costs; that alone does not make it a business decision. Rate each one like any uncertain point ("Decisions" in `conventions.md`):
+These are business decisions as much as technical ones: a decision that accepts a risk, a cost in money or contracts, a weaker driver or a debt; the deferral of a point of this stage's full-depth kinds, or of one that rates high ("Deferral"); a provisional design parameter that this stage sets ("Design parameters"); and the rejection of a finding that leaves a risk in place. Every decision lists its costs; that alone does not make it a business decision. Rate each one like any uncertain point ("Decisions" in `conventions.md`):
 
 - If either rating is high, ask. The answer is the decision: the judgment becomes `confirmed`, and the question and its answer go under "Decisions" in the report.
 - Otherwise, adopt the drafted decision provisionally: write a DAS of kind `decision`, list it in the `premises` of the decision and of every item that depends on it, and mark those items `assumed`.
@@ -57,9 +57,9 @@ Never write a provisional decision as if it were decided.
 
 ## Design parameters
 
-Timeouts, retry counts, pool sizes and cache lifetimes are design decisions too. Propose a provisional value with its basis (a stated number it derives from, a calculation, the default of a named library or service), and list it as a sensitive point when the response depends on it.
+Timeouts, retry counts, pool sizes, cache lifetimes and partition counts are design decisions too ("Numbers" in `conventions.md`). Set a value here only for a parameter of stage 2's full-depth kinds, one that sizes something paid for or hard to change once built (the capacity in a contract, the number of partitions of stored data), or for one that rates high. Propose the value with its basis (a stated number it derives from, a calculation, the default of a named library or service). A provisional parameter is a business decision ("Business decisions"). These usually rate high, because a contract or the shape of stored data depends on them, so they are asked. A parameter that is part of an option you ask about anyway is answered with it.
 
-A provisional parameter is a business decision. Most rate low or medium, because they change one element and are tuned in operation anyway, so they become a DAS of kind `decision`. Ask about one when either rating is high: it sizes something that is paid for or hard to change later (the capacity in a contract, the number of partitions of stored data), or a primary driver fails when the value is wrong and nobody notices. A parameter that is part of an option you ask about anyway is answered with it.
+Leave every other value to the stage that sets it, within the bounds this stage decides ("Decision depth" in `conventions.md`): timeouts, waits, intervals and thresholds go to stage 3 on the paths of time SLOs and of money, and to stage 4 elsewhere, within such bounds as the order of the timeouts along a call path, or a cache lifetime within the freshness its driver allows. When the response depends on the value, name the parameter as a sensitive point and hand the value off, with the decision in the hand-off's `origin`. Leaving a value is not a business decision: it is neither asked nor recorded as an assumption.
 
 ## Debt
 
@@ -86,4 +86,4 @@ How does checkout survive a provider outage (DRV-02)?
 | DRV-10 add a provider later (10) | in part | meets |
 | DRV-07 running cost (11) | meets | in part: a second contract |
 
-DRV-02 ranks above DRV-09, so the second provider wins. The business already chose when it ships (stage 1, question 5): right after the spring sale, and until then an outage of the provider stops checkout. That is not asked again; the decision records it as a debt, repaid right after the sale. The second contract ties the system to another vendor, which is high severity, so it is asked (question 2), with the starting failover threshold as part of the drafted option. The decision records that threshold as a sensitive point, and a trade-off with DRV-07.
+DRV-02 ranks above DRV-09, so the second provider wins. The business already chose when it ships (stage 1, question 5): right after the spring sale, and until then an outage of the provider stops checkout. That is not asked again; the decision records it as a debt, repaid right after the sale. The second contract ties the system to another vendor, which is high severity, so it is asked (question 2). The decision records a trade-off with DRV-07, and the error threshold at which checkout fails over as a sensitive point. The threshold's value is not set here: it lies on the paths of NFR-02 and of money, so HND-02 hands it to stage 3, which checks the failover path against NFR-02's error budget.

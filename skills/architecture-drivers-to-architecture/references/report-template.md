@@ -32,8 +32,9 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <Under the table, one comparison table for every other decision that addresses a primary driver, as in decisions.md.>
 
 ## Design concerns
-| Concern | Settled by, or why standard practice is enough |
+| Concern | Settled by, left to a later stage, or why standard practice is enough |
 |---|---|
+<For what this stage leaves of a concern: the stage that decides it and its trigger, with the hand-off when there is one.>
 
 ## Threat model
 <The data flow diagram with trust boundaries, then the table of flows, threats and counters, as in views.md.>
@@ -59,7 +60,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Design parameters
 | Parameter | Decision | Decided in |
 |---|---|---|
-<Decided in: the question under "Decisions" that settled it, or the DAS that adopted it provisionally.>
+<Only the values this stage sets: those that size something paid for or hard to change once built, and any other that rates high (decisions.md, "Design parameters"). Decided in: the question under "Decisions" that settled it, or the DAS that adopted it provisionally. A sensitive point whose value a later stage sets is under "Hand-offs".>
 
 ## Debt and deferrals
 | Item | Debt, or deferral of a full-depth kind | Decided in |
@@ -73,6 +74,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 | FND | Title | Raised by | Addressed to | Status |
 |---|---|---|---|---|
 <The findings addressed to this stage, and those this stage raised for stage 1.>
+
+## Hand-offs
+| HND | Title | From | To | Status | Items |
+|---|---|---|---|---|---|
+<The hand-offs this stage wrote, and those addressed to it that it took up, as this run left them: the values of sensitive points that a later stage sets, the deferrals under "Debt and deferrals", and any other point left to a later stage that it would not take up otherwise. To names the component as well, for stage 4 and implementation. Items: for a hand-off written here, its origin; for one decided here, the items that decide it, which cite it in their `basis_note`. The point, its bounds, its trigger and why one was passed on are in the HND file.>
 
 ## Issues for the quality chain
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
@@ -94,6 +100,8 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|---|
 
 ## Open gaps
+<Only what this stage could not close and no later stage will take up: a walkthrough gap that no decision closes, a value cut off at ` #` in a file another stage wrote, for that stage to fix. A point left to a later stage or to implementation is under "Hand-offs"; one that only a change in the quality chain would close is under "Issues for the quality chain".>
+
 ## Out of scope
 ## Next
 <Run `design-review` on this stage in a fresh context; re-run this stage to resolve its findings; then run `architecture-to-high-level-design`.>
@@ -113,12 +121,12 @@ Design decisions (excerpt):
 |---|---|---|---|
 | DEC-01 | One application with enforced modules, a stock sync worker and a server-rendered storefront | DRV-09, DRV-01, DRV-03 | inferred |
 | DEC-02 | Fail over to a second payment provider | DRV-02, DRV-10 | assumed |
-| DEC-03 | Stock changes arrive as events; ELM-02 keeps a short stock cache | DRV-03 | assumed |
+| DEC-03 | Stock changes arrive as events; ELM-02 keeps a short stock cache | DRV-03 | inferred |
 | DEC-06 | Fraud screening inside each provider's charge | DRV-01, DRV-06 | inferred |
 | DEC-09 | The provider's hosted card fields | DRV-08 | inferred |
 | DEC-10 | Browsers the storefront supports | DRV-11 | confirmed |
 
-DEC-02 and DEC-03 are assumed because each depends on an open assumption (DAS-02, DAS-03). DEC-03 also lists DAS-01, which question 3 confirmed, and is not assumed on its account. DEC-10 is confirmed by question 1. DEC-01 was not a question: the stated team and deadline behind DRV-09 leave no doubt about it, so it stays inferred.
+DEC-02 is assumed because it depends on an open assumption (DAS-02). DEC-03 lists DAS-01, which question 3 confirmed, and is not assumed on its account; the lifetime of its stock cache is a value that stage 3 sets (HND-03), so it needs no assumption here. DEC-10 is confirmed by question 1. DEC-01 was not a question: the stated team and deadline behind DRV-09 leave no doubt about it, so it stays inferred.
 
 Elements (excerpt):
 
@@ -176,9 +184,9 @@ flowchart TB
 
 Design concerns (excerpt):
 
-| Concern | Settled by, or why standard practice is enough |
+| Concern | Settled by, left to a later stage, or why standard practice is enough |
 |---|---|
-| Concurrency | DEC-05 (idempotency keys for payments); stock reservations use row locks, which is standard practice with the one database of DEC-01 |
+| Concurrency | DEC-05 (payments are idempotent, with one key per order); stage 4, at its run for ELM-02: how a reservation of the last items in stock stays correct when buyers reserve them at once (stage 4 decides the concurrency of such a module in full, so no hand-off is needed) |
 | Distribution | DEC-01, DEC-04: two zones in one region; one region is enough this cycle (QR-16 excluded; DRV-12 keeps region settings in one place) |
 | Variability | DEC-10 for the browsers (TC-03 fixes a web app); otherwise standard practice is enough: one market, one currency, no tenants |
 
@@ -186,14 +194,9 @@ Walkthrough of DRV-01 (excerpt):
 
 | DRV | Where the stimulus enters | Decisions that shape the response | Meets the measure? | Remaining risk |
 |---|---|---|---|---|
-| DRV-01 | ELM-01's checkout script → ELM-02 | DEC-01, DEC-06, DEC-03 (cached stock) | Likely: the charge at the provider's stated 99.9th percentile (1.0 s) leaves 0.5 s for our own work and the database | During failover (DEC-02), checkouts are slower until the failing provider's breaker opens: stage 3 must check that against NFR-02's error budget, and must settle the first provider's outcome before charging the second (DRV-05) |
+| DRV-01 | ELM-01's checkout script → ELM-02 | DEC-01, DEC-06, DEC-03 (cached stock) | Likely: the charge at the provider's stated 99.9th percentile (1.0 s) leaves 0.5 s for our own work and the database | During failover (DEC-02), checkouts are slower until the failing provider's breaker opens, and each one waits until the first provider's outcome is settled before the second is charged (DEC-05): stage 3 sets the threshold and checks the failover path against NFR-02's error budget (HND-02) |
 
-Design parameters (excerpt):
-
-| Parameter | Decision | Decided in |
-|---|---|---|
-| failover_after | DEC-02 | question 2 |
-| stock_cache_lifetime | DEC-03 | DAS-03 |
+Design parameters: none. No value in this architecture sizes a contract or the stored data. The error threshold at which checkout fails over (DEC-02) and the lifetime of ELM-02's stock cache (DEC-03) are sensitive points whose values stage 3 sets: see "Hand-offs".
 
 Debt and deferrals (excerpt):
 
@@ -201,12 +204,21 @@ Debt and deferrals (excerpt):
 |---|---|---|
 | DEC-02 | debt: failover ships right after the spring sale | stage 1, question 5 |
 
+Hand-offs (excerpt):
+
+| HND | Title | From | To | Status | Items |
+|---|---|---|---|---|---|
+| HND-02 | The error threshold at which checkout fails over | architecture-drivers-to-architecture | architecture-to-high-level-design | open | DEC-02 |
+| HND-03 | How long ELM-02 keeps a stock count it has read | architecture-drivers-to-architecture | architecture-to-high-level-design | open | DEC-03 |
+
+Both are sensitive points whose values this stage does not set, so each gets a hand-off. Both values lie on paths that stage 3 budgets: the threshold on the paths of NFR-02 and of money, the cache lifetime on the path of NFR-03, whose threshold is T_stock_lag. Deciding them here would fix numbers before the budgets they must fit exist.
+
 Decisions (excerpt):
 
 | # | Question | Answer | Items |
 |---|---|---|---|
 | 1 | TC-03 keeps the storefront a web app. Which browsers must browsing and checkout work in? | The current and the previous major version of Safari and Chrome on phones, and of Chrome, Edge, Safari and Firefox on computers, as drafted. | DEC-10, ELM-01 |
-| 2 | Checkout must keep confirming orders through a payment provider outage (DRV-02). Fail over to a second provider, at the cost of a second contract, or keep one provider with retries, which cannot ride out an outage? | Fail over to a second provider, as drafted, starting after 5 consecutive errors or 10 s of timeouts, and tune that threshold with the providers' error rates. The running cost of the second contract is accepted. | DEC-02, ELM-06 |
+| 2 | Checkout must keep confirming orders through a payment provider outage (DRV-02). Fail over to a second provider, at the cost of a second contract, or keep one provider with retries, which cannot ride out an outage? | Fail over to a second provider, as drafted. The running cost of the second contract is accepted. | DEC-02, ELM-06 |
 | 3 | Stage 1 assumed, without asking, that the warehouse system announces stock changes (DAS-01). The structure now rests on it: DEC-03, the stock sync worker (ELM-03) and the runtime view. Does the warehouse system send an event when a stock count changes? | Yes: it sends one event per stock change; the warehouse team confirmed it. | DAS-01, DEC-03, ELM-03 |
 
 Question 3 asks about an assumption that stage 1 wrote: the structure rests on it (DEC-03, ELM-03 and the runtime view), so its breadth is high, and this stage asked it ("Assumptions" in `conventions.md`). DAS-01 records the answer in `answer`, with `answered_in` set to "stage 2, question 3", and its status is `confirmed`. DEC-03 and ELM-03 list DAS-01 in `premises` and cite the answer in `basis_note`; stage 1 applies it to DRV-03 when it runs again.
@@ -216,13 +228,12 @@ Open assumptions (excerpt):
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
 | DAS-02 | The second payment provider works like the first | judgment | medium | low | DEC-02, ELM-06 |
-| DAS-03 | Stock cache lifetime | decision | low | low | DEC-03 |
 
 Placeholders (excerpt):
 
 | Name | Stands for | Used in |
 |---|---|---|
-| T_stock_lag | The time within which a stock change must be shown (QR-03) | DEC-03, DAS-03 |
+| T_stock_lag | The time within which a stock change must be shown (QR-03) | DEC-03, HND-03 |
 | A_failover | The share of checkouts that must succeed during a provider outage (DRV-02) | Walkthroughs: DRV-02 |
 
 ## Example items
@@ -234,7 +245,7 @@ id: DEC-02
 title: Fail over to a second payment provider
 status: active
 basis: assumed
-basis_note: The second provider and its starting failover threshold confirmed in question 2; the debt, failover shipping right after the spring sale, decided in stage 1, question 5; the second provider working like the first assumed (DAS-02); the rest inferred
+basis_note: The second provider confirmed in question 2; the debt, failover shipping right after the spring sale, decided in stage 1, question 5; the second provider working like the first assumed (DAS-02); the rest inferred
 premises: [TC-01, CHG-01, DAS-02]
 stage: architecture
 question: How does checkout keep confirming orders when the payment provider fails?
@@ -256,8 +267,7 @@ sensitive_points: [The error threshold that opens a provider's breaker - too low
 trade_offs: [{with: DRV-07, note: A second contract raises running cost}]
 assumptions: ["The second provider works like the first: hosted card fields, and fraud screening inside its charge (DAS-02)"]
 depends_on: [DEC-01]
-parameters:
-  - {name: failover_after, value: 5 consecutive errors or 10 s of timeouts, basis: "Provisional starting value, answered with the second provider (stage 2, question 2); tune with the providers' error rates"}
+parameters: []                           # the value of the failover threshold is stage 3's (HND-02)
 debt:
   what: Failover ships right after the spring sale; until then an outage of the provider stops checkout
   why_accepted: "The business keeps the date and accepts the risk (stage 1, question 5)"
@@ -265,19 +275,21 @@ debt:
 as_is: new
 ```
 
-`docs/design/das/DAS-03.yaml`, a provisional design parameter adopted without asking. Its statement names the parameter and leaves its value in DEC-03's `parameters`, so that tuning it changes one file:
+`docs/design/hnd/HND-02.yaml`, the value of DEC-02's sensitive point. Stage 2 names the threshold and what its value must keep, and leaves the number to stage 3; it is neither asked nor an assumption here:
 
 ```yaml
-id: DAS-03
-title: Stock cache lifetime
+id: HND-02
+title: The error threshold at which checkout fails over
 status: open
-stage: 2
-kind: decision
-statement: ELM-02 caches stock counts for the provisional stock_cache_lifetime in DEC-03's parameters, a share of T_stock_lag that leaves the rest for a warehouse event to reach ELM-04
-why_unsure: A provisional design parameter; how long the event path really takes is not known until it runs
-breadth: low
-severity: low
-rating_note: Only DEC-03 depends on it; a setting of ELM-02 that is tuned in operation
-answer: null
-answered_in: null
+basis: inferred
+basis_note: null
+premises: []
+from: architecture-drivers-to-architecture
+to: architecture-to-high-level-design
+component: null
+origin: [DEC-02]
+what: The value of the error threshold that opens a provider's breaker, after which checkout charges the other provider (DEC-02's sensitive point)
+bounds: NFR-02 error budget, which the failover path must fit; DEC-02 failover; DEC-05 an outcome settled before the other provider is charged
+trigger: The next run of stage 3
+resolution: null
 ```

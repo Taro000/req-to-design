@@ -143,6 +143,8 @@ Design difficulty, your judgment, with a one-line reason:
 | medium | Known solutions exist, but they cost real effort or money |
 | low | Any reasonable design meets it |
 
+For a driver below the primary line, the reason needs to show only why it stays there. How hard it is beyond that is stage 2's to judge, as it checks whether its decisions meet the driver ("Decision depth" in `conventions.md`).
+
 Order the table with high and high first, then high and medium, then medium and high, then the rest by business priority. Within the same pair, put first the driver that touches more CUJs.
 
 ## Primary drivers
@@ -153,6 +155,11 @@ Primary drivers are the ones stage 2 designs for first. Mark as primary:
 - every high-priority driver with medium difficulty;
 - every non-negotiable constraint.
 
-A mid-sized system usually ends with five to twelve primary drivers. More than twelve usually means the scenarios are too fine (merge the ones with the same stimulus and response) or the business has not chosen. Fewer than three usually means the difficulty was underestimated: check the excluded QRs and the change scenarios again.
+Mark at most twelve. A primary line that lets most drivers through no longer tells stage 2 what to design for first. When the rules above mark more than twelve:
 
-The ranking is a business decision ("Decisions" in `conventions.md`). The order of the primary drivers and where the line falls have high breadth, so ask about them in one question: the primary drivers in order, with the drafted ranking as the first option, and the drivers just below the line named. When the business has not chosen, the question asks it to. The answer is the decision: record it under "Decisions" and cite the question in the `basis_note` of every ranked driver. A judgment inside the ranking that moves no driver across the line (the difficulty of a driver far below it) is rated like any other point.
+1. Merge the drivers whose scenarios have the same stimulus and response: the scenarios are too fine. One scenario may serve several QRs and NFRs.
+2. If more than twelve remain, the business has not chosen. Ask which drivers to merge, or which to keep primary, in the ranking question below; it has high breadth, since it moves the primary line. Draft the option that keeps the twelve highest-ranked and names the drivers that fall below the line. A non-negotiable constraint that any reasonable design meets is usually among them: every decision respects it, primary or not.
+
+A mid-sized system usually ends with five to twelve primary drivers. Fewer than three usually means the difficulty was underestimated: check the excluded QRs and the change scenarios again.
+
+The ranking is a business decision ("Decisions" in `conventions.md`). The order of the primary drivers and where the line falls have high breadth, so ask about them in one question: the primary drivers in order, with the drafted ranking as the first option, and the drivers just below the line named. When the business has not chosen, the question asks it to. The answer is the decision: record it under "Decisions" and cite the question in the `basis_note` of every ranked driver. A judgment inside the ranking that moves no driver across the line is not asked on its own: the ranking question answers the order of the primary drivers, and how hard a driver below the line is, beyond what keeps it there, is left to stage 2 ("Ranking").
