@@ -147,7 +147,7 @@ Hand-offs (excerpt):
 | HND-04 | The schemas of the interfaces between elements that ELM-02 provides | architecture-to-high-level-design | implementation, ELM-02 | open | IFC-06 |
 | HND-05 | The timeouts of ELM-01's calls to IFC-06 | architecture-to-high-level-design | high-level-design-to-detailed-design, ELM-01 | open | IFC-06 |
 
-HND-03 is decided within NFR-03's budget: DEC-11, which lets ELM-02 read the stock table, gives the cache the share of T_stock_lag that the warehouse event and ELM-03 leave. HND-04 stays open in the design, as every hand-off to implementation does; stage 4 takes up HND-05 at its run for ELM-01.
+HND-03 is decided within NFR-03's budget: DEC-11, which lets ELM-02 read the stock table, gives the cache the share of T_stock_lag that the warehouse event and ELM-03 leave, as a provisional value in its `parameters` (DAS-07). HND-04 stays open in the design, as every hand-off to implementation does; stage 4 takes up HND-05 at its run for ELM-01.
 
 Decisions (excerpt):
 
@@ -161,6 +161,7 @@ Open assumptions (excerpt):
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
 | DAS-06 | Timeouts on the payment path adopted provisionally | decision | medium | low | IFC-01, IFC-02 |
+| DAS-07 | Stock cache lifetime adopted provisionally | decision | low | low | DEC-11 |
 
 ## Example items
 

@@ -179,7 +179,7 @@ Conflicts (excerpt):
 |---|---|
 | DRV-01, DRV-06 | Stage 2: screen for fraud inside the charge call, or give a separate call its own share of the 1.5 s |
 | DRV-02, DRV-09 | The business: failover comes right after the spring sale (question 5) |
-| DRV-02, DRV-07 | The business, when the budget is set at the funding review (question 3) |
+| DRV-02, DRV-07 | The business, when stage 2 weighs the options for DRV-02; there is no budget to weigh them against until the funding review (question 3) |
 
 Feasibility (excerpt):
 
@@ -189,7 +189,7 @@ Feasibility (excerpt):
 | DRV-02 | no known way before PC-01 | A second integration and its reconciliation take weeks that four developers (PC-02) do not have before the sale; it is built right after it (question 5) |
 | DRV-09 | yes, if failover waits | Holds once DRV-02 moves after the sale (question 5) |
 
-The budget is missing (PC-03): the verdicts weigh only the team and the date, and the cost of DRV-02's second contract is weighed at the funding review (question 3).
+The budget is missing (PC-03): the verdicts weigh only the team and the date, and stage 2 weighs the cost of DRV-02's second contract with no budget to check it against until the funding review (question 3).
 
 Hand-offs (excerpt):
 
@@ -197,7 +197,7 @@ Hand-offs (excerpt):
 |---|---|---|---|---|---|
 | HND-01 | Where the time of a stock change at the warehouse can be read | requirements-to-architecture-drivers | architecture-to-high-level-design | open | SLI-03 |
 
-SLI-03's `basis_note` leaves it to the design to confirm that the time each count changed at the warehouse can be read. No driver, constraint or ranking here turns on it, and stage 3 binds SLI-03 to its source, so the point goes there; `artifacts.md` shows HND-01 once stage 3 has decided it.
+SLI-03's `basis_note` leaves it to the design to confirm that the time each count changed at the warehouse can be read. No driver, constraint or ranking here turns on it, and stage 3 binds SLI-03 to its source, so the point goes there; `artifacts.md` shows HND-01 once stage 3 has decided it. The missing budget needs no hand-off: it is an input that question 3 asked for, and this stage runs again when the funding review sets it. Nor does the conflict between DRV-02 and DRV-07: stage 2 compares its options against both drivers anyway.
 
 Issues for the quality chain:
 

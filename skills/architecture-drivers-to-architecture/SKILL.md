@@ -19,7 +19,7 @@ The quality chain states requirements and leaves the design to this chain. Two k
 ## Read first
 
 - `references/conventions.md`: the design chain, what the quality chain leaves to the design, findings, the working language, judgment basis marks, the question protocol, decisions and assumptions, current state only, re-runs and finishing a run. Follow it exactly.
-- `references/artifacts.md`: where files go, and the schemas for DEC, ELM, DAS and FND (and the DRV items and `design-context.yaml` you read).
+- `references/artifacts.md`: where files go, and the schemas for DEC, ELM, HND, DAS and FND (and the DRV items and `design-context.yaml` you read).
 - `references/structures-and-mechanisms.md`: overall structures, platforms and device support, design mechanisms by quality, and the eight design concerns.
 - `references/decisions.md`: how to write and compare options, sensitive points, trade-offs, business decisions, parameters, debt, deferral and transition.
 - `references/views.md`: the five views, consistency rules, walkthroughs, the threat model and teams.
@@ -89,7 +89,7 @@ A walkthrough that fails sends you back to the decisions. A risk that a later st
 
 ### 8. Debt, deferrals and transition
 
-Record the debts accepted for the budget or the deadline, and the deferrals of points of this stage's full-depth kinds, following `decisions.md`. Each one is a business decision: asked when either rating is high, otherwise adopted provisionally as a DAS of kind `decision`. Handing off any other point is not a business decision ("Decision depth" in `conventions.md`). For an existing system, write the order of the changes as decisions, so that the system works after each step.
+Record the debts accepted for the budget or the deadline, and the deferrals of points of this stage's full-depth kinds or of points that rate high, following `decisions.md`. Each one is a business decision: asked when either rating is high, otherwise adopted provisionally as a DAS of kind `decision`. Handing off any other point is not a business decision ("Decision depth" in `conventions.md`). For an existing system, write the order of the changes as decisions, so that the system works after each step.
 
 ### 9. Cost and team
 
@@ -105,7 +105,7 @@ Process every open finding addressed to this stage, as `conventions.md` describe
 
 ### 12. Report and questions
 
-Write the DEC, ELM, HND and FND items as you draft them in steps 1 to 11, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards" in `conventions.md`: list the points you were unsure of, together with the open DAS and QAS that your judgments depend on ("Assumptions"); rate them; ask the ones that need asking; and write a DAS for each of the others. At this stage, an uncertain overall structure, platform, vendor or managed service the system becomes tied to, or conflict between primary drivers usually rates high and is asked, and so does a design parameter that this stage sets, since it sizes something paid for or hard to change. The tables of single operations, the values of other parameters and the choices inside one component are not points of this stage: they are handed off, and the stage that decides each one rates it. Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied".
+Write the DEC, ELM, HND and FND items as you draft them in steps 1 to 11, and the draft report that indexes them, following `report-template.md`. Then follow "Draft first, ask afterwards" in `conventions.md`: list the points you were unsure of, together with the open DAS and QAS that your judgments depend on ("Assumptions"); rate them; ask the ones that need asking; and write a DAS for each of the others. At this stage, an uncertain overall structure, platform, vendor or managed service the system becomes tied to, or conflict between primary drivers usually rates high and is asked, and so does a design parameter that this stage sets, since it sizes something paid for or hard to change. The tables of single operations, the values of other parameters and the choices inside one component are deferred, unless one rates high as it would stand once deferred ("Deferring the rest" in `conventions.md`): they are left to the stages that decide them, and are neither asked nor recorded as a DAS here. Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied".
 
 ## Exit criteria
 

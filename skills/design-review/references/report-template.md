@@ -70,7 +70,7 @@ Activities (excerpt):
 | B6 | Check data entities | Checked the writers and readers of DAT-01 to DAT-06 | One writer each; ELM-02 reads DAT-04 directly under a recorded read-only decision (DEC-11); reservations are a separate entity (DAT-06) | none |
 | B7 | Check SLI bindings | Compared SLI-02's unit event (one checkout submitted), vantage (system boundary) and counting rules with the binding on IFC-01 | The vantage holds: the load balancer is the system boundary. The binding counts requests, though, and none of its fields ties a resubmitted checkout to the first, so a checkout submitted again counts twice, against SLI-02's counting rule | FND-03 |
 | B10 | Compare specs with IFCs | Compared checkout.openapi.yaml with IFC-01, and checked which IFCs need a spec | They match. IFC-02 and IFC-03 link their owners' documents. IFC-06, which no device and no other team calls, has no spec: its schema is handed off to implementation (HND-04), which is not a gap | none |
-| E3 | Re-rate open assumptions | Counted the items whose `premises` name each open DAS and QAS | DAS-06 keeps its ratings (medium, low): IFC-01 and IFC-02 depend on it. None is high, so none was asked. DAS-01, which IFC-03 rests on, is confirmed (stage 2, question 3) and is not open | none |
+| E3 | Re-rate open assumptions | Counted the items whose `premises` name each open DAS and QAS | DAS-06 keeps its ratings (medium, low): IFC-01 and IFC-02 depend on it. DAS-07 keeps its ratings (low, low): only DEC-11 depends on it. None is high, so none was asked. DAS-01, which IFC-03 rests on, is confirmed (stage 2, question 3) and is not open | none |
 | E5 | Look for copied statements | Read IFC-01 to IFC-06 and DAT-01 to DAT-06 for quality-chain wording | None; IFC-01's timing names NFR-02's 1.5 s next to its ID, a label rather than a copy | none |
 | E7 | Check hand-offs | Read HND-04 and HND-05, which stage 3 wrote, against the full-depth kinds of stage 3 | Each names its stage, its component and its trigger, and its bounds and origin exist. Neither hands off a point of stage 3's full-depth kinds: IFC-06 is used by no device and no other team, and its calls are on no path of a time SLO and move no money | none |
 
@@ -87,6 +87,7 @@ Open assumptions (excerpt):
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
 | DAS-06 | Timeouts on the payment path adopted provisionally | decision | medium | low | IFC-01, IFC-02 |
+| DAS-07 | Stock cache lifetime adopted provisionally | decision | low | low | DEC-11 |
 
 ## Example items
 

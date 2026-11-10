@@ -17,7 +17,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 ## Read first
 
 - `references/conventions.md`: the design chain, what the quality chain leaves to the design, the working language, judgment basis marks, the question protocol, decisions, assumptions, re-runs and how to finish a run. Follow it exactly.
-- `references/artifacts.md`: where files go, and the schemas for `design-context.yaml`, DRV and DAS.
+- `references/artifacts.md`: where files go, and the schemas for `design-context.yaml`, DRV, HND and DAS.
 - `references/reading-the-quality-chain.md`: what each quality-chain item gives this stage, including its shared facts, design inputs, SLIs and assumptions.
 - `references/drivers.md`: driver kinds, how to write scenarios, constraints and principles, and how to rank.
 - `references/report-template.md`: the report layout and a worked example.
@@ -120,7 +120,7 @@ Write `design-context.yaml`, the DRV items, the hand-offs and the findings you p
 - Usually high, so asked: the ranking of the primary drivers; a missing budget or deadline; whether a technology constraint or a deadline can change; a quality-chain QAS that the ranking or a primary driver's measure rests on (its answer goes under "Issues for the quality chain").
 - Asked whatever the ratings: a contradiction between inputs (a DIN against a CUJ or a QR, the code against a constraint), and the content of a law, standard, contract or policy that the inputs name but do not give, when a judgment in this stage depends on it (what an external service's SLA promises).
 - Usually below the bar, so recorded as DAS: setting aside a minimum-line QR, when you are unsure whether it could decide between designs; a stakeholder's concern that the inputs imply but do not state.
-- Not points of this stage, so neither asked nor recorded as DAS: how hard a driver below the primary line is, beyond what keeps it there, and a point that a quality-chain item leaves for the design to confirm and that this stage hands off. The stage that decides each one rates it ("Decision depth" in `conventions.md`).
+- Deferred, so neither asked nor recorded as DAS, unless one rates high as it would stand once deferred ("Deferring the rest" in `conventions.md`): how hard a driver below the primary line is, beyond what keeps it there, and a point that a quality-chain item leaves for the design to confirm and that this stage hands off. The stage that decides each one rates it then.
 
 Each driver lists in `premises` the design-context entries, shared facts (CON, EXT, OPF) and assumptions (DAS, QAS) it rests on, even when `sources` names them too: `sources` says what the driver is built from, and `premises` finds it when one of them changes. A chain item that rests on an open QAS passes it on to the drivers that use the part it covers (`reading-the-quality-chain.md`, "The quality chain's assumptions"). An item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`. A driver that rests on a QAS that a question answered cites the answer in `basis_note` and is not `assumed` on its account.
 

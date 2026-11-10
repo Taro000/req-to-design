@@ -149,7 +149,7 @@ Order the table with high and high first, then high and medium, then medium and 
 
 ## Primary drivers
 
-Primary drivers are the ones stage 2 designs for first. Mark as primary:
+Primary drivers are the ones stage 2 designs for first. Mark as primary, within the limit below:
 
 - every driver that is high on both axes;
 - every high-priority driver with medium difficulty;
@@ -158,7 +158,7 @@ Primary drivers are the ones stage 2 designs for first. Mark as primary:
 Mark at most twelve. A primary line that lets most drivers through no longer tells stage 2 what to design for first. When the rules above mark more than twelve:
 
 1. Merge the drivers whose scenarios have the same stimulus and response: the scenarios are too fine. One scenario may serve several QRs and NFRs.
-2. If more than twelve remain, the business has not chosen. Ask which drivers to merge, or which to keep primary, in the ranking question below; it has high breadth, since it moves the primary line. Draft the option that keeps the twelve highest-ranked and names the drivers that fall below the line. A non-negotiable constraint that any reasonable design meets is usually among them: every decision respects it, primary or not.
+2. If more than twelve remain, the business has not chosen. Ask which drivers to merge, or which to keep primary, in the ranking question below; it has high breadth, since it moves the primary line. Draft the option that keeps the twelve highest-ranked of the drivers the rules mark, and names the ones that fall below the line. A non-negotiable constraint that any reasonable design meets is usually among them: every decision respects it, primary or not.
 
 A mid-sized system usually ends with five to twelve primary drivers. Fewer than three usually means the difficulty was underestimated: check the excluded QRs and the change scenarios again.
 

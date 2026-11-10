@@ -17,7 +17,7 @@ The quality chain names an interface only by its kind and, for an external syste
 ## Read first
 
 - `references/conventions.md`: the design chain, how to use the quality chain, findings, the working language, judgment basis marks, the question protocol, decisions, assumptions, re-runs and finishing a run. Follow it exactly.
-- `references/artifacts.md`: where files go, and the schemas for IFC, DAT, DEC, FND and DAS (and the ELM and DRV items you read).
+- `references/artifacts.md`: where files go, and the schemas for IFC, DAT, DEC, HND, FND and DAS (and the ELM and DRV items you read).
 - `references/interfaces.md`: what every interface specifies, error contracts, idempotency, timing, versioning, SLI bindings and the spec documents.
 - `references/flows-and-budgets.md`: sequence diagrams, failure paths, latency budgets, screen flows and states.
 - `references/data-and-conventions.md`: data entities, ownership, consistency, retention, classification, data quality flows, data SLIs and shared conventions.
@@ -90,7 +90,7 @@ Take up every open hand-off addressed to this stage whose trigger has come, as `
 Process every open finding addressed to this stage; a rejection that leaves a risk in place is a decision. When the architecture cannot support what the interfaces need, write a finding addressed to `architecture-drivers-to-architecture`; do not change stage 2's items yourself. Write the IFC, DAT, DEC, HND and FND items and the spec documents as you draft them in steps 1 to 12, and the draft report that indexes them, following `report-template.md`. Then list, rate and ask as `conventions.md` describes ("Draft first, ask afterwards"), re-rate the open DAS and QAS that your judgments depend on ("Assumptions"), and write a DAS for each point you do not ask about:
 
 - Rate only the points you are unsure of. A judgment you are sure of stays `inferred` and is not asked, however much depends on it.
-- What this stage decides in full, whatever the ratings, is its row of the full-depth kinds ("Decision depth" in `conventions.md`). Rate each point of those kinds that you are unsure of on the scales there, as every stage does. A point outside them that you hand off, such as the schema of an interface between elements or the timeout of a call off the paths of time SLOs and of money, is not rated here: the stage that decides it rates it.
+- What this stage decides in full, whatever the ratings, is its row of the full-depth kinds ("Decision depth" in `conventions.md`). Rate each point of those kinds that you are unsure of on the scales of "Draft first, ask afterwards", as every stage does. A point outside them, such as the schema of an interface between elements or the timeout of a call off the paths of time SLOs and of money, is deferred unless it rates high as it would stand once deferred; a deferred point is neither asked nor recorded as a DAS here.
 - Most values this stage sets, the timeouts, waits and retry limits on the paths of time SLOs and of money included, are low or medium on both scales: adopt the drafted value and record it as a DAS of `kind: decision`.
 
 Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied".
