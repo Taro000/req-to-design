@@ -22,7 +22,7 @@ Decide the layers of tests (`layers` in the testing POL): for each, what it cove
 - Run the integration layer against the same kind of data store as production. An in-memory substitute does not enforce the constraints, transactions and concurrent writes that the design relies on, and the tests then pass where the system fails.
 - Add contract tests where the two sides of an interface are built or released apart: an external system, another team, a client released on its own.
 - Keep end-to-end tests few: one for each CUJ and for its failure paths that only the whole system shows. They are slow, and they break for reasons outside the change.
-- Add a load layer only where a gate or a driver asks for one, and say which environment can carry the load.
+- Add a load layer only where a gate of the quality chain asks for one, and say which environment can carry the load. When the design finds that the system needs a load test that no gate asks for, write a request to the quality chain ("Gates that the design finds missing" in `gate-bindings.md`).
 - Write in `rules` what decides the layer of a check, such as "every acceptance criterion is checked at the lowest layer that can check it", with its check.
 
 ## Test doubles and seams

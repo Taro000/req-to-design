@@ -17,7 +17,7 @@ This stage writes documents, not code. Interfaces are written in a language-neut
 ## Read first
 
 - `references/conventions.md`: the design chain, findings, the working language, judgment basis marks, the question protocol, decisions, assumptions, re-runs and how a run finishes. Follow it exactly.
-- `references/artifacts.md`: where files go, the schemas for MOD, DEC, HND, FND and DAS, and the detailed design index with its hand-off to implementation.
+- `references/artifacts.md`: where files go, the schemas for MOD, DEC, HND, FND, DAS and QCR, and the detailed design index with its hand-off to implementation.
 - `references/modules.md`: splitting a component into modules, the depth of each module, dependencies, frameworks, contracts and allocation.
 - `references/behaviour-and-data.md`: what a module at full depth gets (states, decision tables, algorithms, concurrency, error handling, physical data, caches, screens), and the verification approach of every module.
 - `references/report-template.md`: the component report, the index, and a worked example.
@@ -40,7 +40,7 @@ Essential input: the IFCs of the component. If there are none, ask for the high-
 
 ### 1. Scope
 
-Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. The index lists every component element; `scripts/tables.py` writes its rows. When the component already has a report, start from what changed since its `Inputs as of` commit ("Re-running a stage" in `conventions.md`).
+Confirm the component for this run. One component per run is the default; take several only when they are small and closely related. The index lists every component element; `scripts/tables.py` writes its rows. When the component already has a report, start from what changed since this stage's last run for the component ("Re-running a stage" in `conventions.md`).
 
 ### 2. Modules
 
@@ -78,7 +78,7 @@ Propose the values inside the modules at full depth (timeouts on the component's
 
 ### 10. Hand-offs
 
-Take up every open hand-off addressed to this stage for this component whose trigger has come, as `conventions.md` describes ("Hand-offs"): decide it within its bounds, citing it in the `basis_note` of the items that decide it, or pass it on with the reason. A point that falls inside a module at bounds depth goes on to implementation, with the module named in `resolution`. A point that a quality-chain item leaves for the design to confirm reaches this stage as a hand-off too: confirm it, or raise an issue for the quality chain when the design shows that it does not hold.
+Take up every open hand-off addressed to this stage for this component whose trigger has come, as `conventions.md` describes ("Hand-offs"): decide it within its bounds, citing it in the `basis_note` of the items that decide it, or pass it on with the reason. A point that falls inside a module at bounds depth goes on to implementation, with the module named in `resolution`. A point that a quality-chain item leaves for the design to confirm reaches this stage as a hand-off too: confirm it, or write a request to the quality chain when the design shows that it does not hold.
 
 Write a hand-off to implementation for a point this stage leaves open inside a module at full depth, with the bounds it must keep, such as where a set of rules is kept. The inside of a module at bounds depth needs none: its MOD item, with the report's types, data and verification approach, is its bounds.
 
@@ -90,7 +90,7 @@ Then list and rate the uncertain points, ask about the ones `conventions.md` say
 
 Re-rate the open assumptions this component's judgments depend on, whichever stage wrote them, and ask about one when a judgment you would ask about depends on it ("Assumptions" in `conventions.md`). Number the questions per component report and continue the numbering when the component is re-run; from elsewhere, cite one as "stage 4 ELM-02, question 3".
 
-Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and update the index's header. `scripts/tables.py` updates the component's row, with its modules at each depth, and the list of open hand-offs addressed to implementation; keep the rules above that list as `artifacts.md` gives them ("The detailed design index").
+Apply the answers to the items in place, check the exit criteria, set the report's status to "answers applied", and update the index's header. `scripts/tables.py` updates the component's row, with its modules at each depth, and the list of open hand-offs addressed to implementation; keep the rules above that list as `artifacts.md` gives them ("The detailed design index"). When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", update the index's header, and finish the run; the index then shows the component as waiting for answers, and the next run for the component applies them ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
 
 ## Exit criteria
 
@@ -107,7 +107,7 @@ Apply the answers to the items in place, check the exit criteria, set the report
 - Every design parameter of a module at full depth has a value and a basis, fits the stage 3 budgets, and is either decided under "Decisions" or recorded as an assumption of kind `decision`. None is a timeout or wait that an IFC's `timing` holds: those are used by IFC ID. A timeout that stage 3 handed off to this component keeps the bounds in its IFC's `timing`, whether this stage sets it or passes it on to implementation. The values inside modules at bounds depth are left to implementation.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
 - The index lists every component with its current status and its modules at each depth, and its header gives the date and the `Inputs as of` commit. Its hand-off to implementation starts with the rules for implementation and lists every open hand-off addressed to implementation.
-- Every open hand-off addressed to this stage for this component whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
+- Every open hand-off addressed to this stage for this component whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as a request to the quality chain.
 - Every open finding addressed to this stage for this component, those raised by implementation included, is accepted or rejected.
 - `scripts/check.py --skill high-level-design-to-detailed-design` reports no problem, except those waiting for a finding.
 
@@ -125,4 +125,4 @@ Apply the answers to the items in place, check the exit criteria, set the report
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the issues for the quality chain, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run ("Findings between design stages" in `conventions.md`); re-run the stages that this run addressed a critical or major finding to; re-run this stage for the component when a review addresses a critical or major finding to it; and run this stage for the next component. Minor findings start no run: each waits for the next run of the stage it is addressed to. Then run `scripts/tables.py` and `scripts/check.py` with `--skill high-level-design-to-detailed-design`, fix what the check reports in this stage's files, and commit the files this run wrote (the component report, the index, the MOD, DEC, DAS, HND and FND files, and the DAS and HND files of other stages that it re-rated, answered or took up), with a message that names the component.
+Finish the run as `conventions.md` describes ("Finishing a run"). List the open assumptions this run wrote or depends on, highest ratings first, and say that no answer is needed. Tell the user which files were written, how many modules, how many questions were asked, the findings processed and raised, the requests to the quality chain raised or answered, the components still not designed according to the index, and the next steps: run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review ("Findings between design stages" in `conventions.md`); re-run the stages that this run addressed a critical or major finding to; re-run this stage for the component when a review addresses a critical or major finding to it; and run this stage for the next component. Minor findings start no run: each waits for the next run of the stage it is addressed to. When questions wait for answers, name them, and say that this stage runs again for the component once they are answered and that its review waits until then ("Finishing a run", step 2, in `conventions.md`). Then run `scripts/tables.py` and `scripts/check.py` with `--skill high-level-design-to-detailed-design`, fix what the check reports in this stage's files, and commit the files this run wrote (the component report, the index, the MOD, DEC, DAS, HND, FND and QCR files, `quality-chain-requests.md`, and the DAS, HND and QCR files of other stages that it re-rated, answered or took up), with a message that names the component.

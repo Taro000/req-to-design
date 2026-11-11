@@ -40,7 +40,7 @@ For every SLO with a time threshold, check the flow's normal path:
 3. Percentiles do not add up: a rare stall in any one hop can push the whole flow past the sum of the hops' 99th percentiles. To bound the flow with a sum, give each of the n serial hops a budget at the 1 − (1 − target)/n percentile, which for a 99% SLO and three hops is the 99.67th. If no hop exceeds its budget more often than that, the whole flow stays within the sum at least 99% of the time.
 4. Take external systems' numbers at that percentile from what they promise (the TC that records it, or an OPF in `context.yaml`) or from measurements; a stated 99.9th percentile is a safe stand-in. For our own work, propose provisional values with their basis; like any design parameter, each is a decision ("Decisions" in `conventions.md`).
 5. Keep a margin, and show the sum: the hops plus the margin must not exceed the threshold. Compute it with a script, and put the script's output in the report.
-6. When the numbers at that percentile are not known, say so, and make a load test of the whole flow before release a gate.
+6. When the numbers at that percentile are not known, say so, and keep the provisional values as decisions. Whether the flow must pass a load test before release is not the design's to decide. When no NFR of kind `gate` covers it already, write a request to the quality chain for one (`conventions.md`, "Requests to the quality chain"), naming the SLO, the flow and the hops whose numbers nothing has measured. Never make the test a gate, a parameter or a condition of release in the design.
 
 | Hop | Budget (99.67th percentile) | Basis |
 |---|---|---|

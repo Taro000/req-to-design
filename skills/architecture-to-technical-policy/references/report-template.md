@@ -7,19 +7,19 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs, paths, commands and names of tools as they are, and write the basis marks, statuses, scopes and kinds with the glossary's terms for the working language.
 
-The report indexes the items and never restates what an item says: no stacks, rules, layers, bindings, steps or spec rules copied from the YAML. It holds what only the report records: what was already decided and which policy follows it, the comparison tables of the decisions, the directory tree, the diagram of the pipeline, the kinds of interface that stage 2's views show and the spec rule that covers each, the issues for the quality chain and the decisions.
+The report indexes the items and never restates what an item says: no stacks, rules, layers, bindings, steps or spec rules copied from the YAML. It holds what only the report records: what was already decided and which policy follows it, the comparison tables of the decisions, the directory tree, the diagram of the pipeline, the kinds of interface that stage 2's views show and the spec rule that covers each, and the decisions. The requests to the quality chain are QCR items, which `quality-chain-requests.md` lists; the report does not.
 
-`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the technical policies, the design decisions, the gate bindings, the audit bindings, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the issue that replaces the binding of a gate or an audit that nothing can bind, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the technical policies, the design decisions, the gate bindings, the audit bindings, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the request that replaces the binding of a gate or an audit that nothing can bind, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
 ```markdown
 # Technical policy: <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 2b of 4
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 2b of 4
 
 ## Summary
-<Two or three sentences: the stack of each kind of component, the repositories, how many gates are bound and audits placed and which became issues, the questions asked and the open assumptions that matter most.>
+<Two or three sentences: the stack of each kind of component, the repositories, how many gates are bound and audits placed and which became requests to the quality chain, the questions asked and the open assumptions that matter most.>
 
 ## Inputs
 | Source | What it gave |
@@ -52,17 +52,17 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Gate bindings
 <!-- generated: gate-bindings -->
-| NFR | Title | Where | Bound in | Issue instead |
+| NFR | Title | Where | Bound in | Request instead |
 |---|---|---|---|---|
 <!-- /generated -->
-<One row per NFR of kind gate in the quality chain. Where: the gate's `where`, as the quality chain gives it. Bound in: the POLs whose `gate_bindings` name it. Issue instead, by hand, only for a gate that nothing can bind: the number of its issue for the quality chain.>
+<One row per NFR of kind gate in the quality chain. Where: the gate's `where`, as the quality chain gives it. Bound in: the POLs whose `gate_bindings` name it. Request instead, by hand, only for a gate that nothing binds: the request to the quality chain that replaces its binding, an open or answered QCR with the gate in `targets`.>
 
 ## Audit bindings
 <!-- generated: audit-bindings -->
-| NFR | Title | Placed in | Issue instead |
+| NFR | Title | Placed in | Request instead |
 |---|---|---|---|
 <!-- /generated -->
-<One row per NFR of kind audit in the quality chain. Placed in: the POLs whose `audit_bindings` name it. Issue instead, by hand, as for a gate.>
+<One row per NFR of kind audit in the quality chain. Placed in: the POLs whose `audit_bindings` name it. Request instead, by hand, as for a gate.>
 
 ## Interface kinds
 | Kind of interface | Seen in | Spec rule |
@@ -83,10 +83,10 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <The hand-offs this stage wrote, and those addressed to it. Decided in: the items whose `basis_note` cites the hand-off.>
 
-## Issues for the quality chain
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-<Gates and audits that no design within the constraints can realize as defined; the answers to questions about the quality chain's assumptions (QAS).>
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -105,11 +105,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 |---|---|---|
 
 ## Open gaps
-<Only what this stage could not close and no later stage will take up. A point left to a later stage or to implementation is under "Hand-offs"; a problem in an earlier stage's items is a finding; one that only a change in the quality chain would close is under "Issues for the quality chain".>
+<Only what this stage could not close and no later stage will take up. A point left to a later stage or to implementation is under "Hand-offs"; a problem in an earlier stage's items is a finding; one that only a change in the quality chain would close is a request to the quality chain, which `quality-chain-requests.md` lists.>
 
 ## Out of scope
 ## Next
-<Run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `architecture-to-high-level-design`. On a re-run that changed a policy, name the later stages and the components whose items or code must follow it.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; neither its review nor a later stage runs until then. Otherwise, run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `architecture-to-high-level-design`. On a re-run that changed a policy, name the later stages and the components whose items or code must follow it.>
 ```
 
 ## Worked example: online store
@@ -191,13 +191,13 @@ flowchart LR
 
 Gate bindings:
 
-| NFR | Title | Where | Bound in | Issue instead |
+| NFR | Title | Where | Bound in | Request instead |
 |---|---|---|---|---|
 | NFR-06 | Payments followed from order to charge | Definition of Done | POL-03 | — |
 
 Audit bindings:
 
-| NFR | Title | Placed in | Issue instead |
+| NFR | Title | Placed in | Request instead |
 |---|---|---|---|
 | NFR-05 | Card data protection through audits and fix deadlines | POL-03 | — |
 
@@ -342,7 +342,7 @@ pipeline:
     blocks: The deployment to production
   - step: audit-reminder
     when: On a schedule, at the cadence that NFR-05 sets
-    runs: Opens the issue of NFR-05's audit from its template
+    runs: Opens the ticket of NFR-05's audit from its template
     blocks: Nothing
 as_is: new
 ```
@@ -446,11 +446,11 @@ title: The security team performs NFR-05's audit of card payments
 status: open
 stage: 2b
 kind: judgment
-statement: The company's security team performs NFR-05's audit, from the issue that POL-03 opens for it
+statement: The company's security team performs NFR-05's audit, from the ticket that POL-03 opens for it
 why_unsure: NFR-05 names the audit and its cadence but not who performs it; the security team's memo is the only input about card payments
 breadth: low
 severity: medium
-rating_note: Only POL-03 depends on it; if another party performs the audit, only where its issue goes changes
+rating_note: Only POL-03 depends on it; if another party performs the audit, only where its ticket goes changes
 answer: null
 answered_in: null
 ```

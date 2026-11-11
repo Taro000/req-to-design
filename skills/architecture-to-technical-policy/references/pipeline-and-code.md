@@ -19,8 +19,8 @@ Decide the steps that every change passes, in order (`pipeline` in the pipeline-
 | `blocks` | What its failure stops: a merge, a deployment, a release; or nothing, when it only reports |
 
 - Run the fast checks on every change: types, lint, format, dependency rules, unit and integration tests. Make them required for a merge into the main branch, so that the main branch always passes them.
-- Put each gate whose binding places it in CI into a step that blocks what the gate stops.
-- Run the slow checks (end-to-end, load, contract tests against a provider's sandbox) where their cost fits: before a release, or on a schedule whose result blocks the next release.
+- Put each gate whose binding places it in CI into a step that blocks what the gate stops. Which checks on a quality requirement must pass before a merge or a release is the quality chain's to decide, through its gates: the pipeline runs them where their bindings say, and adds none of its own ("Gates that the design finds missing" in `gate-bindings.md`).
+- Run the slow checks (end-to-end and contract tests, and the load tests that a gate asks for) where their cost fits: before a release, or on a schedule whose result blocks the next release.
 - Stay within the CI that the technology constraints fix, and its limits: minutes, machines, the secrets it holds.
 - Say which secrets each step receives. A step that runs code from outside the team, such as a pull request from a fork, receives none.
 

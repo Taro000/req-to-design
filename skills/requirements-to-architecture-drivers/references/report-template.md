@@ -7,7 +7,7 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs as they are, and write the basis marks, statuses and other enum values with the glossary's terms for the working language.
 
-The report indexes `design-context.yaml`, the DRV, HND and DAS items, and never restates them: statements, scenarios, reasons and values live in the YAML only, and the report's tables hold IDs, titles or short labels, enum values and references. What the report holds that no item does: the summary, the inputs and how each input item was classified, the boundary list, the excluded QRs checked, where the primary line falls, who resolves each conflict, the feasibility check, issues for the quality chain, decisions, placeholders, open gaps and what is out of scope.
+The report indexes `design-context.yaml`, the DRV, HND and DAS items, and never restates them: statements, scenarios, reasons and values live in the YAML only, and the report's tables hold IDs, titles or short labels, enum values and references. What the report holds that no item does: the summary, the inputs and how each input item was classified, the boundary list, the excluded QRs checked, where the primary line falls, who resolves each conflict, the feasibility check, decisions, placeholders, open gaps and what is out of scope. The requests to the quality chain are QCR items, which `quality-chain-requests.md` lists; the report does not.
 
 `scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design context, the architecture drivers, the ranking table, the conflicts, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the label of each design-context entry, who resolves each conflict, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
@@ -16,7 +16,7 @@ The report indexes `design-context.yaml`, the DRV, HND and DAS items, and never 
 ```markdown
 # Architecture drivers: <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 1 of 4
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 1 of 4
 
 ## Summary
 <Two or three sentences: the primary drivers in a phrase each, the hardest conflict, the feasibility verdict, the inputs of the design context still missing.>
@@ -70,7 +70,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 | Drivers | Resolved by |
 |---|---|
 <!-- /generated -->
-<One row per pair of drivers whose `conflicts` name each other; what each conflict is lives there. Resolved by, by hand: stage 2 (by design, with the options it should weigh), the business (a question number), or the quality chain (an issue number).>
+<One row per pair of drivers whose `conflicts` name each other; what each conflict is lives there. Resolved by, by hand: stage 2 (by design, with the options it should weigh), the business (a question number), or the quality chain (a request, QCR-xx).>
 
 ## Feasibility
 | DRV | Known way with this budget, deadline and team | Why |
@@ -91,10 +91,10 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <The hand-offs this stage wrote, and those addressed to it. This stage writes one for each point that a quality-chain item leaves for the design to confirm and that becomes no driver, constraint, question or DAS here, addressed to the stage that designs the part, and one for each point of its own whose deferral waits for an event. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
-## Issues for the quality chain
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-<Answers to questions about the quality chain's assumptions go here too: the QAS, the answer, and whether it holds.>
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -118,7 +118,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Out of scope
 ## Next
-<Run `architecture-drivers-to-architecture`. If issues for the quality chain were raised, say which quality-chain stage would handle each, and that the user decides whether to re-run it first.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; no later stage runs until then. Otherwise, run `architecture-drivers-to-architecture`. If this run raised or answered requests to the quality chain, name them, and say that `quality-chain-requests.md` lists them for the user to answer and hand to the quality chain, and that the user decides whether to do that before stage 2 runs.>
 ```
 
 ## Worked example: online store
@@ -154,7 +154,7 @@ Architecture drivers (excerpt):
 | DRV | Title | Kind | Negotiable | Sources | Premises | Basis |
 |---|---|---|---|---|---|---|
 | DRV-01 | Checkout answers without keeping buyers waiting | quality | — | QR-02, NFR-02, SLI-02 | OPF-03, QAS-08 | inferred |
-| DRV-02 | Checkout survives a payment provider outage | quality | — | QR-08, CHG-01 | EXT-01, CHG-01 | inferred |
+| DRV-02 | Checkout survives a payment provider outage | quality | — | QR-08, CHG-01 | EXT-01, CHG-01, QCR-01 | inferred |
 | DRV-03 | Stock changes reach buyers in time | quality | — | QR-03, NFR-03, SLI-03 | EXT-02, QAS-09, DAS-01 | assumed |
 | DRV-08 | Card numbers never reach our servers | constraint | no | TC-01, QR-12 | TC-01, CON-01 | inferred |
 | DRV-09 | First release before the spring sale | constraint | no | PC-01, PC-02 | PC-01, PC-02 | confirmed |
@@ -215,24 +215,19 @@ Hand-offs (excerpt):
 
 SLI-03's `basis_note` leaves it to the design to confirm that the time each count changed at the warehouse can be read. No driver, constraint or ranking here turns on it, and stage 3 binds SLI-03 to its source, so the point goes there; `artifacts.md` shows HND-01 once stage 3 has decided it. The missing budget needs no hand-off: it is an input that question 3 asked for, and this stage runs again when the funding review sets it. Nor does the conflict between DRV-02 and DRV-07: stage 2 compares its options against both drivers anyway.
 
-Issues for the quality chain:
-
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-| 1 | No target for how many checkouts must succeed during a provider outage | QR-08 | Add an availability target that covers outages of the provider | 4 |
-| 2 | The user answered QAS-09 in question 2: the design treats NFR-03's stock-freshness threshold and target as the ones to meet | QAS-09, NFR-03 | Record the answer in QAS-09 and set it to confirmed | 4 |
-| 3 | The user answered QAS-08 in question 6: the design treats NFR-02's 99% within 1.5 s as the target to meet | QAS-08, NFR-02 | Record the answer in QAS-08, set it to confirmed, and confirm NFR-02's target | 4 |
+Requests to the quality chain: this run wrote three, which `quality-chain-requests.md` lists (`artifacts.md`, "The request document"). QCR-01 asks for a target for checkout during a provider outage, which DRV-02's measure needs; DRV-02 is primary, so the request has high impact and was asked (question 7), and DRV-02 lists it in `premises` and keeps the placeholder A_failover until the quality chain sets the target. QCR-02 and QCR-03 carry the answers to QAS-09 (question 2) and QAS-08 (question 6) to the quality chain.
 
 Decisions (excerpt):
 
 | # | Question | Answer | Items |
 |---|---|---|---|
 | 1 | Are these the primary drivers, in this order: DRV-01, DRV-02, DRV-09, DRV-03, DRV-08, DRV-06, DRV-11? Just below the line come DRV-04, DRV-14 and DRV-10. | Yes, as drafted. | Every ranked driver |
-| 2 | NFR-03's stock-freshness threshold (T_stock_lag) and target are provisional in the quality chain (QAS-09), and DRV-03 is primary because they are tight. Should the design treat them as the ones to meet? | Yes. During a sale, stock shown wrongly costs more in cancelled orders than a slow page does; design for them, and the quality chain should confirm them on its next run. | DRV-03; issue 2 |
+| 2 | NFR-03's stock-freshness threshold (T_stock_lag) and target are provisional in the quality chain (QAS-09), and DRV-03 is primary because they are tight. Should the design treat them as the ones to meet? | Yes. During a sale, stock shown wrongly costs more in cancelled orders than a slow page does; design for them, and the quality chain should confirm them on its next run. | DRV-03; QCR-02 |
 | 3 | What budget is there for building and running the store in its first year (PC-03)? Without one, the draft keeps running cost as a concern of the product owner only. | Not set until the funding review in March. Keep the draft as it is until then. | PC-03, DRV-07 |
 | 4 | Which of these could change if keeping them proves costly: one region (TC-02), a web app only this year (TC-03, from DIN-01), the first release before the spring sale (PC-01)? | Only TC-02: a second region is acceptable if its cost is shown. | DRV-09, DRV-11, DRV-13 |
 | 5 | Four developers cannot build failover for a provider outage (DRV-02) before the spring sale (DRV-09). Which gives way? | Failover. It is built right after the sale. Until then, an outage of the provider stops checkout, and the business accepts that risk for the sale. | DRV-02, DRV-09 |
-| 6 | NFR-02's 99% target is provisional in the quality chain (QAS-08). Should the design treat it as the target to meet? | Yes. Design for 99% within 1.5 s; the quality chain should confirm the target on its next run. | DRV-01; issue 3 |
+| 6 | NFR-02's 99% target is provisional in the quality chain (QAS-08). Should the design treat it as the target to meet? | Yes. Design for 99% within 1.5 s; the quality chain should confirm the target on its next run. | DRV-01; QCR-03 |
+| 7 | No NFR says how many checkouts must succeed during an outage of the payment provider, and DRV-02, a primary driver, needs that for its measure. Should the design ask the quality chain for a target? | Yes, as suggested. Until the quality chain sets it, keep the placeholder A_failover. | DRV-02; QCR-01 |
 
 Open assumptions (excerpt):
 
@@ -242,7 +237,7 @@ Open assumptions (excerpt):
 | QAS-08 | First target of checkout latency | decision | low | high | DRV-01 |
 | DAS-01 | The warehouse system announces stock changes | judgment | low | medium | DRV-03 |
 
-QAS-09 has high breadth here, where the quality chain rated it medium, because it moves the primary line; it was answered in question 2 and stays open until the quality chain applies issue 2. QAS-08 has high severity because DRV-01, a primary driver, takes its measure from NFR-02's target; it was answered in question 6 and stays open until the quality chain applies issue 3. Neither makes a driver `assumed`: DRV-03 is `assumed` because of DAS-01.
+QAS-09 has high breadth here, where the quality chain rated it medium, because it moves the primary line; it was answered in question 2 and stays open until the quality chain applies QCR-02. QAS-08 has high severity because DRV-01, a primary driver, takes its measure from NFR-02's target; it was answered in question 6 and stays open until the quality chain applies QCR-03. Neither makes a driver `assumed`: DRV-03 is `assumed` because of DAS-01.
 
 Placeholders (excerpt):
 
@@ -277,7 +272,7 @@ id: DRV-01
 title: Checkout answers without keeping buyers waiting
 status: active
 basis: inferred
-basis_note: Scenario from QR-02 and NFR-02; ranking confirmed (question 1); NFR-02's target rests on QAS-08, answered in question 6 and open until the quality chain applies issue 3
+basis_note: Scenario from QR-02 and NFR-02; ranking confirmed (question 1); NFR-02's target rests on QAS-08, answered in question 6 and open until the quality chain applies QCR-03
 premises: [OPF-03, QAS-08]
 kind: quality
 statement: Checkout confirms orders without keeping buyers waiting, up to sale-peak load
@@ -311,7 +306,7 @@ id: DRV-03
 title: Stock changes reach buyers in time
 status: active
 basis: assumed
-basis_note: Scenario from QR-03 and NFR-03; ranking confirmed (question 1); NFR-03's threshold and target rest on QAS-09, answered in question 2 and open until the quality chain applies issue 2; the difficulty rests on DAS-01
+basis_note: Scenario from QR-03 and NFR-03; ranking confirmed (question 1); NFR-03's threshold and target rest on QAS-09, answered in question 2 and open until the quality chain applies QCR-02; the difficulty rests on DAS-01
 premises: [EXT-02, QAS-09, DAS-01]
 kind: quality
 statement: Stock counts that change at the warehouse reach what buyers see within T_stock_lag
