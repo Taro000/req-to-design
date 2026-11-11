@@ -418,11 +418,11 @@ class Renderer(object):
 
 
 def report_status(text, glossary):
-    """'draft' or 'answers applied', read from a report's header line."""
+    """'draft', 'waiting for answers' or 'answers applied', read from a report's header line."""
     for line in text.split("\n")[:12]:
         if "·" not in line:
             continue
-        for value in ("answers applied", "draft"):
+        for value in ("answers applied", "waiting for answers", "draft"):
             ja = glossary.term("report status", value, "ja")
             if value in line.lower() or (ja and ja in line):
                 return value

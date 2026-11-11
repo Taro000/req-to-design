@@ -19,7 +19,7 @@ The report holds what only the review records: the activities and their results,
 ```markdown
 # Design review: <stage, with the component for stage 4> of <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Review: full | diff since <the last review's commit> · Context: fresh | the conversation that wrote the design (weaker) · Items reviewed: <IDs; in a diff review, the items its activities covered>
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Review: full | diff since <the last review's commit> · Context: fresh | the conversation that wrote the design (weaker) · Items reviewed: <IDs; in a diff review, the items its activities covered>
 
 ## Summary
 <The number of findings by severity and by addressed skill; the most serious ones in a sentence each; the main risks.>
@@ -45,6 +45,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 | # | Issue | Chain items | Suggested change | Quality-chain stage |
 |---|---|---|---|---|
 <The issues this review raised, and those of earlier reviews at this path that the quality chain has not applied yet.>
+
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while rows wait: the questions about facts the review needed and could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Items: the items, findings and activities the answer bears on. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |

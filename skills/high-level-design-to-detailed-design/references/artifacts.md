@@ -420,4 +420,4 @@ Updated: <date> · Inputs as of: <commit, or "none">
 <!-- /generated -->
 ```
 
-Status: `not started` when the component has no report, otherwise the status in its report's header (`draft` or `answers applied`), written with the glossary's terms in the working language. A component's modules with no `depth` yet, written by an earlier version, are listed under full depth. Write the three rules of the hand-off as they stand here, in the working language, whatever else changes in the index.
+Status: `not started` when the component has no report, otherwise the status in its report's header (`draft`, `waiting for answers` or `answers applied`), written with the glossary's terms in the working language. A component's modules with no `depth` yet, written by an earlier version, are listed under full depth. Write the three rules of the hand-off as they stand here, in the working language, whatever else changes in the index.
