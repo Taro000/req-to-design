@@ -42,7 +42,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 | IFC | Title | Kind | Provider | Consumers | FRs | Spec | Basis |
 |---|---|---|---|---|---|---|---|
 <!-- /generated -->
-<Spec, as the specs policy's entry for the interface's kind makes it: the file under `ifc/specs/` for a spec written by hand; the hand-off that leaves the schema to implementation for a spec generated from the code; "—" for an interface whose owner's document the report links, and for a screen, a file or a batch.>
+<Spec, as the specs policy's entry for the interface's kind makes it: the file under `ifc/specs/` for a spec written by hand; the hand-off that leaves the schema to implementation for a spec generated from the code, and for an interface whose owner's document a component of this system serves; "—" for an external system's interface, whose owner's document the report links, and for a screen, a file or a batch.>
 
 ## SLI bindings
 <!-- generated: sli-bindings -->

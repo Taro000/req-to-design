@@ -27,7 +27,7 @@
 | versioning | How the interface changes without breaking its consumers |
 | observability | What it logs and emits for investigations and operations |
 | sli_bindings | For each quality-chain SLI whose events it produces: which events, the fields the counting rules need, and the method ("SLI bindings") |
-| spec | The OpenAPI or AsyncAPI document, for the interfaces whose spec the technical policy writes by hand ("Specs") |
+| spec | The OpenAPI or AsyncAPI document, for the interfaces whose spec the technical policy says is written by hand ("Specs") |
 
 An FR names an interface by its kind and, for an external system, its EXT ID (`interface: ["screen: buyer checkout", EXT-01]`). Everything in this table is decided here, with one exception: an FR may name the endpoint of an interface that already exists in a running product. That endpoint is a fact about the current system, not a design input and not a request to the quality chain; the IFC keeps it (`as_is: keep`) unless a decision changes it.
 
@@ -141,7 +141,7 @@ The technical policy decides, for each kind of interface, how its spec is made (
 |---|---|
 | `by-hand` | Writes the spec under `ifc/specs/`, with the whole contract, schema included ("Decision depth" in `conventions.md`) |
 | `from-code` | Writes no spec. The IFC holds what the consumers rely on, and the schema is handed off to implementation, which generates it with the tool that the entry's `how` names |
-| `owner` | Writes no spec. The IFC links the owner's document, and holds what the design relies on of it |
+| `owner` | Writes no spec. The IFC links the owner's document, and holds what the design relies on of it. When a component of this system serves the interface (the endpoints of a library it uses), the schema is handed off to implementation as for `from-code`, with the owner's document in the hand-off's `bounds` |
 | `none` | Writes no document: the IFC is the contract (screens, files, batch jobs) |
 
 For a `by-hand` interface, write the decided parts only, and mark provisional values, with the DAS that records each one:
@@ -153,4 +153,4 @@ Name each file after its interface (`partner-orders.openapi.yaml`, `order-events
 
 A `from-code` interface gets no spec here. Its IFC holds what its consumers rely on: its operations, its errors and their codes, what its idempotency keys mean, how it answers when an outcome is unknown, and the states and events its consumers see. The schemas of its requests, responses and messages are handed off to implementation, which generates them from the code: write one hand-off for each component that provides such interfaces, with the IFCs in `origin`, and the IFCs, the shared conventions and the specs policy in `bounds`. A schema written here as well would be a second copy of the code, and would drift from it.
 
-An interface that no entry covers, or whose entry goes against the policy's own rule (another party builds against an interface whose spec the policy generates from the code), is a finding addressed to `architecture-to-technical-policy`. Until it is answered, write its spec by hand when its other side is built apart from this system's code, and hand its schema off otherwise.
+An interface that no entry covers, or whose entry goes against the policy's own rule (another party builds against an interface whose spec the policy says is generated from the code), is a finding addressed to `architecture-to-technical-policy`, major when its other side is built apart from this system's code. This stage does not settle it: until the policy changes, follow the entry, or the policy's default when no entry covers the interface, and hand the schema off. Stage 2b's next run decides the rule, and this stage writes the spec then if the rule asks for one.

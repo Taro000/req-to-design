@@ -135,22 +135,22 @@ Header:
 Status: answers applied · Updated: 2026-11-12 · Inputs as of: 8d41b07 · Stage 4 of 4 · Component: ELM-02
 ```
 
-Modules:
+Modules (the checkout path):
 
 ```mermaid
 flowchart TD
   m01[MOD-01 Checkout orchestrator - checkout/application] --> m02[MOD-02 Order total calculator - checkout/domain]
   m01 --> m03[MOD-03 Payment router - payments/application]
-  m01 --> m08[MOD-08 Orders repository - checkout/adapters]
   m01 --> m09[MOD-09 Stock reservations - stock/application]
   m02 --> m05[MOD-05 Coupon rules - checkout/domain]
   m03 --> m07[MOD-07 Failover policy - payments/domain]
+  m08[MOD-08 Orders repository - checkout/adapters] --> m01
   m04[MOD-04 Provider A adapter - payments/adapters/provider-a] --> m03
   m06[MOD-06 Provider B adapter - payments/adapters/provider-b] --> m03
   m10[MOD-10 Payment reconciliation - payments/application] --> m03
 ```
 
-Each module sits where POL-02's rules put it, under apps/store-api/src/: in the business capability it serves, at its layer. The provider adapters depend on the payment router's provider interface, never the other way round, so a third provider adds one module (DRV-10). POL-02's dependency rules hold every arrow, and this stage adds none: MOD-01 reaches MOD-03 and MOD-09 through the index.ts of payments and of stock (capability-entry), MOD-02, MOD-05 and MOD-07 import no framework, database client or adapter (pure-domain), and only MOD-04 and MOD-06 import the providers' client libraries (provider-sdk-in-adapters).
+Each module sits where POL-02's rules put it, under apps/store-api/src/: in the business capability it serves, at its layer. Each adapter depends on the interface that the module it serves defines, never the other way round: MOD-04 and MOD-06 implement the payment router's provider interface, so a third provider adds one module (DRV-10), and MOD-08 implements the store of orders that MOD-01 defines. POL-02's dependency rules hold every arrow, and this stage adds none: MOD-01 reaches MOD-03 and MOD-09 through the index.ts of payments and of stock (capability-entry); MOD-02, MOD-05 and MOD-07 import no framework, database client or adapter (pure-domain); nothing under application/ imports an adapter (adapters-inward); and only MOD-04 and MOD-06 import the providers' client libraries (provider-sdk-in-adapters). MOD-11 (the catalog, in catalog/) and MOD-12 (the order history, in checkout/) are at bounds depth, off the checkout path, and not drawn.
 
 Module index (excerpt):
 
@@ -295,7 +295,7 @@ interface:
     post: The order stored with this key, if there is one
     errors: []
 invariants: []
-depends_on: []
+depends_on: [MOD-01]                     # it implements the store of orders that MOD-01 defines
 functions: [FR-01]
 realizes: []
 drivers: [DRV-05]

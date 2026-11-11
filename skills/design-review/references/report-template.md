@@ -123,9 +123,9 @@ resolution: null
 
 ## Worked example: the next review of the same stage, a diff review
 
-The review above was committed as 7e2d5a8. Stage 3 then accepted FND-01 to FND-03: it changed IFC-01, IFC-02 and IFC-05, added IFC-07 (the cart API, which the cart page calls from the buyer's browser and which returns availability with every cart read), and redrew the failure paths of the checkout flow. Its items changed to accept critical and major findings, so the stage was reviewed again, and the report at the same path now has this header:
+The review above was committed as 7e2d5a8. Stage 3 then accepted FND-01 to FND-03: it changed IFC-01, IFC-02 and IFC-05, added IFC-07 (the cart API, which the cart page calls from the buyer's browser and which returns availability with every cart read) and named it in HND-04, since POL-05 generates its spec from the code, and redrew the failure paths of the checkout flow. Its items changed to accept critical and major findings, so the stage was reviewed again, and the report at the same path now has this header:
 
-Status: answers applied · Updated: 2026-11-12 · Inputs as of: 9c41b07 · Review: diff since 7e2d5a8 · Context: fresh · Items reviewed: IFC-01, IFC-02, IFC-05 and IFC-07, DAT-04 and DAT-06, the checkout flow and the cart screen flow
+Status: answers applied · Updated: 2026-11-12 · Inputs as of: 9c41b07 · Review: diff since 7e2d5a8 · Context: fresh · Items reviewed: IFC-01, IFC-02, IFC-05 and IFC-07, HND-04, DAT-04 and DAT-06, the checkout flow and the cart screen flow
 
 Activities (excerpt):
 
@@ -138,8 +138,10 @@ Activities (excerpt):
 | B5 | Check event IFCs | No change in scope | | |
 | B6 | Check data entities | Checked DAT-04 and DAT-06, which IFC-07's cart read uses | DAT-04 keeps one writer, ELM-03, and ELM-02 reads it under the read-only decision DEC-13; DAT-06 is ELM-02's own | none |
 | B8 | Check shared conventions | Checked IFC-01, IFC-02, IFC-05 and IFC-07 against the shared conventions | All followed, except one error code that IFC-07 writes in camel case | FND-04 |
+| B10 | Compare specs with IFCs | Checked IFC-07 against the entry of POL-05 that covers its kind, and HND-04, which changed with it | IFC-07 is of the first entry, as IFC-01 is: no spec, and HND-04 now names IFC-07 in its origin and bounds | none |
 | E1 | Read findings | Read FND-01 to FND-03, which stage 3 accepted, and the items they changed | Each change is in the items, cited in their `basis_note` | none |
 | E6 | Check points to confirm | No change in scope | | |
+| E7 | Check hand-offs | Read HND-04, which stage 3 changed | It still hands off no point of stage 3's full-depth kinds: the interfaces it names, IFC-01, IFC-06 and IFC-07, are all of POL-05's first entry, whose specs are generated from the code | none |
 
 Findings:
 

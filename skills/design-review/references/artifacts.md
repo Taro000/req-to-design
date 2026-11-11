@@ -38,7 +38,7 @@ docs/design/
 ├── elm/ELM-01.yaml …                  stage 2: elements
 ├── pol/POL-01.yaml …                  stage 2b: technical policies, one per scope
 ├── ifc/IFC-01.yaml …                  stage 3: interfaces
-├── ifc/specs/<name>.openapi.yaml      stage 3: OpenAPI and AsyncAPI documents, for the interfaces whose spec the technical policy writes by hand
+├── ifc/specs/<name>.openapi.yaml      stage 3: OpenAPI and AsyncAPI documents, for the interfaces whose spec the technical policy says is written by hand
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
 ├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
@@ -83,7 +83,7 @@ The examples below follow one fictional online store through all the stages.
 read_from:
   quality_chain: docs/quality/           # null when the user gave the requirements directly
   other: [Architecture notes (wiki), Roadmap 2026, Kick-off notes, Security team memo]
-technology_constraints:                  # the organization's engineering standards among them (languages, tools and CI it mandates or prohibits, its rules for review and tests), which stage 2b follows
+technology_constraints:                  # the organization's engineering standards among them (the languages, tools and CI it mandates or prohibits, how code is reviewed), which stage 2b follows; a standard that makes a quality check a condition of a merge or a release is a gate of the quality chain instead
   - id: TC-01
     statement: Card payments go through the payment provider's API; card numbers never reach our servers
     kind: external-service               # mandated | prohibited | platform | external-service
@@ -226,7 +226,7 @@ Stage 2b writes one POL for each scope of the technical policy: the rules that t
 | `technology` | The language, framework and main libraries of each kind of component, and the tools every component shares | `stack`: one entry per kind of component, `{kind, elements, language, runtime, framework, libraries}`; every component is in exactly one |
 | `repository` | The repositories, the layout of their directories, and the dependency rules | `repositories`: `{name, holds}`, every component held by exactly one; `dependency_rules`: `{rule, check}`, each naming the check in CI that enforces it |
 | `testing` | The test layers, the test doubles, the environments and their test data; where the quality chain's gates are checked and its audits held | `layers`: `{layer, covers, replaces, runs}`; `doubles`: `{replaces, with, seam}`; `environments`: `{name, runs, data}`; `gate_bindings` and `audit_bindings` (below) |
-| `pipeline-and-code` | The pipeline, deployment and rollback, the static checks, and the conventions inside the code: errors, logs, settings and secrets | `pipeline`: the steps in order, `{step, when, runs, blocks}` |
+| `pipeline-and-code` | The pipeline, deployment and rollback, the static checks, and the conventions inside the code: errors, logs, settings and secrets, texts for people | `pipeline`: the steps in order, `{step, when, runs, blocks}` |
 | `specs` | For each kind of interface, how its spec is made | `specs`: `{interfaces, made, how}`; `made` is `by-hand` (written in stage 3 before the code), `from-code` (generated from the code), `owner` (the other side's document) or `none` (no document: screens, batch jobs) |
 | `implementation-feedback` | How coding agents find the design and the policies, and how implementation's findings come back | none |
 
@@ -327,7 +327,7 @@ sli_bindings:                            # how this interface yields the events 
     events: Each POST /v1/checkout request that reaches the load balancer in front of ELM-02 (the SLI's vantage is the system boundary); requests with the same Idempotency-Key are one checkout, counted by the first request
     fields: [request_id, idempotency_key, status, elapsed, user_agent]
     method: The load balancer's access logs, which already exist (OPF-02), with the Idempotency-Key header added to the logged fields
-spec: null                               # the document under ifc/specs/ when the technical policy writes the interface's spec by hand; null otherwise. IFC-01's spec is generated from ELM-02's code (POL-05), and HND-04 hands its schema to implementation
+spec: null                               # the document under ifc/specs/ when the technical policy says the interface's spec is written by hand; null otherwise. IFC-01's spec is generated from ELM-02's code (POL-05), and HND-04 hands its schema to implementation
 as_is: new
 ```
 

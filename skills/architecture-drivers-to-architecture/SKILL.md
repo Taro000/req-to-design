@@ -73,7 +73,7 @@ Walk all eight concerns in `structures-and-mechanisms.md` ("Design concerns"). F
 
 Define the elements: components (deployable parts), data stores, external systems, and nodes (where things run). Each external system comes from an EXT entry in `context.yaml`, which it lists in `premises`, or from a decision that adds one (a second provider, a managed service).
 
-Write in each component's `technology` the runtime it runs on and its platform (Node.js in containers; the browsers that the decision on platforms names), and in the `technology` of a data store or a node its product or managed service. Give the components of one kind the same runtime, unless a driver or a constraint needs otherwise. Name no language beyond what the runtime fixes, and no framework or library: stage 2b chooses them for each kind of component, within the runtime.
+Write in each component's `technology` the runtime it runs on and its platform (Node.js in containers; the browsers that the decision on platforms names), and in the `technology` of a data store or a node its product or managed service. Give the components that are built the same way (the servers, the workers, the web apps) the same runtime, unless a driver or a constraint needs otherwise. Name no language beyond what the runtime fixes, and no framework or library: stage 2b chooses them for each kind of component, within the runtime.
 
 Then allocate:
 

@@ -67,7 +67,7 @@ The measure is effort or reach: "touches only the payment module", "no change to
 
 A constraint is a decision made outside the design. Write it as what must or must not be true, with its source. Constraints come from:
 
-- the technology constraints in `design-context.yaml`: what the user gave, the organization's engineering standards among it, every design input (DIN) of the quality chain taken in (`source: context.yaml DIN-01`), and every CON that binds what the design may use or do (`source: context.yaml CON-01`);
+- the technology constraints in `design-context.yaml`: what the user gave, the organization's engineering standards among it (but not a standard that makes a quality check a condition of a merge or a release: that is a gate, which the quality chain owns), every design input (DIN) of the quality chain taken in (`source: context.yaml DIN-01`), and every CON that binds what the design may use or do (`source: context.yaml CON-01`);
 - the requirements that entered the quality chain through an entry point (law, standard, security risk analysis, development policy);
 - the budget, the deadline, the team, the team structure and the current structure, when they bind a choice.
 

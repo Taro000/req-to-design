@@ -17,7 +17,7 @@ Agent skills that turn a system's requirements into its design: first the driver
 | 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`), including the design decisions it found in its inputs; the design context, which never comes from users (technology constraints, the organization's engineering standards among them; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
 | 2 | `architecture-drivers-to-architecture` | Stage 1 output | Design decisions with their options and rationale, elements with the runtime and platform of each, four views (context, runtime, deployment, information), a threat model |
 | 2b | `architecture-to-technical-policy` | Stage 2 output; the gates and audits of the quality chain; the organization's engineering standards and the conventions of the existing code | The technical policy that the later stages and the code follow: the stack of each kind of component; the repositories, directories and dependency rules that CI enforces; the test strategy, with where and by what each gate of the quality chain is checked and where each audit is held; the pipeline and the conventions inside the code; whether each kind of interface's spec is written by hand or generated from the code; how coding agents find the design and bring findings back |
-| 3 | `architecture-to-high-level-design` | Stage 2 and 2b output | Interfaces (with OpenAPI and AsyncAPI documents for those whose spec the technical policy writes by hand), end-to-end flows with latency budgets, data entities, the conventions that interfaces share, and where every SLI's events come from |
+| 3 | `architecture-to-high-level-design` | Stage 2 and 2b output | Interfaces (with OpenAPI and AsyncAPI documents for those whose spec the technical policy says is written by hand), end-to-end flows with latency budgets, data entities, the conventions that interfaces share, and where every SLI's events come from |
 | 4 | `high-level-design-to-detailed-design` | Stage 3 output and the technical policy, one component per run | Modules with contracts, placed in the policy's directories, and a verification approach at its test layers; states, decision tables and data constraints only for the modules where a mistake in the code is costly; the hand-off to implementation |
 | Review | `design-review` | The output of stage 2, 2b, 3 or 4 | Findings addressed to the stage that must decide |
 
@@ -81,7 +81,7 @@ docs/design/
 ├── das/                                                  one YAML file per assumption made without asking
 ├── qcr/                                                  one YAML file per request to the quality chain
 ├── quality-chain-requests.md                             the requests to the quality chain, in one document to hand over
-└── ifc/specs/                                            OpenAPI and AsyncAPI documents, for the interfaces whose spec the technical policy writes by hand
+└── ifc/specs/                                            OpenAPI and AsyncAPI documents, for the interfaces whose spec the technical policy says is written by hand
 ```
 
 YAML keys and IDs are fixed in English, so every stage can read every other stage's files. Views, flows and state diagrams are Mermaid diagrams inside the reports. The index tables of the reports, between `<!-- generated: ... -->` marks, are written from the YAML items; edit the items, not those tables.

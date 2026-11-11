@@ -186,7 +186,7 @@ flowchart LR
   sf -. client generated from its spec .-> api
 ```
 
-No app imports another (no-cross-app): the storefront reaches the Store API only through the client generated from its spec. Inside a component, a capability reaches another only through its index.ts (capability-entry), nothing under a domain/ directory imports a framework, the database client or an adapter (pure-domain), and only payments/adapters/ imports the payment providers' client libraries (provider-sdk-in-adapters). TEAM-01 owns every directory, so the tree names no team.
+No app imports another (no-cross-app): the storefront reaches the Store API only through the client generated from its spec. Inside a component, a capability reaches another only through its index.ts (capability-entry), nothing under a domain/ directory imports a framework, the database client or an adapter (pure-domain), nothing under an application/ directory imports an adapter (adapters-inward), and only payments/adapters/ imports the payment providers' client libraries (provider-sdk-in-adapters). TEAM-01 owns every directory, so the tree names no team.
 
 Pipeline:
 
@@ -317,6 +317,8 @@ dependency_rules:
     check: dependency-cruiser rule provider-sdk-in-adapters, in the pipeline's check step
   - rule: Nothing under a domain/ directory imports a framework, the database client or an adapter
     check: dependency-cruiser rule pure-domain, in the pipeline's check step
+  - rule: Nothing under an application/ directory imports from adapters/; each adapter implements an interface that its capability's application/ or domain/ defines
+    check: dependency-cruiser rule adapters-inward, in the pipeline's check step
   - rule: A capability imports another only through the other's index.ts
     check: dependency-cruiser rule capability-entry, in the pipeline's check step
 as_is: new
@@ -341,6 +343,8 @@ rules:
     check: A test that logs a payment and finds no card number, name or address in the output
   - rule: Settings come from environment variables, which each component validates when it starts, refusing to start when one is missing. Secrets come from the secret store of the cloud account (TC-02)
     check: A test that starts each component without one of its settings; a secret scan in the check step
+  - rule: The storefront's texts for buyers live in one message file per language under apps/storefront/messages/, and its pages hold keys; dates and amounts are shown with one formatter, from the buyer's language and the order's currency
+    check: The lint rule that forbids literal text in the storefront's pages, in the check step
 pipeline:
   - step: check
     when: Every push and every pull request
