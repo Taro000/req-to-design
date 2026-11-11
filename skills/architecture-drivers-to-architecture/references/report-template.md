@@ -16,7 +16,7 @@ The report indexes the items and never restates what an item says. Refer to deci
 ```markdown
 # Architecture: <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 2 of 4
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 2 of 4
 
 ## Summary
 <Two or three sentences: the overall structure and the platforms, the decisions the primary drivers forced, the drivers at risk, and the open assumptions that matter most.>
@@ -92,6 +92,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <The hand-offs this stage wrote, and those addressed to it: the values of sensitive points that a later stage sets, the deferrals under "Debt and deferrals", and any other point left to a later stage that it would not take up otherwise. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
+
 ## Decisions
 | # | Question | Answer | Items |
 |---|---|---|---|
@@ -113,7 +118,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Out of scope
 ## Next
-<Run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `architecture-to-high-level-design`.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; neither its review nor a later stage runs until then. Otherwise, run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `architecture-to-high-level-design`.>
 ```
 
 ## Worked example: online store
@@ -231,6 +236,14 @@ Decisions (excerpt):
 | 3 | Stage 1 assumed, without asking, that the warehouse system announces stock changes (DAS-01). The structure now rests on it: DEC-03, the stock sync worker (ELM-03) and the runtime view. Does the warehouse system send an event when a stock count changes? | Yes: it sends one event per stock change; the warehouse team confirmed it. | DAS-01, DEC-03, ELM-03 |
 
 Question 3 asks about an assumption that stage 1 wrote: the structure rests on it (DEC-03, ELM-03 and the runtime view), so its breadth is high, and this stage asked it ("Assumptions" in `conventions.md`). DAS-01 records the answer in `answer`, with `answered_in` set to "stage 2, question 3", and its status is `confirmed`. DEC-03 and ELM-03 list DAS-01 in `premises` and cite the answer in `basis_note`; stage 1 applies it to DRV-03 when it runs again.
+
+When this stage runs where nobody can answer, as a subagent of another agent, its first run ends with these three questions under "Unanswered questions", the items as drafted, and `Status: waiting for answers` in the header. Question 2 then reads:
+
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+| 2 | Checkout must keep confirming orders through a payment provider outage (DRV-02). Fail over to a second provider, at the cost of a second contract, or keep one provider with retries, which cannot ride out an outage? | Only failover meets DRV-02 during an outage, but it ties the store to a second vendor and adds a running cost, and the budget is not set yet (PC-03) | 1. Fail over to a second provider (drafted) 2. Keep one provider, with retries and back-off | DEC-02, ELM-06 | |
+
+The next run applies the answer written in the last cell, and moves the question to "Decisions" with the same number, as above.
 
 Open assumptions (excerpt):
 

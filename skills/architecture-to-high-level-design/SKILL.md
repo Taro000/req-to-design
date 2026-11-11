@@ -32,7 +32,7 @@ The quality chain names an interface only by its kind and, for an external syste
 - Open findings addressed to this stage.
 - Open hand-offs addressed to this stage: `hnd/` items with `to: architecture-to-high-level-design` and `status: open`.
 - The interfaces and schemas that exist in the code, as recorded under `as_is`; read the parts you need.
-- On a re-run, this stage's report and items, and what changed since the report's `Inputs as of` commit (`conventions.md`, "Re-running a stage").
+- On a re-run, this stage's report and items, and what changed since this stage's last run (`conventions.md`, "Re-running a stage").
 
 Essential input: at least one element of kind `component`. If there is none, ask for the architecture (or suggest running `architecture-drivers-to-architecture`) before drafting.
 
@@ -94,7 +94,7 @@ Process every open finding addressed to this stage; a rejection that leaves a ri
 - What this stage decides in full, whatever the ratings, is its row of the full-depth kinds ("Decision depth" in `conventions.md`). Rate each point of those kinds that you are unsure of on the scales of "Draft first, ask afterwards", as every stage does. A point outside them, such as the schema of an interface between elements or the timeout of a call off the paths of time SLOs and of money, is deferred unless it rates high as it would stand once deferred; a deferred point is neither asked nor recorded as a DAS here.
 - Most values this stage sets, the timeouts, waits and retry limits on the paths of time SLOs and of money included, are low or medium on both scales: adopt the drafted value and record it as a DAS of `kind: decision`.
 
-Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied".
+Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied". When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run; the next run applies the answers ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
 
 ## Exit criteria
 
@@ -135,4 +135,4 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions (no answer needed), tell the user what to run next, run `scripts/tables.py` and `scripts/check.py` with `--skill architecture-to-high-level-design` and fix what the check reports in this stage's files, and commit the files this run wrote. Also tell the user which files were written; how many interfaces, specs, flows and entities; which latency budgets fit and which do not; which SLIs are bound and which became requests; the findings processed and raised; the requests to the quality chain raised or answered; and the next steps: run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run ("Findings between design stages" in `conventions.md`); re-run this stage when a review addresses a critical or major finding to it, but not for minor ones, which wait for its next run; then run `high-level-design-to-detailed-design` for each component, naming them.
+Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions (no answer needed), tell the user what to run next, run `scripts/tables.py` and `scripts/check.py` with `--skill architecture-to-high-level-design` and fix what the check reports in this stage's files, and commit the files this run wrote. Also tell the user which files were written; how many interfaces, specs, flows and entities; which latency budgets fit and which do not; which SLIs are bound and which became requests; the findings processed and raised; the requests to the quality chain raised or answered; and the next steps: run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review ("Findings between design stages" in `conventions.md`); re-run this stage when a review addresses a critical or major finding to it, but not for minor ones, which wait for its next run; then run `high-level-design-to-detailed-design` for each component, naming them. When questions wait for answers, name them, and say that this stage runs again once they are answered and that its review and the later stages wait until then ("Finishing a run", step 2, in `conventions.md`).

@@ -16,7 +16,7 @@ The report indexes `design-context.yaml`, the DRV, HND and DAS items, and never 
 ```markdown
 # Architecture drivers: <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 1 of 4
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 1 of 4
 
 ## Summary
 <Two or three sentences: the primary drivers in a phrase each, the hardest conflict, the feasibility verdict, the inputs of the design context still missing.>
@@ -91,6 +91,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <The hand-offs this stage wrote, and those addressed to it. This stage writes one for each point that a quality-chain item leaves for the design to confirm and that becomes no driver, constraint, question or DAS here, addressed to the stage that designs the part, and one for each point of its own whose deferral waits for an event. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
+
 ## Decisions
 | # | Question | Answer | Items |
 |---|---|---|---|
@@ -113,7 +118,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Out of scope
 ## Next
-<Run `architecture-drivers-to-architecture`. If this run raised or answered requests to the quality chain, name them, and say that `quality-chain-requests.md` lists them for the user to answer and hand to the quality chain, and that the user decides whether to do that before stage 2 runs.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; no later stage runs until then. Otherwise, run `architecture-drivers-to-architecture`. If this run raised or answered requests to the quality chain, name them, and say that `quality-chain-requests.md` lists them for the user to answer and hand to the quality chain, and that the user decides whether to do that before stage 2 runs.>
 ```
 
 ## Worked example: online store

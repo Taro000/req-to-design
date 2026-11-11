@@ -16,7 +16,7 @@ The report never restates what an item says: no operations, error contracts, tim
 ```markdown
 # High-level design: <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 3 of 4
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 3 of 4
 
 ## Summary
 <Two or three sentences: how many interfaces, specs, flows and entities; which latency budgets fit and which do not; the main conventions; how many questions were decided and how many assumptions are open.>
@@ -99,6 +99,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <The hand-offs this stage wrote, and those addressed to it: the schemas of interfaces between elements, to implementation; the timeouts of calls off the paths of time SLOs and of money, to stage 4; any other point left to a later stage that it would not take up otherwise. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
+
 ## Decisions
 | # | Question | Answer | Items |
 |---|---|---|---|
@@ -120,7 +125,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 
 ## Out of scope
 ## Next
-<Run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `high-level-design-to-detailed-design` once per component: list them.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; neither its review nor a later stage runs until then. Otherwise, run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `high-level-design-to-detailed-design` once per component: list them.>
 ```
 
 ## Worked example: online store

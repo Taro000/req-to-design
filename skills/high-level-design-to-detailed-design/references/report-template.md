@@ -17,7 +17,7 @@ The report indexes the items and never restates them. A module's depth, responsi
 ```markdown
 # Detailed design of <component name>: <system name>
 
-Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 4 of 4 · Component: <ELM-ID>
+Status: draft | waiting for answers | answers applied · Updated: <date> · Inputs as of: <commit, or "none"> · Stage 4 of 4 · Component: <ELM-ID>
 
 ## Summary
 <Two or three sentences: the modules and which are at full depth, the hardest behaviour, the questions asked, and the open assumptions with the highest ratings.>
@@ -96,6 +96,11 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 <!-- /generated -->
 <The findings addressed to this stage for this component (they target the component, its modules or its decisions, or were raised in its reports), and the findings this stage raised in this report. Items changed are the items whose `basis_note` cites the finding.>
 
+## Unanswered questions
+| # | Question | Why unsure | Options | Items | Answer |
+|---|---|---|---|---|---|
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
+
 ## Decisions
 | # | Question | Answer | Items |
 |---|---|---|---|
@@ -115,7 +120,7 @@ Status: draft | answers applied · Updated: <date> · Inputs as of: <commit, or 
 ## Open gaps
 ## Out of scope
 ## Next
-<Run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items in this run; re-run the stages that this report addresses a critical or major finding to; re-run this stage for the component for the critical or major findings a review addresses to it; then design the next component in the index. Minor findings start no run.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again for the component; its review waits until then. Otherwise, run `design-review` on this component in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review; re-run the stages that this report addresses a critical or major finding to; re-run this stage for the component for the critical or major findings a review addresses to it; then design the next component in the index. Minor findings start no run.>
 ```
 
 ## The index

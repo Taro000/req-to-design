@@ -52,6 +52,10 @@ Requests to the quality chain gather in `docs/design/quality-chain-requests.md`.
 
 Each stage drafts everything first. It then rates every point it was unsure of by breadth (how much depends on it) and severity (the harm if the draft is wrong), and asks you only about the points where either is high. The ranking and the decisions that accept a risk, a cost or a debt are rated the same way; when they are asked, your answer is the decision. Every other point is kept as drafted and recorded as an assumption, which the skill lists at the end for you to skim and correct if you want. Every judgment is marked `stated`, `inferred`, `assumed` or `confirmed`, so you can see what came from you, what the agent decided, and what nobody has checked yet.
 
+When you run a stage yourself, it asks you during the run. When it cannot ask you, because it runs as a subagent of another agent or where nobody watches, it writes the questions in its report under "Unanswered questions", with the same options, sets the report's status to "waiting for answers", commits its draft and stops. Write each answer in its question's row and run the stage again: it applies the answers and moves them to "Decisions". Until then, run no later stage and no review of it.
+
+A stage needs to run again when it is stale: since its last run, something it reads changed, a critical or major finding was addressed to it, a hand-off to it fell due, or an assumption its items rest on was overturned; or an answer waits under its "Unanswered questions" (`conventions.md`, "Re-running a stage").
+
 Each stage decides in full only what is hard to change later: the kinds of point that `conventions.md` lists for it, and any point whose breadth or severity is high. It hands the rest off, with the bounds to keep, to the later stage or to the implementation that will decide it, and each stage takes up the hand-offs addressed to it.
 
 Each stage is a long task. The detailed design runs once per component; it writes in detail only the modules where a mistake in the code is costly, and hands the rest to implementation. Plan time to review the documents and to answer the questions that matter most.
