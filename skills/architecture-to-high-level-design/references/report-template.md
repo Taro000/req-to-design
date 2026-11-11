@@ -167,25 +167,25 @@ Hand-offs (excerpt):
 |---|---|---|---|---|---|---|
 | HND-01 | Where the time of a stock change at the warehouse can be read | requirements-to-architecture-drivers | architecture-to-high-level-design | — | decided | DAT-04 |
 | HND-02 | The error threshold at which checkout fails over | architecture-drivers-to-architecture | architecture-to-high-level-design | — | decided | IFC-02 |
-| HND-03 | How long ELM-02 keeps a stock count it has read | architecture-drivers-to-architecture | architecture-to-high-level-design | — | decided | DEC-11 |
+| HND-03 | How long ELM-02 keeps a stock count it has read | architecture-drivers-to-architecture | architecture-to-high-level-design | — | decided | DEC-13 |
 | HND-04 | The schemas of the interfaces between elements that ELM-02 provides | architecture-to-high-level-design | implementation | ELM-02 | open | — |
 | HND-05 | The timeouts of ELM-01's calls to IFC-06 | architecture-to-high-level-design | high-level-design-to-detailed-design | ELM-01 | open | — |
 
-HND-03 is decided within NFR-03's budget: DEC-11, which lets ELM-02 read the stock table, gives the cache the share of T_stock_lag that the warehouse event and ELM-03 leave, as a provisional value in its `parameters` (DAS-07). HND-04 stays open in the design, as every hand-off to implementation does; stage 4 takes up HND-05 at its run for ELM-01.
+HND-03 is decided within NFR-03's budget: DEC-13, which lets ELM-02 read the stock table, gives the cache the share of T_stock_lag that the warehouse event and ELM-03 leave, as a provisional value in its `parameters` (DAS-07). HND-04 stays open in the design, as every hand-off to implementation does; stage 4 takes up HND-05 at its run for ELM-01.
 
 Decisions (excerpt):
 
 | # | Question | Answer | Items |
 |---|---|---|---|
 | 1 | When a provider times out and its charge cannot be settled within payment_wait, should checkout keep the buyer waiting until it is settled, or answer that the payment is being confirmed and leave the order to reconciliation? | Answer that the payment is being confirmed and leave the order to reconciliation. Never tell the buyer that nothing was charged until every provider tried has confirmed it, and never keep the buyer waiting beyond IFC-01's timeout. | IFC-01, IFC-02, DAT-01 |
-| 2 | Public order IDs are drafted as random IDs that cannot be guessed. Do support staff also need a short order number they can read out on the phone? | No. Support staff never read order IDs aloud, so the random ID is enough. | DEC-13 |
+| 2 | Public order IDs are drafted as random IDs that cannot be guessed. Do support staff also need a short order number they can read out on the phone? | No. Support staff never read order IDs aloud, so the random ID is enough. | DEC-15 |
 
 Open assumptions (excerpt):
 
 | ID | Title | Kind | Breadth | Severity | Items that depend on it |
 |---|---|---|---|---|---|
 | DAS-06 | Timeouts on the payment path adopted provisionally | decision | medium | low | IFC-01, IFC-02 |
-| DAS-07 | Stock cache lifetime adopted provisionally | decision | low | low | DEC-11 |
+| DAS-07 | Stock cache lifetime adopted provisionally | decision | low | low | DEC-13 |
 
 ## Example items
 
@@ -322,7 +322,7 @@ store: ELM-04
 key_attributes: [item_id, available_count, warehouse_sequence, changed_at]
 relations:
   - {to: DAT-05, kind: one-to-one, note: Catalog item}
-consistency: Written only by ELM-03, from IFC-03. ELM-02 never changes it; reservations are a separate entity that ELM-02 owns (DAT-06), and the stock offered to buyers is this count minus the active reservations. ELM-02 reads this table directly, with read-only rights (DEC-11), so the table is part of ELM-03's interface and changes only with a new version
+consistency: Written only by ELM-03, from IFC-03. ELM-02 never changes it; reservations are a separate entity that ELM-02 owns (DAT-06), and the stock offered to buyers is this count minus the active reservations. ELM-02 reads this table directly, with read-only rights (DEC-13), so the table is part of ELM-03's interface and changes only with a new version
 retention: The current value only; history is not kept
 classification: internal
 drivers: [DRV-03]

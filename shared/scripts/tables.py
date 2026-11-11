@@ -191,11 +191,11 @@ class Renderer(object):
     def decisions_of(self, ctx):
         if ctx.stage == 4:
             return self.p.stage4_decisions_of(ctx.component) if ctx.component else []
-        stage = {2: "architecture", 3: "high-level-design"}.get(ctx.stage)
+        stage = {2: "architecture", "2b": "technical-policy", 3: "high-level-design"}.get(ctx.stage)
         return [d for d in self.p.of("DEC") if d.get("stage") == stage]
 
     def t_decisions(self, ctx):
-        self.need(ctx, ("stage",), (2, 3, 4))
+        self.need(ctx, ("stage",), (2, "2b", 3, 4))
         rows = [[d.id, self.text(d.get("title")), self.join(d.get("addresses")), self.term("basis", d.get("basis"))]
                 for d in self.decisions_of(ctx)]
         return Table([("DEC", "DEC"), ("Title", "名前"), ("Addresses", "対象"), ("Basis", "根拠")], rows)
@@ -222,6 +222,38 @@ class Renderer(object):
                 rows.append([self.text(name), m.id, Hand(), Hand()])
         return Table([("Parameter", "値"), ("MOD", "MOD"), ("Decision", "決めた所"),
                       ("Budget or timeout it fits", "収まる予算かタイムアウト")], rows, key_columns=2)
+
+    def t_policies(self, ctx):
+        self.need(ctx, ("stage",), ("2b",))
+        order = dict((s, n) for n, s in enumerate(lib.POL_SCOPES))
+        scope = lambda x: x.get("scope") if isinstance(x.get("scope"), str) else None  # noqa: E731
+        policies = sorted(self.p.of("POL"), key=lambda x: (order.get(scope(x), 99), lib.id_key(x.id)))
+        rows = [[x.id, self.text(x.get("title")), self.term("policy scope", scope(x)), self.join(x.get("addresses")),
+                 self.join(x.get("decisions")), self.term("basis", x.get("basis"))] for x in policies]
+        return Table([("POL", "POL"), ("Title", "名前"), ("Scope", "範囲"), ("Addresses", "対象"), ("Decisions", "決定"),
+                      ("Basis", "根拠")], rows)
+
+    def t_gate_bindings(self, ctx):
+        self.need(ctx, ("stage",), ("2b",))
+        bound = self.p.nfr_bindings("gate_bindings")
+        rows = []
+        for n in self.p.nfrs_of_kind("gate"):
+            gate = n.get("gate") if isinstance(n.get("gate"), dict) else {}
+            on = bound.get(n.id)
+            rows.append([n.id, self.text(n.get("title")), self.term("where a gate runs", gate.get("where")),
+                         self.join(on), DASH if on else Hand()])
+        return Table([("NFR", "NFR"), ("Title", "名前"), ("Where", "確かめる所"), ("Bound in", "出どころの方針"),
+                      ("Request instead", "代わりの要求")], rows)
+
+    def t_audit_bindings(self, ctx):
+        self.need(ctx, ("stage",), ("2b",))
+        bound = self.p.nfr_bindings("audit_bindings")
+        rows = []
+        for n in self.p.nfrs_of_kind("audit"):
+            on = bound.get(n.id)
+            rows.append([n.id, self.text(n.get("title")), self.join(on), DASH if on else Hand()])
+        return Table([("NFR", "NFR"), ("Title", "名前"), ("Placed in", "置き場所の方針"), ("Request instead", "代わりの要求")],
+                     rows)
 
     def t_interfaces(self, ctx):
         self.need(ctx, ("stage",), (3,))
@@ -356,7 +388,7 @@ class Renderer(object):
                        or ctx.component in lib.as_list(i.get("consumers"))]
             reached += [d for d in self.p.of("DAT") if d.get("owner") == ctx.component]
         if ctx.kind == "review":
-            label = "review-%d" % ctx.stage
+            label = "review-%s" % ctx.stage
             scope += [f for f in self.p.of("FND", active_only=False) if f.get("raised_in") == ctx.rel]
         else:
             label = str(ctx.stage)
@@ -681,9 +713,9 @@ def render_requests(project, glossary, lang=None):
 
     def raised_in(stage):
         stage = str(stage)
-        if stage in ("1", "2", "3", "4"):
+        if stage in ("1", "2", "2b", "3", "4"):
             return ("第 %s 段階" if ja else "stage %s") % stage
-        m = re.match(r"review-([234])\Z", stage)
+        m = re.match(r"review-(2b|[234])\Z", stage)
         if m:
             return ("第 %s 段階のレビュー" if ja else "review of stage %s") % m.group(1)
         return r.text(stage)

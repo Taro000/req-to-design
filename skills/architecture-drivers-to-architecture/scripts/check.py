@@ -51,6 +51,13 @@ Rules:
                      request that carries the answer
     sli-binding      a quality-chain SLI that no IFC or DAT binds, and that the SLI bindings table does not
                      replace by an open or answered request that targets it
+    policy           once stage 2b has run (or with --skill for it): a scope with no active POL, or with two; a
+                     component in no stack entry or repository of the policies, or in two; a dependency rule with
+                     no check; a field of another scope's policy
+    gate-binding     once stage 2b has run: a gate NFR of the quality chain that no policy binds, and that the
+                     gate bindings table does not replace by an open or answered request that targets it; or a
+                     gate binding with no where or no by
+    audit-binding    the same for the audit NFRs and audit_bindings
     table            a generated table or the request document is out of date, or a table's markers are
                      wrong (run tables.py)
     empty-cell       a cell of a generated table that the report fills in is empty
@@ -72,6 +79,7 @@ import design_lib as lib  # noqa: E402
 import tables as tables_mod  # noqa: E402
 
 S1, S2, S3, S4 = (lib.STAGE_SKILLS[n] for n in (1, 2, 3, 4))
+S2B = lib.STAGE_SKILLS["2b"]
 COMMON = ["id", "title", "status", "basis", "basis_note", "premises"]
 REQUIRED = {
     "DRV": COMMON + ["kind", "statement", "sources", "concern_of", "scenario", "negotiable", "derived_from",
@@ -89,6 +97,7 @@ REQUIRED = {
     "MOD": COMMON + ["component", "name", "depth", "depth_reason", "responsibility", "visibility", "interface",
                      "invariants", "depends_on", "functions", "realizes", "drivers", "decisions", "behaviour",
                      "verification", "parameters", "as_is"],
+    "POL": COMMON + ["scope", "addresses", "decisions", "rules", "as_is"],
     "HND": COMMON + ["from", "to", "component", "origin", "what", "bounds", "trigger", "resolution"],
     "FND": COMMON + ["raised_by", "raised_in", "to", "targets", "severity", "evidence", "suggestion",
                      "resolution"],
@@ -97,8 +106,16 @@ REQUIRED = {
     "QCR": ["id", "title", "status", "stage", "targets", "origin", "issue", "suggestion", "quality_stages", "impact",
             "impact_note", "answer", "answered_in"],
 }
+SCOPE_FIELDS = {  # the fields a POL has besides the common ones, by its scope
+    "technology": ["stack"],
+    "repository": ["repositories", "dependency_rules"],
+    "testing": ["layers", "doubles", "environments", "gate_bindings", "audit_bindings"],
+    "pipeline-and-code": ["pipeline"],
+    "specs": ["specs"],
+    "implementation-feedback": [],
+}
 RATINGS = ["high", "medium", "low"]
-STAGE_VALUES = ["1", "2", "3", "4", "review-2", "review-3", "review-4"]
+STAGE_VALUES = ["1", "2", "2b", "3", "4", "review-2", "review-2b", "review-3", "review-4"]
 ENUMS = {
     "basis": ["stated", "inferred", "assumed", "confirmed"],
     "as_is": ["keep", "change", "new", "remove"],
@@ -108,6 +125,7 @@ ENUMS = {
     ("IFC", "kind"): ["http", "event", "file", "screen", "batch"],
     ("MOD", "visibility"): ["public", "internal"],
     ("MOD", "depth"): ["full", "bounds"],
+    ("POL", "scope"): list(lib.POL_SCOPES),
     ("FND", "severity"): ["critical", "major", "minor"],
     ("DAS", "kind"): ["judgment", "decision"],
     ("DAS", "breadth"): RATINGS,
@@ -138,11 +156,15 @@ REFS = {
             ("drivers", ["DRV"]), ("sli_bindings[].sli", ["SLI"])],
     "MOD": [("component", ["ELM:component"]), ("depends_on", ["MOD"]), ("functions", ["FR"]),
             ("drivers", ["DRV"]), ("decisions", ["DEC"])],
+    "POL": [("addresses", ["DRV", "QR"]), ("decisions", ["DEC"]), ("stack[].elements", ["ELM:component"]),
+            ("repositories[].holds", ["ELM"]),
+            ("gate_bindings[].nfr", ["NFR:gate"]), ("audit_bindings[].nfr", ["NFR:audit"])],
     "HND": [("component", ["ELM:component"]), ("origin", None)],
     "FND": [("targets", lib.DESIGN_PREFIXES)],
     "DAS": [],
     "QCR": [("targets", lib.QUALITY_PREFIXES), ("origin", lib.DESIGN_PREFIXES)],
 }
+SPEC_MADE = ["by-hand", "from-code", "owner", "none"]
 HTTP_METHODS = ["get", "put", "post", "delete", "patch", "head", "options", "trace"]
 OP_RE = re.compile(r"(GET|PUT|POST|DELETE|PATCH|HEAD|OPTIONS|TRACE)\s+(/\S*)")
 STATUS_RE = re.compile(r"\s*([1-5][0-9]{2})(?![0-9])")
@@ -201,6 +223,8 @@ class Checker(object):
         self.reports()
         self.request_doc()
         self.sli_bindings()
+        self.policies()
+        self.nfr_bindings()
         self.cover()
         return self.problems
 
@@ -332,6 +356,8 @@ class Checker(object):
             debt = item.get("debt")
             if debt and (not isinstance(debt, dict) or not debt.get("repay_when")):
                 self.item_problem("debt", item, "debt", "a debt needs what, why_accepted and repay_when")
+        if p == "POL":
+            self.policy_fields(item)
         if p == "MOD":
             depth = item.get("depth")
             if depth == "full" and not item.get("depth_reason"):
@@ -344,6 +370,38 @@ class Checker(object):
                     self.item_problem("depth", item, kept[0], "a module at bounds depth leaves its inside to"
                                                               " implementation: write %s as null or []"
                                                               % ", ".join(kept))
+
+    def policy_fields(self, item):
+        scope = item.get("scope")
+        if not isinstance(scope, str) or scope not in SCOPE_FIELDS:
+            return  # reported as a bad value of scope
+        own = SCOPE_FIELDS[scope]
+        missing = [k for k in own if k not in item.data]
+        if missing:
+            self.item_problem("missing-field", item, "scope", "missing %s, which a policy of scope %s has (write []"
+                                                              " when there is no value)" % (", ".join(missing), scope))
+        foreign = [k for s, fields in SCOPE_FIELDS.items() if s != scope for k in fields if k in item.data]
+        if foreign:
+            owners = ", ".join("%s (%s)" % (k, next(s for s, f in SCOPE_FIELDS.items() if k in f)) for k in foreign)
+            self.item_problem("policy", item, foreign[0], "%s belong%s to the policy of another scope: %s"
+                              % (", ".join(foreign), "s" if len(foreign) == 1 else "", owners))
+        for n, entry in enumerate(lib.as_list(item.get("rules")), 1):
+            if not isinstance(entry, dict) or not entry.get("rule"):
+                self.item_problem("policy", item, "rules", "rules entry %d is {rule, check}, with the rule written" % n)
+        for n, entry in enumerate(lib.as_list(item.get("dependency_rules")), 1):
+            if not isinstance(entry, dict) or not entry.get("rule") or not entry.get("check"):
+                self.item_problem("policy", item, "dependency_rules", "dependency rule %d needs the rule and the check"
+                                                                      " in CI that enforces it" % n)
+        for n, entry in enumerate(lib.as_list(item.get("specs")), 1):
+            made = entry.get("made") if isinstance(entry, dict) else None
+            if made not in SPEC_MADE:
+                self.item_problem("bad-value", item, "specs", "specs entry %d: made is %r; allowed: %s"
+                                  % (n, made, ", ".join(SPEC_MADE)))
+        for field, rule in (("gate_bindings", "gate-binding"), ("audit_bindings", "audit-binding")):
+            for n, entry in enumerate(lib.as_list(item.get(field)), 1):
+                lacking = [k for k in ("nfr", "where", "by") if not (isinstance(entry, dict) and entry.get(k))]
+                if lacking:
+                    self.item_problem(rule, item, field, "%s entry %d has no %s" % (field, n, ", ".join(lacking)))
 
     def entry_fields(self, item):
         for key in ("basis",):
@@ -365,7 +423,8 @@ class Checker(object):
             out = []
             for entry in lib.as_list(item.get(parent)):
                 if isinstance(entry, dict) and entry.get(child) is not None:
-                    out.append(entry.get(child))
+                    value = entry.get(child)
+                    out.extend(value if isinstance(value, list) else [value])
             return out
         return lib.as_list(item.get(field))
 
@@ -411,8 +470,9 @@ class Checker(object):
             return
         kinds = [a.split(":")[1] for a in (allowed or []) if a.startswith(prefix + ":")]
         if kinds and target.get("kind") not in kinds:
-            self.item_problem("wrong-kind", item, key, "%s names %s, an element of kind %s; it takes %s"
-                              % (field, value, target.get("kind"), " or ".join(kinds)))
+            what = "an element" if prefix == "ELM" else "an %s" % prefix
+            self.item_problem("wrong-kind", item, key, "%s names %s, %s of kind %s; it takes %s"
+                              % (field, value, what, target.get("kind"), " or ".join(kinds)))
         if check_retired and target.retired:
             self.item_problem("retired-ref", item, key, "%s names %s, which is retired" % (field, value))
 
@@ -869,8 +929,8 @@ class Checker(object):
                 first = first_difference(text, new_text)
                 self.add("table", rel, first, "generated tables are out of date: run scripts/tables.py", owner)
             for name, line, header, rows, table, empties in tables:
-                if name == "sli-bindings":
-                    continue  # reported by the sli-binding rule
+                if name in ("sli-bindings", "gate-bindings", "audit-bindings"):
+                    continue  # reported by the sli-binding, gate-binding and audit-binding rules
                 columns = {}
                 for key, column in empties:
                     columns.setdefault(column, []).append(" ".join(key))
@@ -921,6 +981,76 @@ class Checker(object):
                 self.add("sli-binding", "ifc/", 0, "%s is bound on no IFC or DAT, and the report's SLI bindings table"
                                                    " names %s instead, which is no open or answered request with %s in"
                                                    " targets" % (s.id, ", ".join(named[s.id]), s.id), S3)
+
+    def stage_2b_ran(self):
+        """Stage 2b has written something, or this run is stage 2b's own."""
+        return bool(self.p.of("POL")) or "2b-technical-policy.md" in self.p.reports or self.skill == S2B
+
+    def policies(self):
+        """Once stage 2b has run: one active policy per scope, and every component in one stack and one repository."""
+        p = self.p
+        policies = p.of("POL")
+        if not self.stage_2b_ran():
+            return
+        by_scope = {}
+        for pol in policies:
+            scope = pol.get("scope")
+            by_scope.setdefault(scope if isinstance(scope, str) else None, []).append(pol)
+        for scope in lib.POL_SCOPES:
+            found = by_scope.get(scope, [])
+            if not found:
+                self.add("policy", "pol/", 0, "no active policy of scope %s: stage 2b writes one POL for each scope" % scope,
+                         S2B)
+            for extra in found[1:]:
+                self.item_problem("policy", extra, "scope", "%s is also an active policy of scope %s; each scope has"
+                                                            " one" % (found[0].id, scope))
+        for scope, field, child, what, whats in (("technology", "stack", "elements", "stack entry", "stack entries"),
+                                                 ("repository", "repositories", "holds", "repository", "repositories")):
+            pols = by_scope.get(scope, [])
+            if not pols:
+                continue
+            count = {}
+            for pol in pols:
+                for entry in lib.as_list(pol.get(field)):
+                    if isinstance(entry, dict):
+                        for ident in lib.as_list(entry.get(child)):
+                            if isinstance(ident, str):
+                                count[ident] = count.get(ident, 0) + 1
+            for c in p.components():
+                n = count.get(c.id, 0)
+                if n != 1:
+                    self.item_problem("policy", pols[0], field, "%s is in %s of the policies; every component is in"
+                                                                " exactly one" % (c.id, "no " + what if n == 0 else
+                                                                                  "%d %s" % (n, whats)))
+
+    def nfr_bindings(self):
+        """Once stage 2b has run: every gate and audit of the quality chain is bound, or a request replaces it."""
+        p = self.p
+        if not self.stage_2b_ran() or not p.has_quality:
+            return
+        tables = dict((name, rows) for name, line, header, rows, table, empties
+                      in self.rendered.get("2b-technical-policy.md", []))
+        for kind, field, rule, table, column in (("gate", "gate_bindings", "gate-binding", "gate-bindings", 4),
+                                                 ("audit", "audit_bindings", "audit-binding", "audit-bindings", 3)):
+            bound = p.nfr_bindings(field)
+            named = {}
+            for row in tables.get(table, []):
+                if len(row) > column:
+                    named[row[0]] = [x for x in lib.mentions(row[column]) if lib.prefix_of(x) == "QCR"]
+            a = "an" if kind == "audit" else "a"
+            for n in p.nfrs_of_kind(kind):
+                if n.id in bound:
+                    continue
+                valid = [q.id for q in p.requests_on(n.id)]
+                if not named.get(n.id):
+                    self.add(rule, "pol/", 0, "%s, %s %s of the quality chain, is in no policy's %s; bind it, or, when no"
+                                              " design can realize it as defined, write a request to the quality chain"
+                                              " with %s in targets and name it in the last column of the report's %s"
+                                              " table" % (n.id, a, kind, field, n.id, table), S2B)
+                elif not set(named[n.id]) & set(valid):
+                    self.add(rule, "pol/", 0, "%s is in no policy's %s, and the report's %s table names %s instead,"
+                                              " which is no open or answered request with %s in targets"
+                                              % (n.id, field, table, ", ".join(named[n.id]), n.id), S2B)
 
     # findings that cover problems
 

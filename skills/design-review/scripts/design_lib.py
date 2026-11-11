@@ -9,18 +9,20 @@ import re
 
 import yaml_lite
 
-STAGE_SKILLS = {
+STAGE_SKILLS = {  # in the order the stages run; stage 2b runs between stages 2 and 3
     1: "requirements-to-architecture-drivers",
     2: "architecture-drivers-to-architecture",
+    "2b": "architecture-to-technical-policy",
     3: "architecture-to-high-level-design",
     4: "high-level-design-to-detailed-design",
 }
 REVIEW_SKILL = "design-review"
 SKILLS = list(STAGE_SKILLS.values()) + [REVIEW_SKILL]
 SKILL_STAGE = dict((v, k) for k, v in STAGE_SKILLS.items())
-DEC_STAGES = {"architecture": 2, "high-level-design": 3, "detailed-design": 4}
+DEC_STAGES = {"architecture": 2, "technical-policy": "2b", "high-level-design": 3, "detailed-design": 4}
+POL_SCOPES = ["technology", "repository", "testing", "pipeline-and-code", "specs", "implementation-feedback"]
 
-DESIGN_DIRS = [("drv", "DRV"), ("dec", "DEC"), ("elm", "ELM"), ("ifc", "IFC"), ("dat", "DAT"),
+DESIGN_DIRS = [("drv", "DRV"), ("dec", "DEC"), ("elm", "ELM"), ("pol", "POL"), ("ifc", "IFC"), ("dat", "DAT"),
                ("mod", "MOD"), ("hnd", "HND"), ("fnd", "FND"), ("das", "DAS"), ("qcr", "QCR")]
 IMPLEMENTATION = "implementation"  # a hand-off's `to` when the code decides it
 REQUESTS_DOC = "quality-chain-requests.md"  # the request document, written whole by tables.py from qcr/
@@ -51,10 +53,11 @@ MENTION_RE = re.compile(r"(?<![A-Za-z0-9_-])(%s)-([0-9]{2,})(?![0-9])"
 REPORTS = [
     ("1-architecture-drivers.md", "stage", 1),
     ("2-architecture.md", "stage", 2),
+    ("2b-technical-policy.md", "stage", "2b"),
     ("3-high-level-design.md", "stage", 3),
     ("4-detailed-design.md", "index", 4),
 ]
-REVIEW_REPORTS = {"2-architecture.md": 2, "3-high-level-design.md": 3}
+REVIEW_REPORTS = {"2-architecture.md": 2, "2b-technical-policy.md": "2b", "3-high-level-design.md": 3}
 
 
 def prefix_of(ident):
@@ -293,6 +296,8 @@ class Project(object):
             return self.of("DRV") + [i for p in ("TC", "PC", "TEAM", "CHG", "STK") for i in self.of(p)]
         if stage == 2:
             return [d for d in self.of("DEC") if d.get("stage") == "architecture"] + self.of("ELM")
+        if stage == "2b":
+            return self.of("POL") + [d for d in self.of("DEC") if d.get("stage") == "technical-policy"]
         if stage == 3:
             decisions = [d for d in self.of("DEC") if d.get("stage") == "high-level-design"]
             return self.of("IFC") + self.of("DAT") + decisions
@@ -344,6 +349,20 @@ class Project(object):
                 out.append(it)
         return sorted(out, key=lambda i: id_key(i.id))
 
+    def nfrs_of_kind(self, kind):
+        """The quality chain's active NFRs of one kind: slo, gate, audit or monitor."""
+        return [n for n in self.of("NFR") if n.get("kind") == kind]
+
+    def nfr_bindings(self, field):
+        """{NFR ID: [POL IDs]}: the NFRs that the active policies bind in `field` (gate_bindings, audit_bindings)."""
+        out = {}
+        for pol in self.of("POL"):
+            for binding in as_list(pol.get(field)):
+                nfr = binding.get("nfr") if isinstance(binding, dict) else None
+                if isinstance(nfr, str) and pol.id not in out.get(nfr, []):
+                    out.setdefault(nfr, []).append(pol.id)
+        return out
+
     def schema_handoffs(self, ident):
         """The hand-offs that leave the schema of an interface to implementation: addressed to implementation, not
         retired, with the interface in their origin."""
@@ -377,6 +396,8 @@ class Project(object):
             return STAGE_SKILLS[1]
         if p == "ELM":
             return STAGE_SKILLS[2]
+        if p == "POL":
+            return STAGE_SKILLS["2b"]
         if p in ("IFC", "DAT"):
             return STAGE_SKILLS[3]
         if p == "MOD":
@@ -394,11 +415,19 @@ class Project(object):
         return None
 
 
+def stage_key(stage):
+    """The key of STAGE_SKILLS for a stage written as 1, "2", "2b"; None when there is no such stage."""
+    text = str(stage)
+    if text.isdigit() and int(text) in STAGE_SKILLS:
+        return int(text)
+    return text if text in STAGE_SKILLS else None
+
+
 def das_owner(stage):
     stage = str(stage)
-    if stage in ("1", "2", "3", "4"):
-        return STAGE_SKILLS[int(stage)]
-    if stage in ("review-2", "review-3", "review-4"):
+    if stage_key(stage) is not None:
+        return STAGE_SKILLS[stage_key(stage)]
+    if stage.startswith("review-") and stage_key(stage[len("review-"):]) in (2, "2b", 3, 4):
         return REVIEW_SKILL
     return None
 
@@ -409,6 +438,8 @@ def path_owner(rel):
         return STAGE_SKILLS[1]
     if rel.startswith("elm/") or rel == "2-architecture.md":
         return STAGE_SKILLS[2]
+    if rel.startswith("pol/") or rel == "2b-technical-policy.md":
+        return STAGE_SKILLS["2b"]
     if rel.startswith(("ifc/", "dat/")) or rel == "3-high-level-design.md":
         return STAGE_SKILLS[3]
     if rel.startswith(("mod/", "4-detailed-design")):
@@ -469,7 +500,7 @@ def report_context(rel):
     m = re.match(r"4-detailed-design/(ELM-[0-9]{2,})\.md\Z", rel)
     if m:
         return ReportContext(rel, "stage", 4, m.group(1))
-    m = re.match(r"reviews/(2-architecture|3-high-level-design)\.md\Z", rel)
+    m = re.match(r"reviews/(2-architecture|2b-technical-policy|3-high-level-design)\.md\Z", rel)
     if m:
         return ReportContext(rel, "review", REVIEW_REPORTS[m.group(1) + ".md"])
     m = re.match(r"reviews/4-detailed-design-(ELM-[0-9]{2,})\.md\Z", rel)

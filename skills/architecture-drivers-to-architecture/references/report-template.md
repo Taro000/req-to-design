@@ -118,7 +118,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 
 ## Out of scope
 ## Next
-<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; neither its review nor a later stage runs until then. Otherwise, run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `architecture-to-high-level-design`.>
+<While questions wait for answers: answer them under "Unanswered questions", then run this stage again; neither its review nor a later stage runs until then. Otherwise, run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review; re-run this stage for the critical or major findings a review addresses to it, not for minor ones; then run `architecture-to-technical-policy`, and after it `architecture-to-high-level-design`.>
 ```
 
 ## Worked example: online store

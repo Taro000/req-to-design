@@ -77,6 +77,34 @@ QUALITY = {
         vantage: system-boundary
         existing_source: OPF-01
         """),
+    "nfr/NFR-01.yaml": d("""
+        id: NFR-01
+        title: Payment tests stop the merge
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: []
+        from: []
+        kind: gate
+        cuj: CUJ-01
+        statement: The payment tests pass before every merge.
+        gate: {where: CI, check: The payment tests, threshold: All pass}
+        audit: null
+        """),
+    "nfr/NFR-02.yaml": d("""
+        id: NFR-02
+        title: Yearly audit of card payments
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: []
+        from: []
+        kind: audit
+        cuj: null
+        statement: The handling of card payments is audited every year.
+        gate: null
+        audit: {mechanism: A yearly audit, criterion: No finding without an owner, cadence_or_deadline: Every year}
+        """),
     "qas/QAS-01.yaml": d("""
         id: QAS-01
         title: Target of checkout latency
@@ -211,6 +239,151 @@ DESIGN = {
         depends_on: [DEC-01]
         parameters: []
         debt: null
+        as_is: new
+        """),
+    "dec/DEC-03.yaml": d("""
+        id: DEC-03
+        title: Frameworks of the components
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: []
+        stage: technical-policy
+        question: On which frameworks are the components built?
+        addresses: [DRV-02]
+        options:
+          - {name: Framework A and Framework C, effect: Known to the team, cost: Two frameworks}
+          - {name: Framework B for both, effect: One framework, cost: New to the team}
+        chosen: Framework A and Framework C
+        rationale: The team knows them (DRV-02)
+        rejected:
+          - {option: Framework B for both, reason: New to the team}
+        gains: [Speed of work]
+        costs: [Two frameworks]
+        sensitive_points: []
+        trade_offs: []
+        assumptions: []
+        depends_on: [DEC-01]
+        parameters: []
+        debt: null
+        as_is: new
+        """),
+    "das/DAS-02.yaml": d("""
+        id: DAS-02
+        title: The security team performs the audit
+        status: open
+        stage: 2b
+        kind: judgment
+        statement: The security team performs the audit of NFR-02
+        why_unsure: NFR-02 does not say who performs it
+        breadth: low
+        severity: medium
+        rating_note: Only POL-03 depends on it
+        answer: null
+        answered_in: null
+        """),
+    "pol/POL-01.yaml": d("""
+        id: POL-01
+        title: Stacks of the components
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: []
+        scope: technology
+        addresses: [DRV-02]
+        decisions: [DEC-03]
+        rules:
+          - {rule: One lockfile for the repository, check: The pipeline installs with the lockfile frozen}
+        stack:
+          - {kind: Server, elements: [ELM-01], language: TypeScript, runtime: Node.js, framework: Framework A, libraries: [A query builder]}
+          - {kind: Web app, elements: [ELM-05], language: TypeScript, runtime: Node.js, framework: Framework C, libraries: []}
+        as_is: new
+        """),
+    "pol/POL-02.yaml": d("""
+        id: POL-02
+        title: One repository
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: [TEAM-01]
+        scope: repository
+        addresses: [DRV-01]
+        decisions: [DEC-01]
+        rules:
+          - {rule: Code is grouped by business capability, check: The dependency rules}
+        repositories:
+          - {name: store, holds: [ELM-01, ELM-05]}
+        dependency_rules:
+          - {rule: No app imports another app, check: A dependency checker in the check step}
+        as_is: new
+        """),
+    "pol/POL-03.yaml": d("""
+        id: POL-03
+        title: Tests, gates and audits
+        status: active
+        basis: assumed
+        basis_note: Who performs the audit is assumed (DAS-02)
+        premises: [DAS-02]
+        scope: testing
+        addresses: [DRV-01]
+        decisions: []
+        rules: []
+        layers:
+          - {layer: Unit, covers: One module, replaces: Everything outside it, runs: In the check step}
+        doubles:
+          - {replaces: ELM-04, with: A fake provider that can time out, seam: The payment adapter}
+        environments:
+          - {name: CI, runs: The check step, data: Factories}
+        gate_bindings:
+          - {nfr: NFR-01, where: The check step blocks the merge, by: The integration tests of the payment path}
+        audit_bindings:
+          - {nfr: NFR-02, where: An issue opened every year, by: The security team (DAS-02)}
+        as_is: new
+        """),
+    "pol/POL-04.yaml": d("""
+        id: POL-04
+        title: Pipeline and code conventions
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: []
+        scope: pipeline-and-code
+        addresses: []
+        decisions: []
+        rules:
+          - {rule: Settings come from the environment, check: A test that starts without one}
+        pipeline:
+          - {step: check, when: Every push, runs: Types and tests, blocks: The merge}
+        as_is: new
+        """),
+    "pol/POL-05.yaml": d("""
+        id: POL-05
+        title: How specs are made
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: []
+        scope: specs
+        addresses: []
+        decisions: []
+        rules: []
+        specs:
+          - {interfaces: HTTP between the components, made: from-code, how: Generated from the route schemas}
+          - {interfaces: The API of the payment provider, made: owner, how: Its own document}
+        as_is: new
+        """),
+    "pol/POL-06.yaml": d("""
+        id: POL-06
+        title: How coding agents find the design
+        status: active
+        basis: inferred
+        basis_note: null
+        premises: []
+        scope: implementation-feedback
+        addresses: []
+        decisions: []
+        rules:
+          - {rule: AGENTS.md points coding agents to the design, check: The review of the pull request}
         as_is: new
         """),
     "das/DAS-01.yaml": d("""
@@ -564,6 +737,8 @@ REPORTS = {
     "2-architecture.md": "# Architecture\n\n" + HEADER % "2 of 4" + "\n\n" + blocks(
         "decisions", "elements", "parameters", "findings", "handoffs", "assumptions",
         parameters="| Parameter | DEC | Decided in |\n|---|---|---|\n| pool_size | DEC-01 | question 1 |\n"),
+    "2b-technical-policy.md": "# Technical policy\n\n" + HEADER % "2b of 4" + "\n\n" + blocks(
+        "decisions", "policies", "gate-bindings", "audit-bindings", "findings", "handoffs", "assumptions"),
     "3-high-level-design.md": "# High-level design\n\n" + HEADER % "3 of 4" + "\n\n" + blocks(
         "decisions", "interfaces", "sli-bindings", "data", "criteria", "findings", "handoffs", "assumptions",
         criteria="| FR | Criterion | IFCs | Flow |\n|---|---|---|---|\n| FR-01 | 1 | | Checkout |\n"
@@ -874,6 +1049,84 @@ class CheckTest(unittest.TestCase):
         self.assertFinds("empty-cell", "FR-01 2")
         self.assertNotIn("table", self.rules(skill=S3))  # 2-architecture.md belongs to stage 2
 
+    def test_gate_and_audit_bindings(self):
+        self.f.edit("pol/POL-03.yaml", "gate_bindings:\n  - {nfr: NFR-01, where: The check step blocks the merge, by: The"
+                    " integration tests of the payment path}", "gate_bindings: []")
+        problems = self.assertFinds("gate-binding", "NFR-01")
+        self.assertEqual(problems[0].owner, lib.STAGE_SKILLS["2b"])
+        self.f.tables()
+        self.f.edit("2b-technical-policy.md", "| NFR-01 | Payment tests stop the merge | CI | — | — |",
+                    "| NFR-01 | Payment tests stop the merge | CI | — | QCR-03 |")
+        self.assertFinds("gate-binding", "names QCR-03 instead")  # no such request
+        self.f.write(os.path.join(self.f.design, "qcr/QCR-03.yaml"), d("""
+            id: QCR-03
+            title: The payment tests need a sandbox that CI cannot reach
+            status: open
+            stage: 2b
+            targets: [NFR-01]
+            origin: [POL-03]
+            issue: NFR-01 asks for the payment tests in CI, and they need the provider's sandbox, which CI cannot reach
+            suggestion: Run NFR-01's payment tests at the release check
+            quality_stages: [4]
+            impact: low
+            impact_note: No item of stage 2b changes with it; POL-03 binds the gate either way
+            answer: null
+            answered_in: null
+            """))
+        self.f.tables()
+        self.assertEqual([p for p in self.f.check() if p.rule in ("gate-binding", "empty-cell")], [])
+        self.assertIn("| QCR-03 | The payment tests need a sandbox that CI cannot reach | NFR-01 | 4 | low | open |"
+                      " stage 2b |", self.f.read("quality-chain-requests.md"))
+        self.f.edit("pol/POL-03.yaml", "audit_bindings:\n  - {nfr: NFR-02,", "audit_bindings:\n  - {nfr: NFR-01,")
+        self.assertFinds("wrong-kind", "names NFR-01, an NFR of kind gate; it takes audit")
+        self.assertFinds("audit-binding", "NFR-02")
+        self.f.edit("pol/POL-03.yaml", ", by: The security team (DAS-02)}", "}")
+        self.assertFinds("audit-binding", "has no by")
+
+    def test_policies(self):
+        self.f.edit("pol/POL-06.yaml", "status: active", "status: retired")
+        self.assertFinds("policy", "no active policy of scope implementation-feedback")
+        self.f.edit("pol/POL-01.yaml", "elements: [ELM-05]", "elements: [ELM-01]")
+        self.assertFinds("policy", "ELM-05 is in no stack entry")
+        self.assertFinds("policy", "ELM-01 is in 2 stack entries")
+        self.f.edit("pol/POL-02.yaml", "check: A dependency checker in the check step", "check: null")
+        self.assertFinds("policy", "needs the rule and the check")
+        self.f.edit("pol/POL-02.yaml", "as_is: new", "pipeline: []\nas_is: new")
+        self.assertFinds("policy", "pipeline belongs to the policy of another scope")
+        self.f.edit("pol/POL-03.yaml", "doubles:\n", "x_doubles:\n")
+        self.assertFinds("missing-field", "missing doubles, which a policy of scope testing has")
+        self.f.edit("pol/POL-05.yaml", "made: owner", "made: theirs")
+        self.assertFinds("bad-value", "made is 'theirs'")
+        self.f.edit("pol/POL-04.yaml", "scope: pipeline-and-code", "scope: pipeline")
+        self.assertFinds("bad-value", "scope is 'pipeline'")
+        self.assertFinds("policy", "no active policy of scope pipeline-and-code")
+        self.f.edit("pol/POL-04.yaml", "scope: pipeline", "scope: [pipeline-and-code]")
+        self.f.edit("pol/POL-01.yaml", "elements: [ELM-01]", "elements: [[ELM-01]]")
+        self.f.edit("pol/POL-02.yaml", "addresses: [DRV-01]", "addresses: [ELM-01]")
+        self.assertFinds("bad-value", "scope is ['pipeline-and-code']")
+        self.assertFinds("wrong-kind", "addresses holds ELM-01")
+        self.f.tables()  # a malformed policy is reported, and breaks neither script
+
+    def test_stage_2b_run_that_wrote_nothing(self):
+        for n in range(1, 7):
+            os.remove(os.path.join(self.f.design, "pol/POL-%02d.yaml" % n))
+        os.remove(os.path.join(self.f.design, "2b-technical-policy.md"))
+        self.f.edit("dec/DEC-03.yaml", "stage: technical-policy", "stage: architecture")
+        os.remove(os.path.join(self.f.design, "das/DAS-02.yaml"))
+        self.f.tables()
+        self.assertEqual(summary(self.f.check()), [])  # a design made before stage 2b, or before it runs
+        self.assertFinds("policy", "no active policy of scope technology", skill="architecture-to-technical-policy")
+        self.assertFinds("gate-binding", "NFR-01", skill="architecture-to-technical-policy")
+
+    def test_stage_2b_owns_its_files(self):
+        self.f.edit("pol/POL-01.yaml", "decisions: [DEC-03]", "decisions: [DEC-03, DEC-99]")
+        self.f.edit("dec/DEC-03.yaml", "depends_on: [DEC-01]", "depends_on: [DEC-98]")
+        for ident in ("DEC-99", "DEC-98"):
+            problems = self.assertFinds("unknown-id", ident)
+            self.assertEqual(problems[0].owner, "architecture-to-technical-policy")
+        self.f.edit("das/DAS-02.yaml", "stage: 2b", "stage: 2c")
+        self.assertFinds("bad-value", "stage is '2c'")
+
     def test_unbound_sli(self):
         self.f.edit("ifc/IFC-01.yaml", "sli_bindings:\n  - sli: SLI-01", "sli_bindings: []\nx_binding:\n  - sli: SLI-01")
         self.assertFinds("sli-binding", "SLI-01")
@@ -1067,6 +1320,7 @@ class TablesTest(unittest.TestCase):
         templates = {
             "requirements-to-architecture-drivers": ("## Report template", "1-architecture-drivers.md", 7),
             "architecture-drivers-to-architecture": ("## Report template", "2-architecture.md", 6),
+            "architecture-to-technical-policy": ("## Report template", "2b-technical-policy.md", 7),
             "architecture-to-high-level-design": ("## Report template", "3-high-level-design.md", 8),
             "high-level-design-to-detailed-design": ("## Component report template", "4-detailed-design/ELM-01.md", 5),
             "design-review": ("## Report template", "reviews/2-architecture.md", 2),
@@ -1087,6 +1341,66 @@ class TablesTest(unittest.TestCase):
                                                            "4-detailed-design.md", body)
         self.assertEqual((problems, len(written)), ([], 2))
         self.assertIn("| ELM-01 | Store API | answers applied |", new_text)
+
+    def test_review_of_stage_2b(self):
+        self.f.write(os.path.join(self.f.design, "reviews/2b-technical-policy.md"),
+                     "# Design review: technical policy\n\n" + HEADER % "2b" + "\n\n" + blocks("findings", "assumptions"))
+        self.f.write(os.path.join(self.f.design, "fnd/FND-02.yaml"), d("""
+            id: FND-02
+            title: No step runs the payment tests of NFR-01
+            status: open
+            basis: assumed
+            basis_note: null
+            premises: [DAS-03]
+            raised_by: design-review
+            raised_in: reviews/2b-technical-policy.md
+            to: architecture-to-technical-policy
+            targets: [POL-03]
+            severity: major
+            evidence: POL-03 binds NFR-01 to the check step of POL-04, whose layers do not include the payment tests
+            suggestion: Run the integration layer in the check step
+            resolution: null
+            """))
+        self.f.write(os.path.join(self.f.design, "das/DAS-03.yaml"), d("""
+            id: DAS-03
+            title: The payment tests need the database
+            status: open
+            stage: review-2b
+            kind: judgment
+            statement: The payment tests of NFR-01 run against the database
+            why_unsure: NFR-01 does not say
+            breadth: low
+            severity: low
+            rating_note: Only FND-02 depends on it
+            answer: null
+            answered_in: null
+            """))
+        self.f.tables()
+        self.assertEqual(summary(self.f.check()), [])
+        review = self.f.read("reviews/2b-technical-policy.md")
+        self.assertIn("| FND-02 | No step runs the payment tests of NFR-01 | major | architecture-to-technical-policy |"
+                      " POL-03 |", review)
+        self.assertIn("| DAS-03 | The payment tests need the database | judgment | low | low | FND-02 |", review)
+        self.assertIn("| FND-02 | No step runs the payment tests of NFR-01 | major | design-review |"
+                      " architecture-to-technical-policy | open | — |", self.f.read("2b-technical-policy.md"))
+
+    def test_stage_2b_tables(self):
+        stage2b = self.f.read("2b-technical-policy.md")
+        self.assertIn("| DEC-03 | Frameworks of the components | DRV-02 | inferred |", stage2b)
+        self.assertNotIn("DEC-01", stage2b.split("<!-- generated: decisions -->")[1].split("<!-- /generated -->")[0])
+        self.assertNotIn("DEC-03", self.f.read("2-architecture.md"))
+        self.assertIn("| POL-04 | Pipeline and code conventions | pipeline and code | — | — | inferred |", stage2b)
+        self.assertIn("| POL-01 | Stacks of the components | technology | DRV-02 | DEC-03 | inferred |", stage2b)
+        self.assertIn("| NFR-01 | Payment tests stop the merge | CI | POL-03 | — |", stage2b)
+        self.assertIn("| NFR-02 | Yearly audit of card payments | POL-03 | — |", stage2b)
+        self.assertIn("| DAS-02 | The security team performs the audit | judgment | low | medium | POL-03 |", stage2b)
+        self.f.write(os.path.join(self.f.design, "2b-technical-policy.md"),
+                     "# 技術方針\n\n状態: 下書き · 更新: 2026-11-10\n\n" + blocks("policies", "gate-bindings"))
+        self.f.tables()
+        text = self.f.read("2b-technical-policy.md")
+        self.assertIn("| POL | 名前 | 範囲 | 対象 | 決定 | 根拠 |", text)
+        self.assertIn("| POL-03 | Tests, gates and audits | テスト戦略とゲート | DRV-01 | — | 仮定 |", text)
+        self.assertIn("| NFR-01 | Payment tests stop the merge | CI | POL-03 | — |", text)
 
     def test_japanese_report(self):
         self.f.write(os.path.join(self.f.design, "2-architecture.md"),
