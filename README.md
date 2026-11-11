@@ -21,12 +21,14 @@ Agent skills that turn a system's requirements into its design: first the driver
 | 4 | `high-level-design-to-detailed-design` | Stage 3 output and the technical policy, one component per run | Modules with contracts, placed in the policy's directories, and a verification approach at its test layers; states, decision tables and data constraints only for the modules where a mistake in the code is costly; the hand-off to implementation |
 | Review | `design-review` | The output of stage 2, 2b, 3 or 4 | Findings addressed to the stage that must decide |
 
+In Claude Code, a seventh skill, `design-chain`, runs the stages and reviews for you ("Run the chain with design-chain" below).
+
 Run the review in a fresh session, not in the one that wrote the design. Findings go back to the stage that owns the items; re-run that stage to accept or reject them when a finding is critical or major. Minor findings wait until the stage runs again for another reason. Review a stage again only after a critical or major finding has changed its items; that review looks only at what changed since the last one. The skills never write to `docs/quality/`, and never decide what the quality chain owns, such as a target or a check before release: when the design shows that a requirement should change, or that one is missing, a stage writes a request to the quality chain, and `docs/design/quality-chain-requests.md` collects the requests for you to answer and hand to the quality chain.
 
 ## Install
 
 ```sh
-# all six skills, into the current project
+# all seven skills, into the current project
 npx skills add Taro000/req-to-design
 
 # list the skills without installing
@@ -56,7 +58,7 @@ Each stage drafts everything first. It then rates every point it was unsure of b
 
 When you run a stage yourself, it asks you during the run. When it cannot ask you, because it runs as a subagent of another agent or where nobody watches, it writes the questions in its report under "Unanswered questions", with the same options, sets the report's status to "waiting for answers", commits its draft and stops. Write each answer in its question's row and run the stage again: it applies the answers and moves them to "Decisions". Until then, run no later stage and no review of it.
 
-A stage needs to run again when it is stale: since its last run, something it reads changed, a critical or major finding was addressed to it, a hand-off to it fell due, or an assumption its items rest on was overturned; or an answer waits under its "Unanswered questions" (`conventions.md`, "Re-running a stage").
+A stage needs to run again when it is stale: since its last run, something it reads changed, a critical or major finding was addressed to it, a hand-off to it fell due, or an assumption its items rest on was overturned; or an answer waits under its "Unanswered questions" (`conventions.md`, "Re-running a stage"). `scripts/status.py` lists the stale stages with their reasons, and what runs next.
 
 Each stage decides in full only what is hard to change later: the kinds of point that `conventions.md` lists for it, and any point whose breadth or severity is high. It hands the rest off, with the bounds to keep, to the later stage or to the implementation that will decide it, and each stage takes up the hand-offs addressed to it.
 
@@ -64,9 +66,25 @@ Each stage is a long task. The detailed design runs once per component; it write
 
 Reports and items show only the current state; git keeps the history. Each skill ends its run by committing the files it wrote, with the reasons in the commit message, and the next run reads what changed since then.
 
-Before it commits, each skill runs two scripts from its `scripts/` directory. `tables.py` writes the index tables of the reports, and the request document, from the YAML items, so that neither is a hand-made copy that can drift. `check.py` checks what needs no judgment, so that reviews do not spend findings on it: that every YAML file parses and no value is cut off at an unquoted ` #`, that every ID points at an item that exists, that the basis marks match the assumptions, that functions and drivers are allocated consistently from elements to interfaces and modules, that the OpenAPI and AsyncAPI documents have the operations, error statuses and codes of their interfaces, and that every gate and audit of the quality chain has its place in the technical policy. The skill fixes what the check reports in its own files. The scripts need Python 3.8 or later and no packages. To run the check yourself, from the project's root: `python3 <skill directory>/scripts/check.py` (for Claude Code, the skill directory is `.claude/skills/<skill>/`).
+Before it commits, each skill runs two scripts from its `scripts/` directory. `tables.py` writes the index tables of the reports, and the request document, from the YAML items, so that neither is a hand-made copy that can drift. `check.py` checks what needs no judgment, so that reviews do not spend findings on it: that every YAML file parses and no value is cut off at an unquoted ` #`, that every ID points at an item that exists, that the basis marks match the assumptions, that functions and drivers are allocated consistently from elements to interfaces and modules, that the OpenAPI and AsyncAPI documents have the operations, error statuses and codes of their interfaces, and that every gate and audit of the quality chain has its place in the technical policy. The skill fixes what the check reports in its own files. A third script, `status.py`, shows the state of the chain: which stages are stale and why, which wait for answers, which reviews are due, and what runs next. The scripts need Python 3.8 or later and no packages. To run the check yourself, from the project's root: `python3 <skill directory>/scripts/check.py` (for Claude Code, the skill directory is `.claude/skills/<skill>/`).
 
 Questions and artifacts follow your language and your project's documentation language. The skills themselves are written in English.
+
+### Run the chain with design-chain
+
+In Claude Code, `design-chain` runs the steps above for you. It finds the stages that are stale and runs each one with its skill as a subagent, one at a time from the top of the chain down. It runs a review after a stage's first run, and again only after a critical or major finding changed the stage. Findings, hand-offs and requests that the quality chain applied start the runs they call for, and you are asked nothing on the way, except the questions that only you can answer.
+
+- Start: "Run the design chain from docs/quality/. Technology constraints: … Engineering standards: … Budget and deadline: … Teams: … Roadmap: …". It runs stage 1 with what you gave, and goes on down to the detailed design of each component.
+- Continue: "Continue the design chain." after you answered questions in the reports, corrected an assumption, handed the request document to the quality chain and re-ran it, or after implementation raised findings, or when the chain stopped at a limit.
+- See the status: "Show the status of the design chain." It runs nothing, and says what is stale and why, what waits for answers, what runs next, and what will make a stage stale later. You can also run the script yourself: `python3 .claude/skills/design-chain/scripts/status.py`.
+
+When runs wrote questions that nobody could answer during them, it runs every stage that does not depend on them first, then asks you all of the questions together, grouped by stage, writes your answers into the reports, and resumes those stages. Stages below a stage that waits for answers stay stopped until then.
+
+It stops on its own when an item goes back to a value it had earlier in the same invocation, at its limits (10 runs per invocation and 3 runs of one stage, by default), or when critical findings remain after two rounds, and says why. Change the limits in the request ("continue, with up to 20 runs") or in `docs/design/design-chain.yaml`. It ends with the runs and their commits, the questions with your answers, the open assumptions, which you may correct, and the requests to the quality chain that are open or answered, with the stages that each one will make stale. Each stage commits its own run as usual; `design-chain` commits nothing itself and never pushes.
+
+Because no one checks a stage before it runs, an assumption that is wrong and not rated high flows down the chain. Each run re-rates the open assumptions it depends on, and asks about one once enough items rest on it; skim the open assumptions at the end, and correct the ones that are wrong.
+
+In other agents, `design-chain` runs nothing: it shows the next stage to run, what to ask it in a new session, and the questions that wait.
 
 ## Artifacts
 
@@ -76,6 +94,7 @@ docs/design/
 ├── 4-detailed-design.md, 4-detailed-design/              an index with the hand-off to implementation, and one report per component
 ├── reviews/                                              the latest review of each stage
 ├── design-context.yaml                                   the design context: constraints, teams, changes, stakeholders, current structure
+├── design-chain.yaml                                     optional: the limits of design-chain
 ├── drv/  dec/  elm/  pol/  ifc/  dat/  mod/  fnd/       one YAML file per item
 ├── hnd/                                                  one YAML file per hand-off: a point a stage leaves for a later stage or the implementation to decide
 ├── das/                                                  one YAML file per assumption made without asking

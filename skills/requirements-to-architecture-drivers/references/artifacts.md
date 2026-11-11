@@ -32,6 +32,7 @@ docs/design/
 ├── 4-detailed-design/ELM-02.md        stage 4 report, one per component
 ├── reviews/3-high-level-design.md     review report, one per reviewed stage (stage 4: per component, reviews/4-detailed-design-ELM-02.md): the latest review
 ├── quality-chain-requests.md          the request document: the requests to the quality chain, written by scripts/tables.py
+├── design-chain.yaml                  optional: the limits that design-chain keeps, set by the user
 ├── design-context.yaml                the design context: constraints, teams, changes, stakeholders, current structure
 ├── drv/DRV-01.yaml …                  stage 1: architecture drivers
 ├── dec/DEC-01.yaml …                  stages 2, 2b, 3 and 4: design decisions
