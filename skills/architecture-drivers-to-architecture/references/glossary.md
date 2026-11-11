@@ -112,7 +112,8 @@ Use these terms for the working language. For a language not listed, or a term m
 | element: component / data store / external system / node | 要素: コンポーネント / データの置き場所 / 外部のシステム / 実行環境 |
 | responsibility | 責務 |
 | view | ビュー |
-| views: context / runtime / deployment / information / code structure | ビュー: 外部との関係 / 実行時の構成 / 配置 / 情報 / コードの分け方 |
+| views: context / runtime / deployment / information | ビュー: 外部との関係 / 実行時の構成 / 配置 / 情報 |
+| runtime (of a component: what its code runs on, such as Node.js or the JVM; not a node) | ランタイム |
 | walkthrough | 通し確認 |
 | threat model | 脅威のモデル |
 | trust boundary | 信頼の境界 |
@@ -128,7 +129,9 @@ Use these terms for the working language. For a language not listed, or a term m
 | stack (the language, runtime, framework and main libraries of one kind of component) | 技術の組み合わせ |
 | main library | 主なライブラリ |
 | repository | リポジトリ |
+| code structure (the tree of directories and the dependencies the rules allow, in the technical policy's report) | コードの分け方 |
 | directory layout: by business capability / by technical layer | ディレクトリの分け方: 業務の機能ごと / 技術の層ごと |
+| conventions inside the code (errors, logs, settings and secrets, texts for people) | コードの中の約束事 |
 | dependency rule | 依存の規則 |
 | test layer | テストの層 |
 | test layers: unit / integration / contract / end-to-end / load | テストの層の名前: 単体 / 結合 / 契約 / 端から端 / 負荷 |

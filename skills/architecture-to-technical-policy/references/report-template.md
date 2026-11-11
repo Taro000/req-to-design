@@ -45,7 +45,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 <The decisions of stage `technical-policy`. Under the table, a comparison table for each decision whose options were close: the options against the drivers they touch, in rank order.>
 
 ## Repositories and directories
-<The tree of directories of each repository, two or three levels deep, with the component or the purpose of each top-level directory. The rules that the tree follows, and the dependency rules, are in the repository POL.>
+<The code structure, which stage 2 leaves to this stage: the tree of directories of each repository, two or three levels deep, with the component, the owning team when the design context names several, or the purpose of each top-level directory; then a Mermaid flowchart of the dependencies that the dependency rules allow between those directories, and the rules that hold the boundaries inside a component. It shows what a change scenario touches, and which teams. The rules that the tree follows, and the dependency rules with their checks, are in the repository POL.>
 
 ## Pipeline
 <A Mermaid flowchart of the pipeline's steps, from a push to a release, with what each one blocks. The steps themselves are in the pipeline-and-code POL.>
@@ -125,7 +125,7 @@ What was already decided (excerpt):
 | Source | Fixes | Followed by |
 |---|---|---|
 | DEC-01 | One application with enforced modules, a stock sync worker and a server-rendered storefront | POL-01, POL-02 |
-| DEC-04 | TypeScript on Node.js | POL-01 |
+| DEC-04 | Node.js, in containers on the application platform | POL-01 |
 | DEC-02 | An adapter for each payment provider | POL-03 |
 | DEC-09 | The providers' hosted card fields | POL-01 |
 | PC-02 | A team of four that knows TypeScript and PostgreSQL | POL-01 |
@@ -177,6 +177,16 @@ store/
 │   └── config/            the shared lint, type and format settings
 └── infra/                 the platform's definitions (ELM-08)
 ```
+
+```mermaid
+flowchart LR
+  sf[apps/storefront - ELM-01] --> cfg[packages/config]
+  api[apps/store-api - ELM-02] --> cfg
+  sync[apps/stock-sync - ELM-03] --> cfg
+  sf -. client generated from its spec .-> api
+```
+
+No app imports another (no-cross-app): the storefront reaches the Store API only through the client generated from its spec. Inside a component, a capability reaches another only through its index.ts (capability-entry), nothing under a domain/ directory imports a framework, the database client or an adapter (pure-domain), nothing under an application/ directory imports an adapter (adapters-inward), and only payments/adapters/ imports the payment providers' client libraries (provider-sdk-in-adapters). TEAM-01 owns every directory, so the tree names no team.
 
 Pipeline:
 
@@ -240,7 +250,7 @@ id: POL-01
 title: Stacks of the store's components
 status: active
 basis: inferred
-basis_note: The frameworks are confirmed in question 1 (DEC-11); TypeScript on Node.js follows DEC-04 and PC-02; the libraries and the shared tools are inferred
+basis_note: The frameworks are confirmed in question 1 (DEC-11); Node.js follows DEC-04, and TypeScript the team's skills (PC-02); the libraries and the shared tools are inferred
 premises: [PC-02]
 scope: technology
 addresses: [DRV-09, DRV-01]
@@ -307,6 +317,8 @@ dependency_rules:
     check: dependency-cruiser rule provider-sdk-in-adapters, in the pipeline's check step
   - rule: Nothing under a domain/ directory imports a framework, the database client or an adapter
     check: dependency-cruiser rule pure-domain, in the pipeline's check step
+  - rule: Nothing under an application/ directory imports from adapters/; each adapter implements an interface that its capability's application/ or domain/ defines
+    check: dependency-cruiser rule adapters-inward, in the pipeline's check step
   - rule: A capability imports another only through the other's index.ts
     check: dependency-cruiser rule capability-entry, in the pipeline's check step
 as_is: new
@@ -331,6 +343,8 @@ rules:
     check: A test that logs a payment and finds no card number, name or address in the output
   - rule: Settings come from environment variables, which each component validates when it starts, refusing to start when one is missing. Secrets come from the secret store of the cloud account (TC-02)
     check: A test that starts each component without one of its settings; a secret scan in the check step
+  - rule: The storefront's texts for buyers live in one message file per language under apps/storefront/messages/, and its pages hold keys; dates and amounts are shown with one formatter, from the buyer's language and the order's currency
+    check: The lint rule that forbids literal text in the storefront's pages, in the check step
 pipeline:
   - step: check
     when: Every push and every pull request
@@ -407,7 +421,7 @@ id: DEC-11
 title: Frameworks of the store's components
 status: active
 basis: confirmed
-basis_note: Confirmed in question 1; TypeScript on Node.js follows DEC-04 and PC-02
+basis_note: Confirmed in question 1; Node.js follows DEC-04, and TypeScript PC-02
 premises: [PC-02]
 stage: technical-policy
 question: On which frameworks are the Store API, the stock sync worker and the storefront built?

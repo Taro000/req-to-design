@@ -23,7 +23,7 @@ A decision answers one question the design must settle ("how does checkout survi
 - a constraint leaves a choice open (which managed database the platform offers);
 - a later stage would otherwise make a choice of stage 2's full-depth kinds silently.
 
-Do not write decisions for what any competent implementation would do the same way. Those go in the "standard practice is enough" lines. Nor write them for what a later stage decides, such as the key or the error codes of one operation, or the value of a timeout ("Deferral").
+Do not write decisions for what any competent implementation would do the same way. Those go in the "standard practice is enough" lines. Nor write them for what a later stage decides, such as the key or the error codes of one operation, or the value of a timeout ("Deferral"), or for what stage 2b decides for every component: a language beyond what the runtime fixes, a framework or a library, the repositories and the layout of the code, the tests, the pipeline and the conventions inside the code. Decide the runtime and the platform that they must fit, and leave them to stage 2b; it needs no hand-off, since its workflow decides them all.
 
 ## Options
 

@@ -1,6 +1,6 @@
 ---
 name: architecture-drivers-to-architecture
-description: Stage 2 of 4 in the design chain. Designs the architecture from the ranked drivers of requirements-to-architecture-drivers - the overall structure and the platforms first, then decisions and mechanisms from the top of the ranking down, each with real options, the rejected ones and why, gains, costs, sensitive points, trade-offs, debts and deferrals. Walks eight design concerns, draws a threat model, defines the elements (components, data stores, external systems, nodes) with their functions, drivers and owning team, draws five Mermaid views (context, runtime, deployment, information, code structure), and walks every CUJ and primary driver through the design. Drafts first, then asks only about points of high breadth or severity and records the rest as assumptions. Use it when someone wants an architecture, a system design, component boundaries, platform choices, a deployment design or design decisions with their rationale. Next, review it with design-review, then run architecture-to-technical-policy.
+description: Stage 2 of 4 in the design chain. Designs the architecture from the ranked drivers of requirements-to-architecture-drivers - the overall structure and the platforms first, then decisions and mechanisms from the top of the ranking down, each with real options, the rejected ones and why, gains, costs, sensitive points, trade-offs, debts and deferrals. Walks eight design concerns, draws a threat model, defines the elements (components, data stores, external systems, nodes) with their functions, drivers, owning team and runtime, draws four Mermaid views (context, runtime, deployment, information), and walks every CUJ and primary driver through the design. Drafts first, then asks only about points of high breadth or severity and records the rest as assumptions. Use it when someone wants an architecture, a system design, component boundaries, platform choices, a deployment design or design decisions with their rationale. Next, review it with design-review, then run architecture-to-technical-policy.
 license: MIT
 metadata:
   version: "0.2.0"
@@ -8,7 +8,7 @@ metadata:
 
 # Architecture drivers → architecture
 
-Stage 2 of the design chain. It takes the architecture drivers (DRV) from stage 1 and produces the architecture: design decisions (DEC), the elements of the system (ELM), five views, and the assumptions it made without asking (DAS). Stage 3 then specifies how the elements talk to each other and to the outside.
+Stage 2 of the design chain. It takes the architecture drivers (DRV) from stage 1 and produces the architecture: design decisions (DEC), the elements of the system (ELM), four views, and the assumptions it made without asking (DAS). Stage 2b then decides the technical policy that the code of every component follows, and stage 3 specifies how the elements talk to each other and to the outside.
 
 An architecture is the set of decisions that are expensive to change: how the system is split, where data lives, how the parts communicate, where they run. Each such decision serves some drivers at the expense of others. Writing down the options considered, why one was chosen and what it costs is what lets the next person change the design safely, instead of rediscovering why it is the way it is.
 
@@ -16,13 +16,15 @@ Design from the drivers down, not from a favourite structure up. Make the decisi
 
 The quality chain states requirements and leaves the design to this chain. Two kinds of choice it leaves are made here first: the platforms and device support (native or web, operating systems, browsers, versions) when no technology constraint fixes them, and the mechanisms that produce the behaviour its functional requirements state (failover, idempotency, reconciliation).
 
+This stage decides what each component runs on (its runtime and its platform), not how its code is built. The language, framework and libraries of each kind of component, the repositories and the layout of the code, the tests and the pipeline, and the conventions inside the code are the technical policy's: stage 2b decides them once for every component, within this stage's decisions.
+
 ## Read first
 
 - `references/conventions.md`: the design chain, what the quality chain leaves to the design, findings, the working language, judgment basis marks, the question protocol, decisions and assumptions, current state only, re-runs and finishing a run. Follow it exactly.
 - `references/artifacts.md`: where files go, and the schemas for DEC, ELM, HND, DAS, FND and QCR (and the DRV items and `design-context.yaml` you read).
 - `references/structures-and-mechanisms.md`: overall structures, platforms and device support, design mechanisms by quality, and the eight design concerns.
 - `references/decisions.md`: how to write and compare options, sensitive points, trade-offs, business decisions, parameters, debt, deferral and transition.
-- `references/views.md`: the five views, consistency rules, walkthroughs, the threat model and teams.
+- `references/views.md`: the four views, consistency rules, walkthroughs, the threat model and teams.
 - `references/report-template.md`: the report layout and a worked example.
 - `references/glossary.md`: terms for the working language.
 - `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
@@ -69,7 +71,11 @@ Walk all eight concerns in `structures-and-mechanisms.md` ("Design concerns"). F
 
 ### 5. Elements and allocation
 
-Define the elements: components (deployable parts), data stores, external systems, and nodes (where things run). Each external system comes from an EXT entry in `context.yaml`, which it lists in `premises`, or from a decision that adds one (a second provider, a managed service). Then allocate:
+Define the elements: components (deployable parts), data stores, external systems, and nodes (where things run). Each external system comes from an EXT entry in `context.yaml`, which it lists in `premises`, or from a decision that adds one (a second provider, a managed service).
+
+Write in each component's `technology` the runtime it runs on and its platform (Node.js in containers; the browsers that the decision on platforms names), and in the `technology` of a data store or a node its product or managed service. Give the components that are built the same way (the servers, the workers, the web apps) the same runtime, unless a driver or a constraint needs otherwise. Name no language beyond what the runtime fixes, and no framework or library: stage 2b chooses them for each kind of component, within the runtime.
+
+Then allocate:
 
 - every FR to at least one component;
 - every driver to the elements that carry it;
@@ -79,7 +85,7 @@ A component that two teams must change together for most change scenarios is a r
 
 ### 6. Views
 
-Draw the five views in Mermaid, following `views.md`: context, runtime, deployment, information and code structure. Use the element IDs in every view and check the consistency rules.
+Draw the four views in Mermaid, following `views.md`: context, runtime, deployment and information. Use the element IDs in every view and check the consistency rules. How the code is organized into repositories, directories and packages is not a view of this stage: stage 2b draws it, with the dependency rules that hold it.
 
 ### 7. Walkthroughs
 
@@ -120,7 +126,8 @@ Write the DEC, ELM, HND and FND items as you draft them in steps 1 to 11, and th
 - Every flow that crosses a trust boundary has been walked for the six kinds of threat.
 - Every decision has at least two options (or the reason only one was possible), a rationale, gains and costs.
 - Every design parameter whose value this stage sets is of its full-depth kinds or rates high, and has its basis. Every other sensitive point names its parameter, and its value is handed off with its stage and trigger.
-- The five views use the same elements and IDs, and pass the consistency rules.
+- The four views use the same elements and IDs, and pass the consistency rules.
+- Every component's `technology` names its runtime and platform, and nothing that stage 2b decides. No decision of this stage chooses a framework or a library, the repositories or the layout of the code, a test layer or a test double, the pipeline, or a convention inside the code.
 - No point of this stage's full-depth kinds, and none that rates high, is handed off unless its deferral was decided as a business decision ("Decision depth" in `conventions.md`).
 - Every open hand-off addressed to this stage whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as a request to the quality chain.
 - Every open finding addressed to this stage is accepted or rejected.
@@ -135,6 +142,7 @@ Write the DEC, ELM, HND and FND items as you draft them in steps 1 to 11, and th
 - Taking a platform for granted. When no constraint fixes native or web, or which systems and browsers, a platform picked by habit can leave out users that the quality chain counts on.
 - Decisions with one option. If there was no alternative, say what forced it; otherwise the decision is only a description.
 - Deciding here what a later stage will know better: the key and the error codes of each operation, the value of each timeout or threshold. They are redone once the interfaces and the code are designed. Decide the principle and the bounds, and hand off the rest.
+- Deciding how the code is built: a framework, the layers inside a component, a way to test. Stage 2b decides them once for every component of a kind, from the drivers and the teams; a layering decided here binds the code before anyone has weighed the layouts, and contradicts the one that stage 2b then chooses.
 - Boxes with no decision behind them. An element is not designed until someone can say why it exists and what it is for.
 - Copying the quality chain into the design. A decision or an element that restates an FR or a constraint goes stale when the chain changes; refer to it by ID.
 - Ignoring the team. A split that makes most changes cross two teams is slower than either team alone.

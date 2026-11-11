@@ -39,7 +39,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 | ID | Label | Kind | Source | Basis |
 |---|---|---|---|---|
 <!-- /generated -->
-<Technology constraints (the DINs taken in included), project constraints, teams, anticipated changes, stakeholders. Label, by hand: a few words, not the statement. A missing input is an entry too: its statement says what is missing, its source names the question or the DAS, and its label says "missing".>
+<Technology constraints (the DINs taken in and the organization's engineering standards included), project constraints, teams, anticipated changes, stakeholders. Label, by hand: a few words, not the statement. A missing input is an entry too: its statement says what is missing, its source names the question or the DAS, and its label says "missing".>
 <One line on platforms and device support: the TC that fixes them, or "No input fixes them; stage 2 decides them from the kinds of device in the contexts of use.">
 
 ## Concern inventory

@@ -27,7 +27,7 @@
 | versioning | How the interface changes without breaking its consumers |
 | observability | What it logs and emits for investigations and operations |
 | sli_bindings | For each quality-chain SLI whose events it produces: which events, the fields the counting rules need, and the method ("SLI bindings") |
-| spec | The OpenAPI or AsyncAPI document, for the interfaces that get one ("Specs") |
+| spec | The OpenAPI or AsyncAPI document, for the interfaces whose spec the technical policy says is written by hand ("Specs") |
 
 An FR names an interface by its kind and, for an external system, its EXT ID (`interface: ["screen: buyer checkout", EXT-01]`). Everything in this table is decided here, with one exception: an FR may name the endpoint of an interface that already exists in a running product. That endpoint is a fact about the current system, not a design input and not a request to the quality chain; the IFC keeps it (`as_is: keep`) unless a decision changes it.
 
@@ -35,8 +35,8 @@ An FR names an interface by its kind and, for an external system, its EXT ID (`i
 
 | Kind | Also specify |
 |---|---|
-| http | Resource paths and methods; status codes; paging for lists; rate limits; request and response schemas, for an interface that gets a spec ("Specs") |
-| event | The channel or topic; who publishes and who subscribes; the ordering key; the delivery guarantee; how consumers recognize duplicates; how long messages are kept; the message schema, for an interface that gets a spec ("Specs") |
+| http | Resource paths and methods; status codes; paging for lists; rate limits; request and response schemas, for an interface whose spec this stage writes ("Specs") |
+| event | The channel or topic; who publishes and who subscribes; the ordering key; the delivery guarantee; how consumers recognize duplicates; how long messages are kept; the message schema, for an interface whose spec this stage writes ("Specs") |
 | file | The name pattern; layout and encoding; who writes it and when; how the reader knows it is complete; what happens to a malformed file |
 | screen | Its purpose in the CUJ step; the data it shows and takes; its actions and where each leads; error and empty states |
 | batch | The schedule or trigger; input and output; how a failed run restarts; how long a run may take (from the NFRs) |
@@ -130,16 +130,27 @@ When the vantage cannot be realized (the system cannot reach the person's device
 Where the events come from:
 
 - When the SLI has an `existing_source`, bind to that telemetry, list the OPF in the item's `premises`, and add only the fields it lacks.
-- When nothing produces the events, design it here: the log line, the event or the probe, the element that emits it, and its fields. Follow the shared conventions for logs; personal and payment data never go into the fields unmasked.
+- When nothing produces the events, design it here: the log line, the event or the probe, the element that emits it, and its fields. Follow the shared conventions for the request ID and the log fields, and the technical policy for how the code writes its logs; personal and payment data never go into the fields unmasked.
 - When producing them needs a new behaviour of the system, something no FR provides (the system never learns that a parcel was delivered), write a request to the quality chain and do not add the behaviour. Telemetry that people do not see (a log line, a timing beacon, a probe) is design, and is added here.
 
 ## Specs
 
-Write a spec for every HTTP or event interface with an external system, called from the users' devices, or used by another team: its whole contract is decided here, schema included ("Decision depth" in `conventions.md`). Write the decided parts only, and mark provisional values, with the DAS that records each one.
+The technical policy decides, for each kind of interface, how its spec is made (stage 2b, the policy of scope `specs`): written by hand before the code when its other side is built apart from this system's code, generated from the code otherwise, the other side's own document, or none. This stage writes a spec only where the policy says to. For each HTTP or event interface, find the entry whose `interfaces` cover its kind, and follow its `made`:
+
+| `made` | This stage |
+|---|---|
+| `by-hand` | Writes the spec under `ifc/specs/`, with the whole contract, schema included ("Decision depth" in `conventions.md`) |
+| `from-code` | Writes no spec. The IFC holds what the consumers rely on, and the schema is handed off to implementation, which generates it with the tool that the entry's `how` names |
+| `owner` | Writes no spec. The IFC links the owner's document, and holds what the design relies on of it. When a component of this system serves the interface (the endpoints of a library it uses), the schema is handed off to implementation as for `from-code`, with the owner's document in the hand-off's `bounds` |
+| `none` | Writes no document: the IFC is the contract (screens, files, batch jobs) |
+
+For a `by-hand` interface, write the decided parts only, and mark provisional values, with the DAS that records each one:
 
 - OpenAPI, for each such HTTP interface: paths and methods; request and response schemas with required fields and formats; every error response, using the shared error schema; the security scheme; the idempotency header where it applies.
 - AsyncAPI, for each such event interface that this system publishes or defines: channels; messages with their payload schemas and headers (event ID, schema version, the time the event happened); who publishes and who subscribes; the delivery and ordering notes from the IFC.
 
-Name each file after its interface (`checkout.openapi.yaml`, `order-events.asyncapi.yaml`) and keep one document per interface, so that each can change on its own. For an external system's interface, link the owner's document instead of writing one.
+Name each file after its interface (`partner-orders.openapi.yaml`, `order-events.asyncapi.yaml`) and keep one document per interface, so that each can change on its own.
 
-Every other HTTP or event interface between elements gets no spec. Its IFC holds what its consumers rely on: its operations, its errors and their codes, what its idempotency keys mean, how it answers when an outcome is unknown, and the states and events its consumers see. The schemas of its requests, responses and messages are handed off to implementation, which generates them from the code: write one hand-off for each component that provides such interfaces, with the IFCs in `origin`, and the IFCs and the shared conventions in `bounds`. A schema written here as well would be a second copy of the code, and would drift from it.
+A `from-code` interface gets no spec here. Its IFC holds what its consumers rely on: its operations, its errors and their codes, what its idempotency keys mean, how it answers when an outcome is unknown, and the states and events its consumers see. The schemas of its requests, responses and messages are handed off to implementation, which generates them from the code: write one hand-off for each component that provides such interfaces, with the IFCs in `origin`, and the IFCs, the shared conventions and the specs policy in `bounds`. A schema written here as well would be a second copy of the code, and would drift from it.
+
+An interface that no entry covers, or whose entry goes against the policy's own rule (another party builds against an interface whose spec the policy says is generated from the code), is a finding addressed to `architecture-to-technical-policy`, major when its other side is built apart from this system's code. This stage does not settle it: until the policy changes, follow the entry, or the policy's default when no entry covers the interface, and hand the schema off. Stage 2b's next run decides the rule, and this stage writes the spec then if the rule asks for one.

@@ -11,7 +11,7 @@
 - Screens
 - Verification approach
 
-Everything here except the verification approach is for the modules at full depth ("Depth of modules" in `modules.md`), and for the tables another component reads directly. For a module at bounds depth, implementation decides its states, rules, algorithms, concurrency, error handling, data, caches and screens, within its MOD item, the IFCs it realizes and the DATs it writes. Every module, at either depth, has a verification approach.
+Everything here except the verification approach is for the modules at full depth ("Depth of modules" in `modules.md`), and for the tables another component reads directly. For a module at bounds depth, implementation decides its states, rules, algorithms, concurrency, error handling, data, caches and screens, within its MOD item, the IFCs it realizes, the DATs it writes and the technical policies. Every module, at either depth, has a verification approach.
 
 ## States
 
@@ -49,7 +49,7 @@ Say what runs at the same time inside the component (requests, workers, schedule
 
 ## Error handling
 
-For each module at full depth: which errors it handles itself and how, which it turns into its own errors for its caller, and which it passes on. Where the component meets the outside, errors become the IFC's error contract. Every error caught is either recovered from or logged with the request ID; none is swallowed.
+For each module at full depth: which errors it handles itself and how, which it turns into its own errors for its caller, and which it passes on. The technical policy's conventions inside the code say how a failure is signalled and passed on, where errors become the IFC's error contract, and that none is swallowed (the pipeline-and-code policy); this stage says which errors each module meets and what it does about each, within them.
 
 ## Physical data
 
@@ -75,13 +75,13 @@ For a screen that a module at full depth serves: its states, in the module's sta
 
 ## Verification approach
 
-For every module, at either depth, list in the MOD's `verification` what must be verified and how, without writing the tests:
+For every module, at either depth, list in the MOD's `verification` what must be verified and how, without writing the tests. Each check runs at a test layer of the technical policy (stage 2b, the policy of scope `testing`), with the doubles and environments it has:
 
 | Checks | How |
 |---|---|
 | FR-03, criteria 1 to 3 | Unit tests generated from the decision table |
-| IFC-01's error contract | Contract tests against checkout.openapi.yaml |
-| The module's share of the NFR-02 budget | A load test at the sale peak (OPF-03) in staging |
-| Analysability (an internal QR) | A CI check that every log line carries request_id |
+| IFC-01's error contract | Integration tests of POST /v1/checkout, one for each error case, with the fake payment providers |
+| A charge that provider A completes after its timeout is taken once | An integration test in which the fake provider answers after its timeout |
+| The module's share of the NFR-02 budget | No layer before release: the policy has no load layer, and QCR-04 asks the quality chain for a load test of checkout |
 
-For a module at bounds depth, these checks are what holds the code to the summary of its contract and to its acceptance criteria. In the report, describe only what serves several modules: the test doubles for external systems, the environments, the load tests and the checks in CI.
+For a module at bounds depth, these checks are what holds the code to the summary of its contract and to its acceptance criteria. A check that needs a layer, a double or an environment that the policy lacks, such as a double that can answer late where the policy's can only answer or fail, is a finding addressed to `architecture-to-technical-policy`. A budget that only a load test can check is the exception. The policy has a load layer only where a gate of the quality chain asks for one, and whether to have the gate is the quality chain's to decide. So say in the verification approach that no layer checks the budget before release, and name the request to the quality chain that asks for the gate: stage 3 writes it when a budget rests on numbers that nothing has measured, and this stage writes one only when none exists. The module lists the request in `premises`, since its verification changes when the gate comes. In the report, name the layers, doubles and environments of the policy that the component's checks use, and describe only the scenarios that several modules share, such as what the fake providers must do for the checks of the payment path. The doubles, the environments and the checks in CI themselves are the policy's.
