@@ -23,6 +23,12 @@ Use these terms for the working language. For a language not listed, or a term m
 | report status: draft / waiting for answers / answers applied | 報告書の状態: 下書き / 質問待ち / 回答反映済み |
 | unanswered questions (the questions a run writes in its report when nobody can answer during the run) | 未回答の質問 |
 | stale stage (one that has something to process since its last run) | 古い段 |
+| run (of a stage or a review) | 実行 |
+| invocation (of design-chain) | 起動 |
+| limit (on the runs of one invocation) | 上限 |
+| oscillation (an item that goes back to an earlier value, or a rejected finding raised again) | 振動 |
+| round (a run of a stage that closes critical findings addressed to it) | 巡 |
+| subagent | サブエージェント |
 | inputs as of (the commit the inputs were read at) | 入力の基準 |
 | detailed design status: not started / draft / waiting for answers / answers applied | 詳細設計の状態: 未着手 / 下書き / 質問待ち / 回答反映済み |
 | business decision | 事業の判断 |
