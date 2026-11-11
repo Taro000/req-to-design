@@ -1,16 +1,18 @@
 # Views
 
 ## Contents
-- The five views
+- The four views
 - Consistency rules
 - Walkthroughs
 - Threat model
 - Teams
 - Large systems
 
-## The five views
+## The four views
 
 Draw each view as a Mermaid diagram in the report, with a short table under it when the diagram cannot carry the detail. Label every box with its element ID and name.
+
+How the code is organized (its repositories, directories and packages, which may depend on which, and which team owns each) is not a view of this stage. Stage 2b draws it in its report and holds it with dependency rules that CI checks, from the elements, the deployment and the teams that these views show.
 
 ### Context
 
@@ -41,17 +43,12 @@ Nodes (environments, zones, managed services), which components and data stores 
 
 The main data, the element that owns each piece (the only one that writes it), and how data flows between elements and from data producers. Stage 3 details the entities; here the point is ownership and flow.
 
-### Code structure
-
-How the code is organized into repositories, packages or modules; which may depend on which; which team owns which. It answers: what a developer must change for a given change scenario, and which teams that involves.
-
 ## Consistency rules
 
-- Every element appears in the views where its kind belongs: components in runtime, deployment and code structure; data stores in runtime, deployment and information; external systems in context and runtime.
+- Every element appears in the views where its kind belongs: components in runtime and deployment; data stores in runtime, deployment and information; external systems in context and runtime.
 - The same element has the same ID and name in every view.
 - Every connector in the runtime view joins elements that exist, and every data flow in the information view follows a connector in the runtime view.
 - Every component runs on a node in the deployment view.
-- Every module or package in the code structure belongs to one component.
 
 ## Walkthroughs
 
@@ -83,7 +80,7 @@ A step or a driver that cannot be walked through is a gap: fix the design, or re
 
 ## Teams
 
-When the design context names teams, mark each component and each code module with its owning team. Look for components that two teams must change together for most change scenarios: they slow both teams down. Either move the boundary, or record the risk.
+When the design context names teams, mark each component with its owning team. Look for components that two teams must change together for most change scenarios: they slow both teams down. Either move the boundary, or record the risk. Stage 2b then splits the repositories along these owners.
 
 ## Large systems
 

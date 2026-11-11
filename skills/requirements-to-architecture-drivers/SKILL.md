@@ -28,7 +28,7 @@ Users are not the only source. Budget owners, the people who build and run the s
 
 - `docs/quality/`: `context.yaml` (the boundary, users, CUJs, constraints CON, external systems EXT, operational facts OPF, design inputs DIN, hints), `qiu/`, `kpi/`, `fr/`, `frp/`, `qr/`, `nfr/`, `sli/`, `ebp/`, `qas/` and the four reports. Read them; never write to them. If they do not exist, accept the same information from the user and record its source.
 - What the user knows about the solution side. The quality chain decides none of it; take it from the input:
-  - technology constraints: technologies that must or must not be used, the platform, external services and what they promise (SLAs, rate limits). Every DIN in `context.yaml` is a candidate;
+  - technology constraints: technologies that must or must not be used, the platform, external services and what they promise (SLAs, rate limits). Every DIN in `context.yaml` is a candidate. The organization's engineering standards are technology constraints too: the languages, frameworks, tools and CI it mandates or prohibits, and its rules for code review and tests. Record each one, mandated or prohibited, with its source; stage 2 designs within them, and stage 2b's technical policy follows them and decides only what they leave open;
   - project constraints: budget, deadline, team size and skills;
   - team structure: which teams exist and what each owns;
   - anticipated changes: the roadmap, changes already expected, the variants the product must support (markets, tenants, kinds of device).
@@ -57,7 +57,7 @@ If the repository holds code or infrastructure definitions, read them before any
 
 ### 3. Design context and stakeholders
 
-Record the four kinds of solution-side input in `design-context.yaml`. Take every DIN in as a technology constraint candidate: a TC with `source: context.yaml DIN-xx`, or set aside in the concern inventory with a reason. Take in each CON the same way when it binds what the design may use or do (`source: context.yaml CON-xx`); the other CONs stay in the `premises` of the drivers they shape. Follow `drivers.md` ("Constraints").
+Record the four kinds of solution-side input in `design-context.yaml`, the organization's engineering standards among the technology constraints. Take every DIN in as a technology constraint candidate: a TC with `source: context.yaml DIN-xx`, or set aside in the concern inventory with a reason. Take in each CON the same way when it binds what the design may use or do (`source: context.yaml CON-xx`); the other CONs stay in the `premises` of the drivers they shape. Follow `drivers.md` ("Constraints").
 
 Platforms and device support (operating systems, browsers and their versions, native or web) are a technology constraint only when an input fixes them: a DIN, or the user. Otherwise leave them to stage 2, which decides them from the kinds of device in the contexts of use, and say so in the report. Never infer a platform from the quality chain: "smartphone" in a context of use is a kind of device, not a choice of operating systems.
 

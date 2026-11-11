@@ -15,13 +15,14 @@ Choose the overall structure from the primary drivers and the constraints. These
 | One deployable application with enforced internal modules | One or two teams; an early product; parts with similar load and availability needs | Everything is deployed and scaled together; module boundaries decay unless dependency rules are checked |
 | Several services split by business capability | Several teams that must release independently; parts with very different load, availability or security needs | Failures between services; data consistency across services; more to run and observe |
 | Parts that react to published events | Changes must reach many consumers; producers must not wait for consumers | Consistency arrives later; flows are harder to follow; duplicates and ordering need handling |
-| Layers inside a part (interface, application, domain, infrastructure) | Almost every part that holds business rules | Layers leak when nobody checks the direction of dependencies |
 | Pipeline or batch stages | Data processing, imports, settlement | Latency between stages; a failure in the middle needs a restart point |
 | A client that holds state (a single-page app or a native app) | Rich interaction, work while offline, frequent small updates | Two places to keep correct; a slower first load; harder for search engines |
 | Server-rendered pages | Content and forms; search indexing; simple clients | Less interaction without a round trip to the server |
 | Functions the platform runs on demand | Spiky, event-triggered work with little steady load | Start-up delay; the platform's limits; tied to one vendor |
 
 Screen first: drop every option that breaks a non-negotiable constraint (the team cannot run it, the platform does not offer it, the budget cannot pay for it). Then compare what remains against the primary drivers, in rank order, as `decisions.md` describes.
+
+How the code inside a part is organized (by business capability or by technical layer, with the layers inside it and the rules on its dependencies) is not an overall structure. Stage 2b decides it once for every component, with the check in CI that holds it: decide here only the parts and what they share.
 
 ## Platforms and device support
 
@@ -62,21 +63,22 @@ A design mechanism is a known way to produce a response. Pick the ones that prod
 
 ### Modifiability and variability
 - Hide what is likely to change behind an interface: a payment provider, a pricing rule, a map service.
-- Split by reason to change: code that changes for the same reason lives together.
+- Split the elements by reason to change: what changes for the same reason lives in one element. Inside a component, stage 2b's layout of the directories does the same for the code.
 - Point dependencies toward stable parts; never let a stable part depend on a volatile one.
 - Make known variants configuration, not code: settings per tenant, feature flags, rule tables.
 - Agree contracts between parts and version them, so one part can change without the other.
 
 ### Analysability and observability
-- One request ID carried through every hop, into every log line.
-- Structured logs with the fields the SLIs and investigations need.
+- One request ID carried through every hop, so that one request can be followed across the elements. Stage 3 names its header and the log fields that the SLIs need; stage 2b decides how the code writes its logs.
 - Metrics per CUJ step; traces across parts; health and diagnostic endpoints.
 - A place in the design to observe each SLI's events from its vantage: the users' devices for a user-side SLI, the boundary in front of the system for a system-boundary SLI, a prober for a synthetic SLI, the data itself for a data SLI. Stage 3 binds each SLI to the interface or data that produces its events.
 
 ### Testability and deployability
-- Seams to replace dependencies in tests: an interface for every external system, an injectable clock and ID generator.
-- Contract tests between parts that are released separately.
-- Small, backward-compatible changes; feature flags; gradual rollout with automatic rollback; infrastructure defined as code.
+Stage 2b decides them, once for every component, in its technical policy: the test layers, the test doubles and their seams (the clock and IDs included), the environments and their test data, the pipeline, and how a release is deployed and rolled back. Choose none of them here. This stage gives them what they rely on:
+- an adapter of its own for each external system ("Interoperability"), the seam where stage 2b's test doubles plug in;
+- a deployment in which each part that must be released on its own can be, which the deployment view shows.
+
+A driver of testability or deployability is met by these and by stage 2b's policies: name stage 2b in its walkthrough for what it decides.
 
 ### Data quality
 - Currentness: push changes as events instead of polling; bound every cache's lifetime by the freshness the driver allows; keep the time each value was produced.
@@ -96,7 +98,7 @@ A design mechanism is a known way to produce a response. Pick the ones that prod
 
 ## Design concerns
 
-Walk all eight for the whole system. For each, point to the decisions that settle it and to the later stages that decide the rest, with their triggers, or write "standard practice is enough" with a reason.
+Walk all eight for the whole system. For each, point to the decisions that settle it and to the later stages that decide the rest, with their triggers, or write "standard practice is enough" with a reason. What a concern asks of the code itself, such as how errors are passed on and logged inside a component, how settings are read, or how the variants are built and tested, is stage 2b's: name it as the later stage for that part.
 
 | Concern | Questions |
 |---|---|

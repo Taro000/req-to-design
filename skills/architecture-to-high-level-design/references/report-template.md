@@ -28,7 +28,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 ## Shared conventions
 | Convention | DEC |
 |---|---|
-<One row per shared convention, with the DEC that records it. What was decided lives in the DEC only; stage 4 reads the conventions from those DECs.>
+<One row per convention that interfaces show to their consumers, with the DEC that records it. What was decided lives in the DEC only; stage 4 reads the conventions from those DECs. The conventions inside the code are the technical policy's, and get no row here.>
 
 ## Design decisions
 <!-- generated: decisions -->
@@ -42,7 +42,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 | IFC | Title | Kind | Provider | Consumers | FRs | Spec | Basis |
 |---|---|---|---|---|---|---|---|
 <!-- /generated -->
-<Spec: the file under `ifc/specs/`, or, for an HTTP or event interface between elements whose schema implementation generates from the code, the hand-off that leaves it there. "—" for a screen, a file or a batch, and for an external system's interface, whose owner's document the report links.>
+<Spec, as the specs policy's entry for the interface's kind makes it: the file under `ifc/specs/` for a spec written by hand; the hand-off that leaves the schema to implementation for a spec generated from the code; "—" for an interface whose owner's document the report links, and for a screen, a file or a batch.>
 
 ## SLI bindings
 <!-- generated: sli-bindings -->
@@ -134,7 +134,7 @@ Interfaces (excerpt). The operations, error contracts, timing and bindings are i
 
 | IFC | Title | Kind | Provider | Consumers | FRs | Spec | Basis |
 |---|---|---|---|---|---|---|---|
-| IFC-01 | Checkout API | http | ELM-02 | ELM-01 | FR-01 | checkout.openapi.yaml | assumed |
+| IFC-01 | Checkout API | http | ELM-02 | ELM-01 | FR-01 | HND-04 | assumed |
 | IFC-02 | Payment provider A | http | ELM-05 | ELM-02 | FR-01 | — | assumed |
 | IFC-03 | Stock changed events from the warehouse | event | ELM-07 | ELM-03 | FR-04, FR-05 | — | inferred |
 | IFC-04 | Checkout screen | screen | ELM-01 | USR-01 | FR-01 | — | inferred |
@@ -143,7 +143,7 @@ Interfaces (excerpt). The operations, error contracts, timing and bindings are i
 
 The consumers of a screen are the users who use it (USR-01, the buyer). IFC-02 and IFC-03 have no spec of ours: provider A and the warehouse team own theirs, and "Inputs" links them. Provider A's stated latencies for a charge, a lookup and a cancel come from its API documentation, which the user gave for this run; this stage added them to `design-context.yaml` as TC-04 and lists the document under "Inputs" (`conventions.md`, "Judgment basis"). IFC-02 cites TC-04 and does not restate it.
 
-IFC-01 has its whole contract here, OpenAPI document included, because the buyer's browser calls it. IFC-06 serves the product pages that ELM-01 renders on its server: no device and no other team calls it, so its IFC holds its operations, its errors and their codes, and the schema of its requests and responses is handed off to implementation, which generates it from ELM-02's code (HND-04). Its calls are on no path of a time SLO and move no money (NFR-03 counts how long a stock change takes to become visible, which its own budget covers, not how long a page takes to load), so its `timing` holds only the bound: ELM-01's timeout above the worst case of the read it waits for. Stage 4 sets the value for ELM-01 (HND-05).
+IFC-01 and IFC-06 follow the first entry of the specs policy, POL-05: the store team builds both sides of each, so their specs are generated from ELM-02's code. The storefront's checkout script calls IFC-01 from the buyer's browser, and ELM-01's server calls IFC-06 to render the product pages. Their IFCs hold what their consumers rely on: their operations, their errors and their codes, and for IFC-01 what its idempotency key means and how it answers when the outcome of a payment is unknown. The schemas of their requests and responses are handed off to implementation (HND-04). No interface of the store is of POL-05's by-hand kind, so this stage writes no spec under `ifc/specs/`. IFC-06's calls are on no path of a time SLO and move no money (NFR-03 counts how long a stock change takes to become visible, which its own budget covers, not how long a page takes to load), so its `timing` holds only the bound: ELM-01's timeout above the worst case of the read it waits for. Stage 4 sets the value for ELM-01 (HND-05).
 
 SLI bindings (excerpt):
 
@@ -226,7 +226,7 @@ sli_bindings:
     events: Each POST /v1/checkout request that reaches the load balancer in front of ELM-02 (the SLI's vantage is the system boundary); requests with the same Idempotency-Key are one checkout, counted by the first request
     fields: [request_id, idempotency_key, status, elapsed, user_agent]
     method: The load balancer's access logs, which already exist (OPF-02), with the Idempotency-Key header added to the logged fields
-spec: ifc/specs/checkout.openapi.yaml
+spec: null
 as_is: new
 ```
 

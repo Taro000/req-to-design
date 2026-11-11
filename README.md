@@ -14,11 +14,11 @@ Agent skills that turn a system's requirements into its design: first the driver
 
 | Stage | Skill | Input | Output |
 |---|---|---|---|
-| 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`), including the design decisions it found in its inputs; the design context, which never comes from users (technology constraints; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
-| 2 | `architecture-drivers-to-architecture` | Stage 1 output | Design decisions with their options and rationale, elements, five views, a threat model |
+| 1 | `requirements-to-architecture-drivers` | The quality chain's artifacts (`docs/quality/`), including the design decisions it found in its inputs; the design context, which never comes from users (technology constraints, the organization's engineering standards among them; budget, deadline and team; how the teams are split; anticipated changes); existing code | Architecture drivers: quality and change scenarios, constraints, principles, and a ranking |
+| 2 | `architecture-drivers-to-architecture` | Stage 1 output | Design decisions with their options and rationale, elements with the runtime and platform of each, four views (context, runtime, deployment, information), a threat model |
 | 2b | `architecture-to-technical-policy` | Stage 2 output; the gates and audits of the quality chain; the organization's engineering standards and the conventions of the existing code | The technical policy that the later stages and the code follow: the stack of each kind of component; the repositories, directories and dependency rules that CI enforces; the test strategy, with where and by what each gate of the quality chain is checked and where each audit is held; the pipeline and the conventions inside the code; whether each kind of interface's spec is written by hand or generated from the code; how coding agents find the design and bring findings back |
-| 3 | `architecture-to-high-level-design` | Stage 2 output | Interfaces (with OpenAPI and AsyncAPI documents for those that devices, other teams or external systems use), end-to-end flows with latency budgets, data entities, shared conventions, and where every SLI's events come from |
-| 4 | `high-level-design-to-detailed-design` | Stage 3 output, one component per run | Modules with contracts and a verification approach; states, decision tables and data constraints only for the modules where a mistake in the code is costly; the hand-off to implementation |
+| 3 | `architecture-to-high-level-design` | Stage 2 and 2b output | Interfaces (with OpenAPI and AsyncAPI documents for those whose spec the technical policy writes by hand), end-to-end flows with latency budgets, data entities, the conventions that interfaces share, and where every SLI's events come from |
+| 4 | `high-level-design-to-detailed-design` | Stage 3 output and the technical policy, one component per run | Modules with contracts, placed in the policy's directories, and a verification approach at its test layers; states, decision tables and data constraints only for the modules where a mistake in the code is costly; the hand-off to implementation |
 | Review | `design-review` | The output of stage 2, 2b, 3 or 4 | Findings addressed to the stage that must decide |
 
 Run the review in a fresh session, not in the one that wrote the design. Findings go back to the stage that owns the items; re-run that stage to accept or reject them when a finding is critical or major. Minor findings wait until the stage runs again for another reason. Review a stage again only after a critical or major finding has changed its items; that review looks only at what changed since the last one. The skills never write to `docs/quality/`, and never decide what the quality chain owns, such as a target or a check before release: when the design shows that a requirement should change, or that one is missing, a stage writes a request to the quality chain, and `docs/design/quality-chain-requests.md` collects the requests for you to answer and hand to the quality chain.
@@ -42,10 +42,10 @@ The skills work best after the quality chain (`npx skills add Taro000/cuj-to-slo
 
 Run each step in a fresh request:
 
-1. "Derive the architecture drivers from docs/quality/. Technology constraints: … Budget and deadline: … Teams: … Roadmap: …"
+1. "Derive the architecture drivers from docs/quality/. Technology constraints: … Engineering standards: … Budget and deadline: … Teams: … Roadmap: …"
 2. "Design the architecture from the drivers."
 3. In a new session: "Review the architecture." If there are critical or major findings: "Re-run the architecture stage to resolve the findings." If that changed the architecture, review it again in a new session.
-4. "Decide the technical policy." Review it in a new session, and resolve its findings the same way. It decides once, for every component, what the later stages and the code follow: the stack of each kind of component, the repositories and the dependency rules, the test strategy with where every gate of the quality chain is checked, the pipeline, and how each kind of interface gets its spec.
+4. "Decide the technical policy." Review it in a new session, and resolve its findings the same way. It decides once, for every component, what the later stages and the code follow: the stack of each kind of component, the repositories and the dependency rules, the test strategy with where every gate of the quality chain is checked, the pipeline and the conventions inside the code, and how each kind of interface gets its spec. The other stages decide none of these: the architecture stops at the runtime and platform of each component, the high-level design writes a spec only where the policy says to, and the detailed design builds each component on the stack of its kind.
 5. "Write the high-level design." Review it in a new session, and resolve its findings the same way.
 6. "Write the detailed design of ELM-02." Repeat for every component listed in `docs/design/4-detailed-design.md`, and review each one.
 7. Implement from `docs/design/4-detailed-design.md`, within the technical policy of `docs/design/2b-technical-policy.md`. The hand-off to implementation tells the coding agent what the design decides, what the code decides, and how to raise a finding when the code cannot keep a design decision or a policy.
@@ -81,7 +81,7 @@ docs/design/
 ├── das/                                                  one YAML file per assumption made without asking
 ├── qcr/                                                  one YAML file per request to the quality chain
 ├── quality-chain-requests.md                             the requests to the quality chain, in one document to hand over
-└── ifc/specs/                                            OpenAPI and AsyncAPI documents
+└── ifc/specs/                                            OpenAPI and AsyncAPI documents, for the interfaces whose spec the technical policy writes by hand
 ```
 
 YAML keys and IDs are fixed in English, so every stage can read every other stage's files. Views, flows and state diagrams are Mermaid diagrams inside the reports. The index tables of the reports, between `<!-- generated: ... -->` marks, are written from the YAML items; edit the items, not those tables.

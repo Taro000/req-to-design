@@ -1,6 +1,6 @@
 ---
 name: architecture-to-high-level-design
-description: Stage 3 of 4 in the design chain. Turns the architecture from architecture-drivers-to-architecture into the high-level design of the whole system in one run - every interface between elements and with the outside (HTTP, events, files, screens, batch) with its error contract, idempotency, timing and versioning, and OpenAPI and AsyncAPI documents for public and cross-team ones; where each SLI's events come from; sequence diagrams for every CUJ and primary driver, with failure paths and latency budgets checked against the SLOs; screen flows; the logical data model with one owner per entity; states that span elements; and shared conventions. Drafts first, asks only about points of high breadth or severity, and records the rest as assumptions. Use it when someone wants API or event design, interface specifications, SLI instrumentation, sequence diagrams, a data model, latency budgets or cross-cutting conventions. Next, review it with design-review, then run high-level-design-to-detailed-design for each component.
+description: Stage 3 of 4 in the design chain. Turns the architecture and the technical policy into the high-level design of the whole system in one run - every interface between elements and with the outside (HTTP, events, files, screens, batch) with its error contract, idempotency, timing and versioning, and OpenAPI and AsyncAPI documents where the technical policy writes specs by hand; where each SLI's events come from; sequence diagrams for every CUJ and primary driver, with failure paths and latency budgets checked against the SLOs; screen flows; the logical data model with one owner per entity; states that span elements; and shared conventions. Drafts first, asks only about points of high breadth or severity, and records the rest as assumptions. Use it when someone wants API or event design, interface specifications, SLI instrumentation, sequence diagrams, a data model, latency budgets or interface conventions. Next, review it with design-review, then run high-level-design-to-detailed-design for each component.
 license: MIT
 metadata:
   version: "0.2.0"
@@ -8,19 +8,21 @@ metadata:
 
 # Architecture → high-level design
 
-Stage 3 of the design chain. It takes the elements (ELM) and decisions (DEC) of stage 2 and specifies, for the whole system at once, how the elements interact with each other and with the outside: interfaces (IFC) with their specs, end-to-end flows, data entities (DAT), the shared conventions every part follows, and where the events of every SLI come from. Stage 4 then designs the inside of each component.
+Stage 3 of the design chain. It takes the elements (ELM) and decisions (DEC) of stage 2, within the technical policy (POL) of stage 2b, and specifies, for the whole system at once, how the elements interact with each other and with the outside: interfaces (IFC) with their specs, end-to-end flows, data entities (DAT), the shared conventions that every interface follows, and where the events of every SLI come from. Stage 4 then designs the inside of each component.
 
 This stage looks outward from each component. A component's inside can change freely later; its interfaces cannot, because other parts depend on them. That is why the interfaces are designed here for the whole system in one run: an error code, an ID format or a delivery guarantee decided separately in two places will not match.
 
 The quality chain names an interface only by its kind and, for an external system, its EXT ID, and defines each SLI in the terms of the domain. The names, paths, protocols and mechanisms of the interfaces (idempotency keys, tokens, queues), and where each SLI's events are observed, are decided here.
 
+The technical policy has already decided what the code does inside every component, and how each kind of interface gets its spec: written by hand here, generated from the code, or the other side's document. This stage follows it, and decides only what the interfaces show to their consumers.
+
 ## Read first
 
 - `references/conventions.md`: the design chain, how to use the quality chain, findings, the working language, judgment basis marks, the question protocol, decisions, assumptions, re-runs and finishing a run. Follow it exactly.
 - `references/artifacts.md`: where files go, and the schemas for IFC, DAT, DEC, HND, FND, DAS and QCR (and the ELM and DRV items you read).
-- `references/interfaces.md`: what every interface specifies, error contracts, idempotency, timing, versioning, SLI bindings and the spec documents.
+- `references/interfaces.md`: what every interface specifies, error contracts, idempotency, timing, versioning, SLI bindings, and the specs that the technical policy asks for.
 - `references/flows-and-budgets.md`: sequence diagrams, failure paths, latency budgets, screen flows and states.
-- `references/data-and-conventions.md`: data entities, ownership, consistency, retention, classification, data quality flows, data SLIs and shared conventions.
+- `references/data-and-conventions.md`: data entities, ownership, consistency, retention, classification, data quality flows, data SLIs, and the shared conventions that interfaces show to their consumers.
 - `references/report-template.md`: the report layout and a worked example.
 - `references/glossary.md`: terms for the working language.
 - `scripts/tables.py` and `scripts/check.py`: write the report's index tables from the items, and check the items, specs and reports for what needs no judgment. Run them before committing ("Scripts" and "Finishing a run" in `references/conventions.md`).
@@ -28,13 +30,14 @@ The quality chain names an interface only by its kind and, for an external syste
 ## Inputs
 
 - `docs/design/`: `1-architecture-drivers.md`, `2-architecture.md`, `elm/`, `dec/`, `drv/`, `design-context.yaml`, and the open assumptions in `das/`.
+- The technical policy: `2b-technical-policy.md` and `pol/`. The specs policy (`scope: specs`) says for each kind of interface how its spec is made; the pipeline-and-code policy holds the conventions inside the code, which the shared conventions leave to it.
 - `docs/quality/`, read only: `fr/` (acceptance criteria and interface kinds), `sli/` (unit events, vantages, counting rules and existing sources), `nfr/` (targets, for the latency budgets), `qr/` (data quality and security detail), `context.yaml` (CUJ steps; external systems, EXT; operational facts, OPF, such as telemetry that already exists), and the open assumptions in `qas/`.
 - Open findings addressed to this stage.
 - Open hand-offs addressed to this stage: `hnd/` items with `to: architecture-to-high-level-design` and `status: open`.
 - The interfaces and schemas that exist in the code, as recorded under `as_is`; read the parts you need.
 - On a re-run, this stage's report and items, and what changed since this stage's last run (`conventions.md`, "Re-running a stage").
 
-Essential input: at least one element of kind `component`. If there is none, ask for the architecture (or suggest running `architecture-drivers-to-architecture`) before drafting.
+Essential inputs: at least one element of kind `component`, and the technical policy's specs policy. If either is missing, ask for it (or suggest running `architecture-drivers-to-architecture`, or `architecture-to-technical-policy`) before drafting.
 
 ## Workflow
 
@@ -44,7 +47,7 @@ Write one IFC for every connector between components in the runtime view, and fo
 
 ### 2. Shared conventions
 
-Decide the conventions every interface and component follows (errors, IDs, time, money, paging, tokens, log and trace fields, configuration, languages, naming), each as a decision, following `data-and-conventions.md` ("Shared conventions"). Do this early: every interface depends on them.
+Decide the conventions that every interface shows to its consumers (errors, IDs, time, money, paging, tokens, versioning, the headers of idempotency keys and request IDs, the log fields that SLIs need, naming), each as a decision, following `data-and-conventions.md` ("Shared conventions"). Do this early: every interface depends on them. The conventions inside the code (how errors are passed on, how logs are written, how settings and secrets are read, where the texts for people live) are the technical policy's: follow its pipeline-and-code policy, and decide none of them here.
 
 ### 3. Specify each interface
 
@@ -56,7 +59,13 @@ For every SLI in the quality chain, write an `sli_bindings` entry on the IFC tha
 
 ### 5. Specs
 
-Write an OpenAPI or AsyncAPI document for every HTTP or event interface of these kinds: with an external system, unless the system owns its spec; called from the users' devices; used by another team. Write them under `ifc/specs/`, following `interfaces.md` ("Specs"), with only what the design decides, and mark provisional values. Every other HTTP or event interface between elements gets no spec: its IFC holds its operations, its errors and their codes, what its idempotency keys mean and how it answers when an outcome is unknown, and its schema is handed off to implementation, which generates it from the code. Write one hand-off for each component that provides such interfaces.
+Find, for each HTTP or event interface, the entry of the specs policy that covers its kind, and follow it, as `interfaces.md` ("Specs") describes:
+
+- `by-hand`: write its OpenAPI or AsyncAPI document under `ifc/specs/`, with its whole contract, schema included, only what the design decides, and provisional values marked.
+- `from-code`: write no spec. Its IFC holds its operations, its errors and their codes, what its idempotency keys mean and how it answers when an outcome is unknown, and its schema is handed off to implementation, which generates it from the code with the tool that the policy names. Write one hand-off for each component that provides such interfaces.
+- `owner`: write no spec; the IFC links the owner's document.
+
+Write a spec only where the policy says to. An interface that no entry covers, or whose entry goes against the policy's own rule (another party builds against an interface whose spec the policy generates from the code), is a finding addressed to `architecture-to-technical-policy`; until it is answered, write its spec by hand when its other side is built apart from this system's code, and hand its schema off otherwise.
 
 ### 6. End-to-end flows
 
@@ -80,7 +89,7 @@ For each entity whose life spans several elements and that holds money, a bookin
 
 ### 11. Check
 
-Trace every acceptance criterion of every allocated FR through the IFCs and flows. Recompute every latency budget. Check that every entity has one owner, that every interface follows the shared conventions, and that every SLI has its binding.
+Trace every acceptance criterion of every allocated FR through the IFCs and flows. Recompute every latency budget. Check that every entity has one owner, that every interface follows the shared conventions and its spec rule, and that every SLI has its binding.
 
 ### 12. Hand-offs
 
@@ -88,10 +97,10 @@ Take up every open hand-off addressed to this stage whose trigger has come, as `
 
 ### 13. Findings, report, questions, items
 
-Process every open finding addressed to this stage; a rejection that leaves a risk in place is a decision. When the architecture cannot support what the interfaces need, write a finding addressed to `architecture-drivers-to-architecture`; do not change stage 2's items yourself. Write the IFC, DAT, DEC, HND and FND items and the spec documents as you draft them in steps 1 to 12, and the draft report that indexes them, following `report-template.md`. Then list, rate and ask as `conventions.md` describes ("Draft first, ask afterwards"), re-rate the open DAS and QAS that your judgments depend on ("Assumptions"), and write a DAS for each point you do not ask about:
+Process every open finding addressed to this stage; a rejection that leaves a risk in place is a decision. When the architecture cannot support what the interfaces need, write a finding addressed to `architecture-drivers-to-architecture`, and when the technical policy cannot (no spec rule fits an interface, or a convention inside the code keeps an interface from its contract), one addressed to `architecture-to-technical-policy`; do not change their items yourself. Write the IFC, DAT, DEC, HND and FND items and the spec documents as you draft them in steps 1 to 12, and the draft report that indexes them, following `report-template.md`. Then list, rate and ask as `conventions.md` describes ("Draft first, ask afterwards"), re-rate the open DAS and QAS that your judgments depend on ("Assumptions"), and write a DAS for each point you do not ask about:
 
 - Rate only the points you are unsure of. A judgment you are sure of stays `inferred` and is not asked, however much depends on it.
-- What this stage decides in full, whatever the ratings, is its row of the full-depth kinds ("Decision depth" in `conventions.md`). Rate each point of those kinds that you are unsure of on the scales of "Draft first, ask afterwards", as every stage does. A point outside them, such as the schema of an interface between elements or the timeout of a call off the paths of time SLOs and of money, is deferred unless it rates high as it would stand once deferred; a deferred point is neither asked nor recorded as a DAS here.
+- What this stage decides in full, whatever the ratings, is its row of the full-depth kinds ("Decision depth" in `conventions.md`). Rate each point of those kinds that you are unsure of on the scales of "Draft first, ask afterwards", as every stage does. A point outside them, such as the schema of an interface whose spec the technical policy generates from the code or the timeout of a call off the paths of time SLOs and of money, is deferred unless it rates high as it would stand once deferred; a deferred point is neither asked nor recorded as a DAS here.
 - Most values this stage sets, the timeouts, waits and retry limits on the paths of time SLOs and of money included, are low or medium on both scales: adopt the drafted value and record it as a DAS of `kind: decision`.
 
 Apply the answers to the items in place, check the exit criteria, and set the report's status to "answers applied". When nobody can answer during the run, write the questions under "Unanswered questions" instead, set the report's status to "waiting for answers", and finish the run; the next run applies the answers ("Draft first, ask afterwards", steps 7 and 8, in `conventions.md`).
@@ -101,14 +110,14 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 - Every connector between components and every interaction with the outside has an IFC with its operations, error contract, idempotency, timing and versioning.
 - Every call that changes something says what happens when its outcome is unknown, and no one is told "nothing happened" unless every party asked has confirmed it.
 - Every call between elements on the path of an SLO with a time threshold, or on a path that moves money, has its timeouts and waits in its IFC's `timing`, settlement waits included, and every caller's timeout there is above the worst case it waits for, as computed in the report. Every other call between elements has the bounds of its timeouts in its IFC's `timing`, and their values are handed off to stage 4, with the component and the trigger.
-- Every HTTP or event interface with an external system, called from the users' devices, or used by another team has an OpenAPI or AsyncAPI document, except where the spec belongs to the external system. Every other HTTP or event interface between elements has its schema handed off to implementation, with the component and the trigger.
+- Every HTTP or event interface follows the entry of the specs policy that covers its kind: an OpenAPI or AsyncAPI document under `ifc/specs/` for the kinds whose spec is written by hand, and for no other; its schema handed off to implementation, with the component and the trigger, for the kinds whose spec is generated from the code; its owner's document linked for the kinds whose other side owns it. An interface that no entry covers has a finding addressed to `architecture-to-technical-policy`.
 - Every quality-chain SLI has an `sli_bindings` entry, on an IFC or a DAT, that realizes its vantage, counting rules, applicability and lifecycle without changing them; or, when producing its events needs a new behaviour of the system, a request to the quality chain.
 - Every CUJ and every primary driver has a sequence diagram with its failure paths.
 - Every SLO with a time threshold has a latency budget whose normal path fits the threshold with each hop at its share of the tail, and whose failure paths fit the error budget; or a finding or a request to the quality chain.
 - Every acceptance criterion of every allocated FR can be traced through IFCs and flows.
 - Every DAT has one owner, a store, a consistency rule, a classification, and a retention period (stated, or a placeholder).
 - Every entity whose life spans several elements and that holds money, a booking or an unknown outcome, or whose states rate high, has a state diagram in which no state that money, goods or a booking can still leave is final.
-- The shared conventions are decided, and every IFC follows them.
+- The shared conventions that interfaces show to their consumers are decided, and every IFC follows them. None decides a convention inside the code, which the technical policy holds.
 - No point of this stage's full-depth kinds, and none that rates high, is handed off unless its deferral was decided as a business decision ("Decision depth" in `conventions.md`).
 - Every open hand-off addressed to this stage whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as a request to the quality chain.
 - Every open finding addressed to this stage is accepted or rejected.
@@ -131,7 +140,8 @@ Apply the answers to the items in place, check the exit criteria, and set the re
 - Making a load test before release a gate of the design, or a level the system must reach a parameter. Gates, targets and thresholds belong to the quality chain: write a request for the one the design needs.
 - Asking about every timeout and retry count. A wrong value is tuned in operation; record it as an assumption of kind decision, and spend the questions on what is hard to reverse: the shared conventions, published interfaces and the shape of stored data.
 - Setting every timeout here. Off the paths of time SLOs and of money, a value set now is set again when the component is designed; decide the bounds, and hand the values to stage 4.
-- Writing a schema for every interface. Between elements that no other team builds and no device runs, the schema comes from the code, and a copy written here drifts from it.
+- Writing a spec that the technical policy generates from the code. The schema then exists twice, and the copy written here drifts from the code.
+- Deciding here how the code writes its logs or reads its settings. Those are the technical policy's, and a second rule here contradicts it.
 
 ## Finish
 

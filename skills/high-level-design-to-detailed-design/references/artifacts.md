@@ -38,7 +38,7 @@ docs/design/
 ├── elm/ELM-01.yaml …                  stage 2: elements
 ├── pol/POL-01.yaml …                  stage 2b: technical policies, one per scope
 ├── ifc/IFC-01.yaml …                  stage 3: interfaces
-├── ifc/specs/checkout.openapi.yaml    stage 3: OpenAPI and AsyncAPI documents, for the interfaces that get one
+├── ifc/specs/<name>.openapi.yaml      stage 3: OpenAPI and AsyncAPI documents, for the interfaces whose spec the technical policy writes by hand
 ├── dat/DAT-01.yaml …                  stage 3: data entities
 ├── mod/MOD-01.yaml …                  stage 4: modules
 ├── hnd/HND-01.yaml …                  stages 1–4: hand-offs, the points a stage leaves to a later stage or to implementation
@@ -83,7 +83,7 @@ The examples below follow one fictional online store through all the stages.
 read_from:
   quality_chain: docs/quality/           # null when the user gave the requirements directly
   other: [Architecture notes (wiki), Roadmap 2026, Kick-off notes, Security team memo]
-technology_constraints:
+technology_constraints:                  # the organization's engineering standards among them (languages, tools and CI it mandates or prohibits, its rules for review and tests), which stage 2b follows
   - id: TC-01
     statement: Card payments go through the payment provider's API; card numbers never reach our servers
     kind: external-service               # mandated | prohibited | platform | external-service
@@ -209,7 +209,7 @@ functions: [FR-01, FR-03, FR-04]         # FRs allocated to it; [] for nodes
 drivers: [DRV-01, DRV-02, DRV-05]        # drivers it carries
 decisions: [DEC-01, DEC-02, DEC-04]
 team: TEAM-01                            # null when no team structure is given
-technology: TypeScript on Node.js (DEC-04)   # null until decided
+technology: Node.js, in containers (DEC-04)   # the runtime and the platform it runs on; the language, framework and libraries are stage 2b's, for each kind of component; null until decided
 runs_on: ELM-08                          # the node it is deployed to; null for external systems
 depends_on: [ELM-04, ELM-05, ELM-06]
 as_is: new
@@ -327,7 +327,7 @@ sli_bindings:                            # how this interface yields the events 
     events: Each POST /v1/checkout request that reaches the load balancer in front of ELM-02 (the SLI's vantage is the system boundary); requests with the same Idempotency-Key are one checkout, counted by the first request
     fields: [request_id, idempotency_key, status, elapsed, user_agent]
     method: The load balancer's access logs, which already exist (OPF-02), with the Idempotency-Key header added to the logged fields
-spec: ifc/specs/checkout.openapi.yaml    # null for screens, files and batches, for interfaces whose spec belongs to an external system, and for those whose schema is handed off to implementation
+spec: null                               # the document under ifc/specs/ when the technical policy writes the interface's spec by hand; null otherwise. IFC-01's spec is generated from ELM-02's code (POL-05), and HND-04 hands its schema to implementation
 as_is: new
 ```
 

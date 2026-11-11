@@ -3,7 +3,7 @@
 ## Contents
 - Splitting a component into modules
 - Depth of modules
-- Dependencies and visibility
+- Where modules live, dependencies and visibility
 - Frameworks and off-the-shelf parts
 - Contracts
 - Allocation
@@ -30,18 +30,25 @@ The detailed design goes into detail only where a mistake in the code is costly 
 - Rate each module that is of none of these kinds in step 2, as a whole and as it would stand at bounds depth, with its contract holding what other modules rely on: would a wrong inside cause harm of high severity (money, personal data, safety, stored data that cannot be repaired), or would five or more items have to change? It is at full depth when either rating is high. A module that decides what personal data leaves the component typically rates high. The points inside a module at bounds depth are not rated one by one: implementation decides them.
 - A module is at one depth as a whole. When a small part of a module is of these kinds and the rest is not, that part is often a module of its own: split it, so that the rest stays at bounds depth.
 - Leaving a module of these kinds, or one that would rate high, at bounds depth defers a point of this stage's full-depth kinds: a business decision ("Deferring the rest" in `conventions.md`). Its `depth_reason` cites the question or the DAS that decided it.
-- The depth decides only how much this stage writes. At either depth, a module keeps the shared conventions, the IFCs it realizes and the DATs it writes, and its verification approach checks it.
+- The depth decides only how much this stage writes. At either depth, a module keeps the technical policies, the shared conventions, the IFCs it realizes and the DATs it writes, and its verification approach checks it.
 
-## Dependencies and visibility
+## Where modules live, dependencies and visibility
+
+The repository policy of stage 2b (`pol/`, scope `repository`) gives every component the layout of its directories and the dependency rules that CI checks. Place each module where those rules put it, under its component's directory: when the layout groups the code by business capability, in the capability the module serves, at the layer its responsibility belongs to (an adapter of an external system among the adapters, the business rules where nothing reaches a framework or the database).
 
 - Dependencies point toward stable modules. Business rules do not depend on frameworks, storage or providers; the adapters for those depend on the rules.
+- Every dependency keeps the policy's dependency rules. This stage adds no rule of its own: a boundary between modules that the rules do not hold, and that a mistake in the code would cross at a cost, is a finding addressed to `architecture-to-technical-policy`, and so is a rule that blocks every reasonable split of the component.
 - No cycles. When two modules need each other, one of them is really two modules, or a third module holds what they share.
 - Mark each module `public` (other components call it, through an IFC) or `internal` (only modules of the same component call it).
-- Draw the module dependencies as a Mermaid flowchart in the component report, and write the rule a tool can check in CI ("nothing under pricing imports from payment").
+- Draw the module dependencies as a Mermaid flowchart in the component report, with the directory of each module, so that a coding agent knows where each one goes.
 
 ## Frameworks and off-the-shelf parts
 
-Choosing a framework, a library or a managed service for a module is a decision (a DEC with `stage: detailed-design`), with options, the drivers it serves, its cost (licence, lock-in, learning) and the rejected options. Prefer what the shared conventions and the team's skills already use. A library used only inside a module at bounds depth is implementation's choice, within the shared conventions.
+The technical policy chooses the language, the framework and the main libraries of each kind of component, and the tools that every component shares (stage 2b, the policy of scope `technology`). Build every module on the stack of its component's kind, as it is. Never choose another framework for one component, nor a second library for what a main library of the stack already does: components of one kind would then differ, and a package they share would force one component's choice on the others.
+
+Write a decision (a DEC with `stage: detailed-design`) only for a library whose choice the technical policy left open on purpose and handed to this stage for this component, because a module at full depth is designed around it, such as a rules engine. Decide it within the stack, as the hand-off's bounds say, with options, the drivers it serves, its cost (licence, lock-in, learning) and the rejected options, and cite the hand-off in the decision's `basis_note`. Any other library beyond the main ones is implementation's choice, within the stack.
+
+When the stack cannot do what a module needs (a driver it cannot meet, a library that no module can do without and that the stack rules out), write a finding addressed to `architecture-to-technical-policy`; do not choose around it. A managed service is an element of the architecture: a module that needs one the architecture lacks is a finding addressed to `architecture-drivers-to-architecture`.
 
 ## Contracts
 

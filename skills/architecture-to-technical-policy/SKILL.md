@@ -53,7 +53,7 @@ Group the components by kind (a server, a single-page app, a server-rendered web
 
 ### 3. Repositories and directories
 
-Decide the repositories and the components each holds; the layout of the directories inside each, by business capability or by technical layer, with where shared code, tests and generated files live; and the dependency rules, each with the check in CI that enforces it, following `stack-and-repository.md`. Check the split against stage 2's deployment and the teams. Write them in the `repository` POL, and draw the directory tree and the allowed dependencies in the report.
+Decide the repositories and the components each holds; the layout of the directories inside each, by business capability or by technical layer, with where shared code, tests and generated files live; and the dependency rules, each with the check in CI that enforces it, following `stack-and-repository.md`. Check the split against stage 2's deployment and the teams. Write them in the `repository` POL, and draw the code structure in the report, which stage 2 leaves to this stage: the directory tree with the owning teams, and the allowed dependencies.
 
 ### 4. Test strategy
 

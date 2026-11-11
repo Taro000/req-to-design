@@ -14,11 +14,13 @@ The detailed design is the input to implementation, and coding agents are its ma
 
 This stage writes documents, not code. Interfaces are written in a language-neutral notation, so that the design survives a change of language or framework.
 
+The technical policy of stage 2b has already decided, for every component of a kind, how its code is built: the stack, the directories and the dependency rules, the test layers with their doubles and environments, and the conventions inside the code. This stage designs the modules within it, and chooses none of it again for one component.
+
 ## Read first
 
 - `references/conventions.md`: the design chain, findings, the working language, judgment basis marks, the question protocol, decisions, assumptions, re-runs and how a run finishes. Follow it exactly.
 - `references/artifacts.md`: where files go, the schemas for MOD, DEC, HND, FND, DAS and QCR, and the detailed design index with its hand-off to implementation.
-- `references/modules.md`: splitting a component into modules, the depth of each module, dependencies, frameworks, contracts and allocation.
+- `references/modules.md`: splitting a component into modules, the depth of each module, where modules live and what they depend on, the stack they are built on, contracts and allocation.
 - `references/behaviour-and-data.md`: what a module at full depth gets (states, decision tables, algorithms, concurrency, error handling, physical data, caches, screens), and the verification approach of every module.
 - `references/report-template.md`: the component report, the index, and a worked example.
 - `references/glossary.md`: terms for the working language.
@@ -28,6 +30,7 @@ This stage writes documents, not code. Interfaces are written in a language-neut
 
 - The component or components to design, named by their element IDs. If the user does not name them, ask, offering the components the index shows as not started.
 - `docs/design/`: the element (`elm/`), its interfaces (`ifc/` and `ifc/specs/`), its data entities (`dat/`), the decisions that bind it (`dec/`), the drivers it carries (`drv/`), the shared conventions, read from the DEC items that record them (the "Shared conventions" table of `3-high-level-design.md` lists them), and the index.
+- The technical policies (`pol/`, which `2b-technical-policy.md` indexes): the stack of the component's kind, the layout of its directories and the dependency rules, the test layers with their doubles and environments, and the conventions inside the code.
 - `docs/quality/`, read only: the FRs allocated to the component, with their acceptance criteria; the QRs behind its drivers, internal quality included; and the SLIs that its interfaces and data entities bind (`sli_bindings`), for the events and fields the component must produce.
 - The open assumptions in the `premises` of the items you read: DAS under `docs/design/das/`, and the quality chain's QAS.
 - Open findings addressed to this stage for this component, those raised by implementation included.
@@ -44,7 +47,7 @@ Confirm the component for this run. One component per run is the default; take s
 
 ### 2. Modules
 
-Split the component into modules, following `modules.md`: one responsibility each, what changes together kept together, decisions likely to change hidden behind interfaces, dependencies pointing toward stable modules, no cycles. Choose frameworks and off-the-shelf parts as decisions. For an existing component, start from its current modules and mark each `keep`, `change`, `new` or `remove`.
+Split the component into modules, following `modules.md`: one responsibility each, what changes together kept together, decisions likely to change hidden behind interfaces, dependencies pointing toward stable modules, no cycles. Place each module in the directories that the repository policy's rules give, within its dependency rules. Build on the stack that the technology policy gives the component's kind, and choose no framework or main library here: write a decision only for a library whose choice the technical policy handed to this stage for this component ("Frameworks and off-the-shelf parts" in `modules.md`). For an existing component, start from its current modules and mark each `keep`, `change`, `new` or `remove`.
 
 Then give each module its depth ("Depth of modules" in `modules.md`): `full` when it moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions or migrates data, or when it would rate high on breadth or severity at bounds depth, with the reason in `depth_reason`; `bounds` otherwise. Rate each module that is of none of these kinds here, as a whole, as `modules.md` describes. Steps 4 to 9 design a module at full depth in detail. A module at bounds depth gets only its responsibility, the summary of its contract, its allocation and its verification approach; implementation decides the rest.
 
@@ -58,7 +61,7 @@ For every public operation of every module at full depth, write the signature in
 
 ### 5. Behaviour
 
-For each module at full depth, as it applies, following `behaviour-and-data.md`: a state diagram with every state and transition, timeouts and errors included; sequences inside the component; decision tables for rules with several conditions; algorithms with their steps, cost and edge cases; concurrency (what runs at the same time, what is locked, what is idempotent); error handling (what is handled where, what is passed on, what is logged). A timeout on a call that changes something leads to a state that settles its outcome, never to a failure. Implementation decides the behaviour of a module at bounds depth, within its contract.
+For each module at full depth, as it applies, following `behaviour-and-data.md`: a state diagram with every state and transition, timeouts and errors included; sequences inside the component; decision tables for rules with several conditions; algorithms with their steps, cost and edge cases; concurrency (what runs at the same time, what is locked, what is idempotent); error handling (which errors are handled where, and which are passed on, within the technical policy's conventions for errors and logs). A timeout on a call that changes something leads to a state that settles its outcome, never to a failure. Implementation decides the behaviour of a module at bounds depth, within its contract.
 
 ### 6. Data structures
 
@@ -70,7 +73,7 @@ When a module at full depth serves a screen, design the screen with it: its stat
 
 ### 8. Verification approach
 
-For every module, at either depth, write which acceptance criteria, contracts, budgets and internal quality requirements it must pass, and how they will be checked: unit tests from a decision table, contract tests against the IFC spec, property tests for an algorithm, a load test for a budget, a check in CI. Do not write test code. Each module's checks go in its MOD item; the report describes what serves several modules (test doubles, environments, load tests, checks in CI).
+For every module, at either depth, write which acceptance criteria, contracts, budgets and internal quality requirements it must pass, and how they will be checked, at the test layers of the technical policy, with its doubles and environments: unit tests from a decision table, property tests for an algorithm, an integration test against the database, a contract test of an adapter against the provider's sandbox. Do not write test code. Each module's checks go in its MOD item; the report names the layers, doubles and environments that the checks use, and describes only the scenarios that several modules share. A check that needs a layer, a double or an environment that the policy lacks is a finding addressed to `architecture-to-technical-policy` ("Verification approach" in `behaviour-and-data.md`).
 
 ### 9. Design parameters
 
@@ -84,9 +87,9 @@ Write a hand-off to implementation for a point this stage leaves open inside a m
 
 ### 11. Findings, report, questions, items, index
 
-Process every open finding addressed to this stage for this component, those raised by implementation included. When an interface, an entity or an architecture decision does not work, write a finding addressed to the stage that owns it; do not change its items yourself. Write the MOD, DEC, HND and FND items as you draft them in steps 2 to 10, and the draft component report that indexes them, following `report-template.md`; the index shows the component as `draft` from the status in the report's header.
+Process every open finding addressed to this stage for this component, those raised by implementation included. When an interface, an entity, an architecture decision or a technical policy does not work, write a finding addressed to the stage that owns it; do not change its items yourself. Write the MOD, DEC, HND and FND items as you draft them in steps 2 to 10, and the draft component report that indexes them, following `report-template.md`; the index shows the component as `draft` from the status in the report's header.
 
-Then list and rate the uncertain points, ask about the ones `conventions.md` says to ask about, and record the rest as assumptions ("Draft first, ask afterwards"). The rules in `modules.md` and `behaviour-and-data.md` settle most choices here; a choice they settle from what the inputs state stays `inferred` and is not a point. A point inside a module at bounds depth is implementation's and is not rated here. Most of the points that remain stay inside one module and are easy to change later, so both ratings are low and they become assumptions. The points of high severity here are typically those that move money, touch personal data, fix the shape of stored data or tie the component to a vendor; breadth is high when five or more modules depend on a point, as they do on a framework they all use.
+Then list and rate the uncertain points, ask about the ones `conventions.md` says to ask about, and record the rest as assumptions ("Draft first, ask afterwards"). The rules in `modules.md` and `behaviour-and-data.md` settle most choices here; a choice they settle from what the inputs state stays `inferred` and is not a point. A point inside a module at bounds depth is implementation's and is not rated here. Most of the points that remain stay inside one module and are easy to change later, so both ratings are low and they become assumptions. The points of high severity here are typically those that move money, touch personal data, fix the shape of stored data or tie the component to a vendor; breadth is high when five or more modules depend on a point, as they do on a type they all pass around. The stack, the directories and the test layers are not points of this stage: the technical policy decided them.
 
 Re-rate the open assumptions this component's judgments depend on, whichever stage wrote them, and ask about one when a judgment you would ask about depends on it ("Assumptions" in `conventions.md`). Number the questions per component report and continue the numbering when the component is re-run; from elsewhere, cite one as "stage 4 ELM-02, question 3".
 
@@ -101,7 +104,9 @@ Apply the answers to the items in place, check the exit criteria, set the report
 - Every module that moves money, settles an unknown outcome, shares state with work that runs at the same time, applies rules with several conditions or migrates data, and every module that would rate high at bounds depth, is at full depth, with its reason in `depth_reason`, unless its deferral was decided as a business decision, which its `depth_reason` then cites.
 - Every module at full depth has its behaviour and its data structures, as they apply. The inside of a module at bounds depth is left to implementation, and is not a gap.
 - Every module at full depth that has states has all its states and transitions, timeouts and errors included. Every decision table covers every combination of its conditions, without overlaps.
-- The module dependencies have no cycles and follow the shared conventions.
+- The module dependencies have no cycles and keep the dependency rules of the technical policy, and every module sits in the directory that the policy's rules give it.
+- The component is built on the stack of its kind in the technical policy. No decision of this stage chooses a framework or a main library; one chooses a library only where the technical policy handed that choice to this stage for this component.
+- Every check in the verification approaches runs at a layer of the technical policy, with doubles and environments that the policy has, or a finding addressed to `architecture-to-technical-policy` names what it lacks.
 - Every invariant of stored data that a module at full depth relies on is kept by the physical data the report designs ("Physical data" in `behaviour-and-data.md`), and every migration of an existing schema keeps the running version working. Every table another component reads directly is designed in full. The rest of the physical data is left to implementation, within the DATs.
 - Every call that changes something in an external system or in another component is driven by a module at full depth, which has a state that settles its outcome after a timeout, whichever module sends the call.
 - Every design parameter of a module at full depth has a value and a basis, fits the stage 3 budgets, and is either decided under "Decisions" or recorded as an assumption of kind `decision`. None is a timeout or wait that an IFC's `timing` holds: those are used by IFC ID. A timeout that stage 3 handed off to this component keeps the bounds in its IFC's `timing`, whether this stage sets it or passes it on to implementation. The values inside modules at bounds depth are left to implementation.
@@ -115,6 +120,8 @@ Apply the answers to the items in place, check the exit criteria, set the report
 
 - Designing only the happy path of a module at full depth. States and errors are where two implementations of the same design differ.
 - Modules named only after technical layers (controllers, services, repositories) with no business responsibility. Every change then touches every layer.
+- Choosing a framework or a library for one component. Components of the same kind then differ, and a package they share forces one component's choice on the others; the technical policy chooses once for each kind.
+- Writing a dependency rule or a test layer of the component's own. The policy's rules and layers already hold every component; a gap in them is a finding addressed to `architecture-to-technical-policy`.
 - Contracts without errors, at either depth. The caller then learns them in production.
 - Decision tables with gaps. Each missing combination is a behaviour someone will implement differently.
 - Putting a module at full depth to be safe. Each detail in it is then decided twice, in the design and in the code, and the two copies drift apart.

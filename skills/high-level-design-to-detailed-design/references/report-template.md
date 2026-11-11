@@ -27,7 +27,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 |---|---|
 
 ## Modules
-<The module dependency diagram in Mermaid and the dependency rule CI checks, then the index of the MOD items:>
+<The module dependency diagram in Mermaid, with the directory that the repository policy's rules give each module, then the index of the MOD items. The dependency rules and their checks in CI are the policy's; say which of them hold the diagram's boundaries.>
 <!-- generated: modules -->
 | MOD | Name | Depth | Visibility | Functions | Realizes | As-is | Basis |
 |---|---|---|---|---|---|---|---|
@@ -73,7 +73,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 <Only for screens that a module at full depth serves: the validation of each input, with its messages, and what the accessibility requirements need. The screen's states are in the module's state diagram.>
 
 ## Verification approach
-<What serves several modules: test doubles for external systems, environments, load tests, checks in CI. Each module's own checks are in its MOD item.>
+<The test layers, doubles and environments of the technical policy that the component's checks use, and the scenarios that several modules share. Each module's own checks are in its MOD item; the doubles, the environments and the checks in CI themselves are the policy's.>
 
 ## Design parameters
 <!-- generated: parameters -->
@@ -87,7 +87,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 | DEC | Title | Addresses | Basis |
 |---|---|---|---|
 <!-- /generated -->
-<The DEC items this stage wrote for the component, frameworks included: the decisions of stage `detailed-design` that its modules list in `decisions`.>
+<The DEC items this stage wrote for the component: the decisions of stage `detailed-design` that its modules list in `decisions`. A library is among them only when the technical policy handed its choice to this stage for this component.>
 
 ## Findings
 <!-- generated: findings -->
@@ -139,18 +139,18 @@ Modules:
 
 ```mermaid
 flowchart TD
-  m01[MOD-01 Checkout orchestrator] --> m02[MOD-02 Order total calculator]
-  m01 --> m03[MOD-03 Payment router]
-  m01 --> m08[MOD-08 Orders repository]
-  m01 --> m09[MOD-09 Stock reservations]
-  m02 --> m05[MOD-05 Coupon rules]
-  m03 --> m07[MOD-07 Failover policy]
-  m04[MOD-04 Provider A adapter] --> m03
-  m06[MOD-06 Provider B adapter] --> m03
-  m10[MOD-10 Payment reconciliation] --> m03
+  m01[MOD-01 Checkout orchestrator - checkout/application] --> m02[MOD-02 Order total calculator - checkout/domain]
+  m01 --> m03[MOD-03 Payment router - payments/application]
+  m01 --> m08[MOD-08 Orders repository - checkout/adapters]
+  m01 --> m09[MOD-09 Stock reservations - stock/application]
+  m02 --> m05[MOD-05 Coupon rules - checkout/domain]
+  m03 --> m07[MOD-07 Failover policy - payments/domain]
+  m04[MOD-04 Provider A adapter - payments/adapters/provider-a] --> m03
+  m06[MOD-06 Provider B adapter - payments/adapters/provider-b] --> m03
+  m10[MOD-10 Payment reconciliation - payments/application] --> m03
 ```
 
-The provider adapters depend on the payment router's provider interface, never the other way round, so a third provider adds one module (DRV-10). CI rule: nothing outside MOD-04 and MOD-06 imports a provider's client library.
+Each module sits where POL-02's rules put it, under apps/store-api/src/: in the business capability it serves, at its layer. The provider adapters depend on the payment router's provider interface, never the other way round, so a third provider adds one module (DRV-10). POL-02's dependency rules hold every arrow, and this stage adds none: MOD-01 reaches MOD-03 and MOD-09 through the index.ts of payments and of stock (capability-entry), MOD-02, MOD-05 and MOD-07 import no framework, database client or adapter (pure-domain), and only MOD-04 and MOD-06 import the providers' client libraries (provider-sdk-in-adapters).
 
 Module index (excerpt):
 
@@ -264,8 +264,8 @@ drivers: [DRV-02, DRV-05, DRV-10]
 decisions: [DEC-02, DEC-05]
 behaviour: "Report section: MOD-03 Payment router"
 verification:
-  - {checks: Every row of the failover policy table (MOD-07), how: Unit tests with fake providers}
-  - {checks: No double charge when A times out and completes its charge later, how: An integration test with a provider stub that answers after its timeout}
+  - {checks: Every row of the failover policy table (MOD-07), how: Unit tests with the fake providers of POL-03}
+  - {checks: No double charge when A times out and completes its charge later, how: An integration test in which POL-03's fake provider answers after its timeout}
 parameters: []                           # its waits are IFC-02's timing, set in stage 3; it sets none of its own
 as_is: new
 ```

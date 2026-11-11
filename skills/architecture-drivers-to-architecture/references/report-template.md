@@ -54,8 +54,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 ### Runtime
 ### Deployment
 ### Information
-### Code structure
-<One Mermaid diagram each, with a short table under it when needed.>
+<One Mermaid diagram each, with a short table under it when needed. How the code is organized is stage 2b's, in its report.>
 
 ## Walkthroughs
 ### CUJs
