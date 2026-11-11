@@ -7,9 +7,9 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs, paths, field names and codes as they are, and write the basis marks and statuses with the glossary's terms for the working language.
 
-The report never restates what an item says: no operations, error contracts, timings, fields, bindings, or other text or values copied from the YAML. It indexes the items by ID, title, enum values and references, and holds what only the report records: the flows, the latency budgets and the worst cases behind the timeouts, the screen flows, the data model diagram, the states across elements, the shared conventions, the flows that the acceptance criteria pass through, the issues for the quality chain and the decisions.
+The report never restates what an item says: no operations, error contracts, timings, fields, bindings, or other text or values copied from the YAML. It indexes the items by ID, title, enum values and references, and holds what only the report records: the flows, the latency budgets and the worst cases behind the timeouts, the screen flows, the data model diagram, the states across elements, the shared conventions, the flows that the acceptance criteria pass through, and the decisions. The requests to the quality chain are QCR items, which `quality-chain-requests.md` lists; the report does not.
 
-`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the interfaces, the SLI bindings, the data entities, the acceptance criteria trace, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the issue that replaces the binding of an SLI that nothing binds, the flow each acceptance criterion passes through, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
+`scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the interfaces, the SLI bindings, the data entities, the acceptance criteria trace, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: the request that replaces the binding of an SLI that nothing binds, the flow each acceptance criterion passes through, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
 ## Report template
 
@@ -46,10 +46,10 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 
 ## SLI bindings
 <!-- generated: sli-bindings -->
-| SLI | Title | Vantage | Bound on | Existing source | Issue instead |
+| SLI | Title | Vantage | Bound on | Existing source | Request instead |
 |---|---|---|---|---|---|
 <!-- /generated -->
-<One row per quality-chain SLI. Bound on: the IFCs and DATs whose `sli_bindings` name it. Issue instead, by hand, only for an SLI that nothing can bind: the number of its issue for the quality chain.>
+<One row per quality-chain SLI. Bound on: the IFCs and DATs whose `sli_bindings` name it. Request instead, by hand, only for an SLI that nothing binds: the request to the quality chain that replaces its binding, an open or answered QCR with the SLI in `targets`.>
 
 ## End-to-end flows
 ### <CUJ-xx name>
@@ -99,14 +99,10 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 <!-- /generated -->
 <The hand-offs this stage wrote, and those addressed to it: the schemas of interfaces between elements, to implementation; the timeouts of calls off the paths of time SLOs and of money, to stage 4; any other point left to a later stage that it would not take up otherwise. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
-## Issues for the quality chain
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-
 ## Unanswered questions
 | # | Question | Why unsure | Options | Items | Answer |
 |---|---|---|---|---|---|
-<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. The next run moves each answered row to "Decisions".>
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -125,7 +121,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 |---|---|---|
 
 ## Open gaps
-<Only what this stage could not close and no later stage will take up, such as a value cut off at ` #` in a file another stage wrote, for that stage to fix. A point left to stage 4 or to implementation is under "Hand-offs"; a problem in the architecture is a finding addressed to stage 2; one that only a change in the quality chain would close is under "Issues for the quality chain".>
+<Only what this stage could not close and no later stage will take up, such as a value cut off at ` #` in a file another stage wrote, for that stage to fix. A point left to stage 4 or to implementation is under "Hand-offs"; a problem in the architecture is a finding addressed to stage 2; one that only a change in the quality chain would close is a request to the quality chain, which `quality-chain-requests.md` lists.>
 
 ## Out of scope
 ## Next
@@ -151,11 +147,11 @@ IFC-01 has its whole contract here, OpenAPI document included, because the buyer
 
 SLI bindings (excerpt):
 
-| SLI | Title | Vantage | Bound on | Existing source | Issue instead |
+| SLI | Title | Vantage | Bound on | Existing source | Request instead |
 |---|---|---|---|---|---|
 | SLI-02 | Checkout latency | system-boundary | IFC-01 | OPF-02 | — |
 
-Latency budget for NFR-02: SLI-02's vantage is the system boundary, and its binding observes it at the load balancer in front of ELM-02 (IFC-01). ELM-01's checkout script runs in the buyer's browser and calls IFC-01 through that load balancer, so the script's own time and the buyer's network are outside the budget. The hop table in `flows-and-budgets.md` budgets three serial hops at the 99.67th percentile, 1.30 s in all, plus a 0.20 s margin, against the 1.5 s threshold. The failover path makes at most 3,000 checkouts slow per provider outage at the sale peak (OPF-03), 3.6% of the error budget ("Failure paths and the error budget"). The script's output is pasted under the table.
+Latency budget for NFR-02: SLI-02's vantage is the system boundary, and its binding observes it at the load balancer in front of ELM-02 (IFC-01). ELM-01's checkout script runs in the buyer's browser and calls IFC-01 through that load balancer, so the script's own time and the buyer's network are outside the budget. The hop table in `flows-and-budgets.md` budgets three serial hops at the 99.67th percentile, 1.30 s in all, plus a 0.20 s margin, against the 1.5 s threshold. The failover path makes at most 3,000 checkouts slow per provider outage at the sale peak (OPF-03), 3.6% of the error budget ("Failure paths and the error budget"). The script's output is pasted under the table. The hops of ELM-02's own work and of the database are provisional values that nothing has measured, and no NFR load-tests checkout before release, so this stage wrote QCR-04, asking the quality chain for a gate; whether to have one is the quality chain's to decide, and no item of this stage depends on it.
 
 Timeouts on the payment path, from the same script: IFC-02's provider_timeout and payment_wait at A, then the same values at B, whose interface keeps them, plus the 0.3 s that the budget gives ELM-02's own work and the database, make a worst case of 2.0 + 3.0 + 2.0 + 3.0 + 0.3 = 10.3 s. IFC-01's timeout of 15 s is above it, so the storefront never abandons a payment that is still running. The three values are provisional and share DAS-06 with IFC-02's failover_after, the threshold that HND-02 left to this stage; stage 4 uses them by IFC ID and sets none of them. Off these paths, IFC-06's `timing` holds only the bound, and HND-05 leaves the value to stage 4.
 

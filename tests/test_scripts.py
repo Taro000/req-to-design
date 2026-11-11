@@ -363,8 +363,8 @@ DESIGN = {
         title: Checkout screen
         status: active
         basis: inferred
-        basis_note: null
-        premises: []
+        basis_note: The empty history follows FR-02 as it stands, until QCR-02 is answered
+        premises: [QCR-02]
         kind: screen
         name: Checkout screen
         provider: ELM-05
@@ -494,6 +494,36 @@ DESIGN = {
         evidence: ELM-01 depends on no data store
         suggestion: Add ELM-02 to depends_on
         resolution: Added ELM-02 to the dependencies of ELM-01
+        """),
+    "qcr/QCR-01.yaml": d("""
+        id: QCR-01
+        title: The answer to QAS-01
+        status: answered
+        stage: 1
+        targets: [QAS-01]
+        origin: [DRV-01]
+        issue: The checkout latency target is provisional in the quality chain (QAS-01)
+        suggestion: Record the answer in QAS-01 and set it to confirmed
+        quality_stages: [4]
+        impact: high
+        impact_note: DRV-01, a primary driver, takes its measure from it
+        answer: The target holds
+        answered_in: stage 1, question 1
+        """),
+    "qcr/QCR-02.yaml": d("""
+        id: QCR-02
+        title: An empty order history
+        status: open
+        stage: 3
+        targets: [FR-02]
+        origin: [IFC-02]
+        issue: FR-02 does not say what the history shows to a buyer with no past order
+        suggestion: Add an acceptance criterion for a buyer with no past order
+        quality_stages: [2]
+        impact: low
+        impact_note: Only the empty state of the checkout screen depends on it
+        answer: null
+        answered_in: null
         """),
 }
 
@@ -848,6 +878,55 @@ class CheckTest(unittest.TestCase):
         self.f.edit("ifc/IFC-01.yaml", "sli_bindings:\n  - sli: SLI-01", "sli_bindings: []\nx_binding:\n  - sli: SLI-01")
         self.assertFinds("sli-binding", "SLI-01")
 
+    def test_unbound_sli_replaced_by_a_request(self):
+        self.f.edit("ifc/IFC-01.yaml", "sli_bindings:\n  - sli: SLI-01", "sli_bindings: []\nx_binding:\n  - sli: SLI-01")
+        self.f.edit("qcr/QCR-02.yaml", "targets: [FR-02]", "targets: [FR-02, SLI-01]")
+        self.f.tables()
+        self.assertFinds("sli-binding", "name it in the last column")
+        self.f.edit("3-high-level-design.md", "| OPF-01 | — |", "| OPF-01 | QCR-02 |")
+        self.assertEqual(self.rules(), [])
+        self.f.edit("qcr/QCR-02.yaml", "targets: [FR-02, SLI-01]", "targets: [FR-02]")
+        self.f.tables()
+        self.assertFinds("sli-binding", "names QCR-02 instead")
+
+    def test_requests(self):
+        self.f.edit("qcr/QCR-01.yaml", "status: answered", "status: open")
+        self.assertFinds("request", "holds an answer")
+        self.f.edit("qcr/QCR-02.yaml", "status: open", "status: answered")
+        self.assertFinds("request", "records the user's answer")
+        self.f.edit("qcr/QCR-02.yaml", "quality_stages: [2]", "quality_stages: [5]")
+        self.assertFinds("bad-value", "quality_stages")
+        self.f.edit("qcr/QCR-02.yaml", "targets: [FR-02]", "targets: [IFC-02]")
+        self.assertFinds("wrong-kind", "targets holds IFC-02")
+
+    def test_request_targets_and_who_fixes_an_answer(self):
+        self.f.edit("qcr/QCR-02.yaml", "targets: [FR-02]", "targets: []")
+        self.assertFinds("request", "targets names")
+        self.f.edit("qcr/QCR-02.yaml", "status: open", "status: answered")
+        problems = [p for p in self.f.check(S4) if p.rule == "request" and "records the user's answer" in p.message]
+        self.assertEqual([p.owner for p in problems], [S4])  # any run may record an answer, so the run that checks fixes it
+
+    def test_no_quality_chain(self):
+        self.f.edit("qcr/QCR-02.yaml", "quality_stages: [2]", "quality_stages: []")
+        self.assertFinds("bad-value", "quality_stages")
+        problems = check.Checker(lib.Project(self.f.design, None), lib.Glossary()).run()
+        self.assertEqual([p.message for p in problems if "quality_stages" in p.message], [])
+
+    def test_an_answered_qas_needs_a_request(self):
+        os.remove(os.path.join(self.f.design, "qcr/QCR-01.yaml"))
+        problems = self.assertFinds("request", "cites QAS-01 as answered")
+        self.assertEqual(problems[0].owner, S1)
+
+    def test_a_request_in_premises_is_no_assumption(self):
+        self.f.edit("ifc/IFC-02.yaml", "basis: inferred", "basis: assumed")
+        self.assertFinds("basis", "a QCR in premises does not make an item assumed")
+
+    def test_request_document_problems_go_to_the_run(self):
+        self.f.edit("qcr/QCR-02.yaml", "title: An empty order history", "title: A buyer with no past order")
+        problems = [p for p in self.f.check(S2) if p.rule == "table"]
+        self.assertEqual([(p.path, p.owner) for p in problems], [(lib.REQUESTS_DOC, S2)])
+        self.assertEqual([p.owner for p in self.f.check() if p.rule == "table"], [check.REQUESTS_OWNER])
+
 
 class TablesTest(unittest.TestCase):
     def setUp(self):
@@ -867,9 +946,97 @@ class TablesTest(unittest.TestCase):
         self.assertNotIn("| FR-02 | 1 |", text)
 
     def test_second_run_changes_nothing(self):
-        before = dict((rel, self.f.read(rel)) for rel in REPORTS)
+        files = list(REPORTS) + [lib.REQUESTS_DOC]
+        before = dict((rel, self.f.read(rel)) for rel in files)
+        self.assertEqual(self.f.tables(), 0)
+        self.assertEqual(before, dict((rel, self.f.read(rel)) for rel in files))
+
+    def test_request_document(self):
+        text = self.f.read(lib.REQUESTS_DOC)
+        self.assertTrue(text.startswith("# Requests to the quality chain\n"))
+        self.assertIn("| QCR-01 | The answer to QAS-01 | QAS-01 | 4 | high | answered | stage 1 |", text)
+        self.assertIn("| QCR-02 | An empty order history | FR-02 | 2 | low | open | stage 3 |", text)
+        self.assertIn("- Status: answered (stage 1, question 1) · Raised in: stage 1\n", text)
+        self.assertIn("- Origin: IFC-02 · Items that depend on it: IFC-02\n", text)
+        self.assertIn("- Origin: DRV-01 · Items that depend on it: DRV-01\n", text)  # through QAS-01
+        self.assertIn("\nAnswer: The target holds\n", text)
+        self.assertIn("### Stage 2 (`quality-in-use-to-functional-requirements`)\n\n"
+                      "- FR-02: QCR-02 An empty order history (open)\n", text)
+        self.assertIn("### Stage 4 (`product-quality-to-slo`)\n\n- QAS-01: QCR-01 The answer to QAS-01 (answered)\n", text)
+        self.f.edit("qcr/QCR-02.yaml", "status: open", "status: withdrawn")
         self.f.tables()
-        self.assertEqual(before, dict((rel, self.f.read(rel)) for rel in REPORTS))
+        text = self.f.read(lib.REQUESTS_DOC)
+        self.assertNotIn("QCR-02", text)
+        self.assertNotIn("### Stage 2", text)
+
+    def test_answer_written_in_the_request_document(self):
+        self.f.edit(lib.REQUESTS_DOC, "Answer: —", "Answer: Show that there\nis no order yet")
+        before = self.f.read(lib.REQUESTS_DOC)
+        self.assertEqual(self.f.tables(), 1)
+        self.assertEqual(self.f.read(lib.REQUESTS_DOC), before)
+        problems = [p for p in self.f.check(S2) if p.rule == "request-edit"]
+        self.assertEqual([(p.owner, "QCR-02" in p.message) for p in problems], [(S2, True)])
+        self.f.edit("qcr/QCR-02.yaml", "status: open", "status: answered")
+        self.f.edit("qcr/QCR-02.yaml", "answer: null\nanswered_in: null",
+                    "answer: Show that there is no order yet\nanswered_in: quality-chain-requests.md")
+        self.assertEqual(self.f.tables(), 0)
+        self.assertIn("\nAnswer: Show that there is no order yet\n", self.f.read(lib.REQUESTS_DOC))
+        self.assertEqual(summary(self.f.check()), [])
+
+    def test_a_list_written_after_the_placeholder(self):
+        self.f.edit(lib.REQUESTS_DOC, "Answer: —", "Answer: —\n- Show that there is no order yet\n- Offer the catalog")
+        self.assertEqual(self.f.tables(), 1)
+        self.f.edit("qcr/QCR-02.yaml", "status: open", "status: answered")
+        self.f.edit("qcr/QCR-02.yaml", "answer: null\nanswered_in: null",
+                    "answer: |\n  - Show that there is no order yet\n  - Offer the catalog\n"
+                    "answered_in: quality-chain-requests.md")
+        self.assertEqual(self.f.tables(), 0)
+        self.assertIn("\nAnswer:\n- Show that there is no order yet\n- Offer the catalog\n", self.f.read(lib.REQUESTS_DOC))
+        self.assertEqual(summary(self.f.check()), [])
+
+    def test_a_corrected_answer_replaces_the_old_one(self):
+        self.f.edit("qcr/QCR-01.yaml", "answer: The target holds", "answer: The target holds until the sale")
+        self.assertEqual(self.f.tables(), 0)
+        self.assertIn("\nAnswer: The target holds until the sale\n", self.f.read(lib.REQUESTS_DOC))
+
+    def test_answers_in_other_forms_are_kept(self):
+        fresh = self.f.read(lib.REQUESTS_DOC)
+        for written in ("- **Answer:** Show that there is no order yet", "回答: 注文がないと示す", "answer: Show it"):
+            self.f.write(os.path.join(self.f.design, lib.REQUESTS_DOC), fresh.replace("Answer: —", written, 1))
+            before = self.f.read(lib.REQUESTS_DOC)
+            self.assertEqual(self.f.tables(), 1, written)
+            self.assertEqual(self.f.read(lib.REQUESTS_DOC), before, written)
+
+    def test_other_text_written_by_hand_is_kept(self):
+        self.f.edit(lib.REQUESTS_DOC, "## List\n", "## List\n\nQCR-02: ask the product owner first\n")
+        self.f.edit(lib.REQUESTS_DOC, "- Issue: FR-02 does", "Ask the product owner.\n- Issue: FR-02 does")
+        self.assertEqual(self.f.tables(), 1)
+        problems = [p for p in self.f.check() if p.rule == "request-edit"]
+        self.assertEqual(len(problems), 2)
+        self.assertEqual(problems[0].owner, check.REQUESTS_OWNER)
+        self.f.edit(lib.REQUESTS_DOC, "QCR-02: ask the product owner first\n", "")
+        self.f.edit(lib.REQUESTS_DOC, "Ask the product owner.\n", "")
+        self.assertEqual(self.f.tables(), 0)
+        self.assertEqual(summary(self.f.check()), [])
+
+    def test_an_answer_line_that_starts_with_a_hash(self):
+        self.f.edit("qcr/QCR-01.yaml", "answer: The target holds",
+                    "answer: |\n  The target holds.\n  # It is checked at each sale")
+        self.assertEqual(self.f.tables(), 0)
+        self.assertIn("\nAnswer:\nThe target holds.\n\\# It is checked at each sale\n", self.f.read(lib.REQUESTS_DOC))
+        self.assertEqual(self.f.tables(), 0)
+        self.assertEqual(summary(self.f.check()), [])
+
+    def test_japanese_request_document(self):
+        self.f.write(os.path.join(self.f.design, lib.REQUESTS_DOC), "# 品質チェーンへの要求書\n")
+        self.f.tables()
+        text = self.f.read(lib.REQUESTS_DOC)
+        self.assertIn("| QCR | 要求 | 品質チェーンの項目 | 品質チェーンの段 | 影響 | 状態 | 出した段 |", text)
+        self.assertIn("| QCR-02 | An empty order history | FR-02 | 2 | 低 | 未回答 | 第 3 段階 |", text)
+        self.assertIn("- 状態: 回答済み（stage 1, question 1） · 出した段: 第 1 段階\n", text)
+        self.assertIn("### 第 2 段階（`quality-in-use-to-functional-requirements`）\n\n"
+                      "- FR-02: QCR-02 An empty order history（未回答）\n", text)
+        self.assertIn("\n答え: —\n", text)
 
     def test_hand_offs_and_the_schema_hand_off(self):
         row = ("| HND-01 | Where checkouts can be counted | requirements-to-architecture-drivers |"

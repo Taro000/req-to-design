@@ -41,15 +41,10 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 <!-- /generated -->
 <The open findings raised at this report's path, by this review and by earlier ones, ordered by severity. Under the table, by hand, cite in one line the rejected findings not raised again.>
 
-## Issues for the quality chain
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-<The issues this review raised, and those of earlier reviews at this path that the quality chain has not applied yet.>
-
 ## Unanswered questions
 | # | Question | Why unsure | Options | Items | Answer |
 |---|---|---|---|---|---|
-<Only while rows wait: the questions about facts the review needed and could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Items: the items, findings and activities the answer bears on. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. The next run moves each answered row to "Decisions".>
+<Only while rows wait: the questions about facts the review needed and could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Items: the items, findings and activities the answer bears on. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -81,11 +76,12 @@ Activities (excerpt):
 | B2 | Recompute latency budgets | A script added NFR-02's three serial hops inside the load balancer, where SLI-02's binding observes checkouts, each at the 99.67th percentile (1.30 s, plus a 0.20 s margin), and counted the failover path: at most 3,000 slow checkouts per provider outage at peak | The normal path fits; the failover path uses 3.6% of the error budget per outage, which holds while outages stay rare | none |
 | B3 | Check error contracts | Followed every error case of IFC-01 and IFC-02, and what each caller does | When provider A times out, the flow charges provider B at once, while A's outcome is still unknown; A's key does not cover B | FND-01 |
 | B6 | Check data entities | Checked the writers and readers of DAT-01 to DAT-06 | One writer each; ELM-02 reads DAT-04 directly under a recorded read-only decision (DEC-11); reservations are a separate entity (DAT-06) | none |
-| B7 | Check SLI bindings | Compared SLI-02's unit event (one checkout submitted), vantage (system boundary) and counting rules with the binding on IFC-01 | The vantage holds: the load balancer is the system boundary. The binding counts requests, though, and none of its fields ties a resubmitted checkout to the first, so a checkout submitted again counts twice, against SLI-02's counting rule | FND-03 |
+| B7 | Check SLI bindings | Compared SLI-02's unit event (one checkout submitted), vantage (system boundary) and counting rules with the binding on IFC-01 | The vantage holds: the load balancer is the system boundary. The binding counts requests, though, and none of its fields ties a resubmitted checkout to the first, so a checkout submitted again counts twice, against SLI-02's counting rule. SLI-02's counting rules also do not say how a checkout that IFC-01 answers with PAYMENT_PENDING counts, which no binding can settle: QCR-05 asks the quality chain | FND-03 |
 | B10 | Compare specs with IFCs | Compared checkout.openapi.yaml with IFC-01, and checked which IFCs need a spec | They match. IFC-02 and IFC-03 link their owners' documents. IFC-06, which no device and no other team calls, has no spec: its schema is handed off to implementation (HND-04), which is not a gap | none |
 | E3 | Re-rate open assumptions | Counted the items whose `premises` name each open DAS and QAS | DAS-06 keeps its ratings (medium, low): IFC-01 and IFC-02 depend on it. DAS-07 keeps its ratings (low, low): only DEC-11 depends on it. None is high, so none was asked. DAS-01, which IFC-03 rests on, is confirmed (stage 2, question 3) and is not open | none |
 | E5 | Look for copied statements | Read IFC-01 to IFC-06 and DAT-01 to DAT-06 for quality-chain wording | None; IFC-01's timing names NFR-02's 1.5 s next to its ID, a label rather than a copy | none |
 | E7 | Check hand-offs | Read HND-04 and HND-05, which stage 3 wrote, against the full-depth kinds of stage 3 | Each names its stage, its component and its trigger, and its bounds and origin exist. Neither hands off a point of stage 3's full-depth kinds: IFC-06 is used by no device and no other team, and its calls are on no path of a time SLO and move no money | none |
+| E8 | Look for gates and thresholds in the design | Read IFC-01 to IFC-06, DAT-01 to DAT-06, DEC-11, DEC-13 and the latency budgets for checks before release and levels the system must reach | None; NFR-02's budget splits its threshold, and the load test before the sale that the budget calls for is QCR-04, a request of stage 3 | none |
 
 Findings:
 

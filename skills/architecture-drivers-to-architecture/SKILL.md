@@ -19,7 +19,7 @@ The quality chain states requirements and leaves the design to this chain. Two k
 ## Read first
 
 - `references/conventions.md`: the design chain, what the quality chain leaves to the design, findings, the working language, judgment basis marks, the question protocol, decisions and assumptions, current state only, re-runs and finishing a run. Follow it exactly.
-- `references/artifacts.md`: where files go, and the schemas for DEC, ELM, HND, DAS and FND (and the DRV items and `design-context.yaml` you read).
+- `references/artifacts.md`: where files go, and the schemas for DEC, ELM, HND, DAS, FND and QCR (and the DRV items and `design-context.yaml` you read).
 - `references/structures-and-mechanisms.md`: overall structures, platforms and device support, design mechanisms by quality, and the eight design concerns.
 - `references/decisions.md`: how to write and compare options, sensitive points, trade-offs, business decisions, parameters, debt, deferral and transition.
 - `references/views.md`: the five views, consistency rules, walkthroughs, the threat model and teams.
@@ -55,7 +55,7 @@ Take the drivers in rank order. For each one, decide how the design will produce
 
 The functional requirements say what can be observed from outside ("an order is charged at most once, even when the request is sent again"), never how. When that behaviour is demanding or spans elements, choose here the mechanisms that produce it (failover, idempotency, reconciliation, events instead of polling), and decide only their principles and the promises they make across elements: the principles that "Decision depth" in `conventions.md` lists for stage 2, such as which operations are idempotent and what their keys cover, or the order of the timeouts along a call path. Leave how each operation applies them (its key, its error codes, its retries) to stage 3, and the values they run with (timeouts, waits, intervals, thresholds) to the stage that "Decision depth" names, with a hand-off for each sensitive point ("Design parameters" in `decisions.md`). Stage 3 writes the mechanisms into the interfaces, and stage 4 into the modules.
 
-When no option you know meets two primary drivers together, draft the option that serves the higher-ranked one, record the conflict in the decision and in both drivers' walkthroughs, and ask the business to choose, unless it already chose in stage 1. A primary driver left unmet is high severity, and the choice may become an issue for the quality chain.
+When no option you know meets two primary drivers together, draft the option that serves the higher-ranked one, record the conflict in the decision and in both drivers' walkthroughs, and ask the business to choose, unless it already chose in stage 1. A primary driver left unmet is high severity, and the choice may become a request to the quality chain.
 
 For drivers below the primary line, check whether the decisions already made meet them, and add decisions only where they do not. Constraints and principles apply to every decision; say in each decision's rationale how it respects the ones it touches.
 
@@ -86,7 +86,7 @@ Draw the five views in Mermaid, following `views.md`: context, runtime, deployme
 - Walk every step of every CUJ through the elements and their interactions.
 - Walk every primary driver's scenario: where the stimulus enters, which decisions shape the response, whether the response can meet the measure as far as can be judged before anything is built, and what risk remains.
 
-A walkthrough that fails sends you back to the decisions. A risk that a later stage settles within this stage's bounds, such as a value it sets, is not a gap: name that stage in the walkthrough. A gap you cannot close goes under "Open gaps", or becomes an issue for the quality chain when only a change there would close it.
+A walkthrough that fails sends you back to the decisions. A risk that a later stage settles within this stage's bounds, such as a value it sets, is not a gap: name that stage in the walkthrough. A gap you cannot close goes under "Open gaps", or becomes a request to the quality chain when only a change there would close it.
 
 ### 8. Debt, deferrals and transition
 
@@ -94,11 +94,11 @@ Record the debts accepted for the budget or the deadline, and the deferrals of p
 
 ### 9. Cost and team
 
-Check the whole design against the budget, the deadline and the team: the running cost of the chosen platform and services (from stated prices only; otherwise placeholders), the work to build it, and the skills it needs. When it does not fit, say which driver must give way. That is a business decision, and it is asked whenever a primary driver gives way. Write an issue for the quality chain when a target or a priority would have to move.
+Check the whole design against the budget, the deadline and the team: the running cost of the chosen platform and services (from stated prices only; otherwise placeholders), the work to build it, and the skills it needs. When it does not fit, say which driver must give way. That is a business decision, and it is asked whenever a primary driver gives way. Write a request to the quality chain when a target or a priority would have to move.
 
 ### 10. Hand-offs
 
-Take up every open hand-off addressed to this stage whose trigger has come, as `conventions.md` describes ("Hand-offs"): decide it within its bounds, citing it in the `basis_note` of the items that decide it, or pass it on with the reason. Stage 1 hands off the points that quality-chain items leave for the design to confirm and that it could not settle: confirm each one addressed to this stage, or raise an issue for the quality chain when the design shows that it does not hold.
+Take up every open hand-off addressed to this stage whose trigger has come, as `conventions.md` describes ("Hand-offs"): decide it within its bounds, citing it in the `basis_note` of the items that decide it, or pass it on with the reason. Stage 1 hands off the points that quality-chain items leave for the design to confirm and that it could not settle: confirm each one addressed to this stage, or write a request to the quality chain when the design shows that it does not hold.
 
 ### 11. Findings
 
@@ -122,7 +122,7 @@ Write the DEC, ELM, HND and FND items as you draft them in steps 1 to 11, and th
 - Every design parameter whose value this stage sets is of its full-depth kinds or rates high, and has its basis. Every other sensitive point names its parameter, and its value is handed off with its stage and trigger.
 - The five views use the same elements and IDs, and pass the consistency rules.
 - No point of this stage's full-depth kinds, and none that rates high, is handed off unless its deferral was decided as a business decision ("Decision depth" in `conventions.md`).
-- Every open hand-off addressed to this stage whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as an issue for the quality chain.
+- Every open hand-off addressed to this stage whose trigger has come is decided or passed on; a point that a quality-chain item leaves for the design to confirm is confirmed in the `basis_note` of an item, or raised as a request to the quality chain.
 - Every open finding addressed to this stage is accepted or rejected.
 - Each uncertain point has been asked or recorded as a DAS, and every business decision is under "Decisions" or is a DAS of kind `decision`, as `conventions.md` describes.
 - Every item that depends on an assumption lists it in `premises`, and an item whose `premises` include an open DAS, or an open QAS that no design question has answered, has `basis: assumed`.
@@ -143,4 +143,4 @@ Write the DEC, ELM, HND and FND items as you draft them in steps 1 to 11, and th
 
 ## Finish
 
-Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions, without asking for answers; name what to run next; run `scripts/tables.py` and `scripts/check.py` with `--skill architecture-drivers-to-architecture` and fix what the check reports in this stage's files; and commit the files this run wrote: the report, the DEC, ELM, DAS, HND and FND items, and the DAS and HND files of other stages that it re-rated, answered or took up. Tell the user also which files were written, how many decisions and elements, the platforms decided, which drivers are met, deferred or at risk, the findings processed and raised, the issues for the quality chain, and the next steps: run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review ("Findings between design stages" in `conventions.md`); re-run this stage when a review addresses a critical or major finding to it, but not for minor ones, which wait for its next run; then run `architecture-to-high-level-design`. When questions wait for answers, name them, and say that this stage runs again once they are answered and that its review and the later stages wait until then ("Finishing a run", step 2, in `conventions.md`).
+Finish the run as `conventions.md` describes ("Finishing a run"): list the open assumptions, without asking for answers; name what to run next; run `scripts/tables.py` and `scripts/check.py` with `--skill architecture-drivers-to-architecture` and fix what the check reports in this stage's files; and commit the files this run wrote: the report, the DEC, ELM, DAS, HND, FND and QCR items, `quality-chain-requests.md`, and the DAS, HND and QCR files of other stages that it re-rated, answered or took up. Tell the user also which files were written, how many decisions and elements, the platforms decided, which drivers are met, deferred or at risk, the findings processed and raised, the requests to the quality chain raised or answered, and the next steps: run `design-review` on this stage in a fresh context when it has not been reviewed yet, or when a critical or major finding changed its items since its last review ("Findings between design stages" in `conventions.md`); re-run this stage when a review addresses a critical or major finding to it, but not for minor ones, which wait for its next run; then run `architecture-to-high-level-design`. When questions wait for answers, name them, and say that this stage runs again once they are answered and that its review and the later stages wait until then ("Finishing a run", step 2, in `conventions.md`).

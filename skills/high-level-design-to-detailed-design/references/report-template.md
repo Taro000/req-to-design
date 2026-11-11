@@ -96,14 +96,10 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 <!-- /generated -->
 <The findings addressed to this stage for this component (they target the component, its modules or its decisions, or were raised in its reports), and the findings this stage raised in this report. Items changed are the items whose `basis_note` cites the finding.>
 
-## Issues for the quality chain
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-
 ## Unanswered questions
 | # | Question | Why unsure | Options | Items | Answer |
 |---|---|---|---|---|---|
-<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. The next run moves each answered row to "Decisions".>
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -221,18 +217,12 @@ Design parameters (excerpt):
 
 MOD-03 sets no timing of its own. It waits for provider A within IFC-02's provider_timeout and settles an unknown outcome within IFC-02's payment_wait; stage 3 owns both values (DAS-06) and has checked their worst case against IFC-01's timeout. A change to them would be a finding addressed to `architecture-to-high-level-design`.
 
-Decisions (excerpt). Both were asked because their severity is high: question 1 fixes the shape of stored data, and question 2 decides how much buyers pay.
+Decisions (excerpt). Question 1 was asked because its severity is high: it fixes the shape of stored data. Question 2 answers a request to the quality chain: FR-03 does not say how a percentage discount is rounded, a rule that only the requirements can set, and MOD-02 and MOD-05, which move money, rest on it. The request, QCR-06, has high impact, so it was asked in this run, and the answer is recorded in it (`artifacts.md`, "QCR"); MOD-02 and MOD-05 list QCR-06 in `premises` and cite the answer in `basis_note`.
 
 | # | Question | Answer | Items |
 |---|---|---|---|
 | 1 | MOD-10 matches each provider's settlement report with our payment attempts. Do the reports carry our idempotency key, or only the provider's own charge ID? | Only the provider's own charge ID, for both providers. Keep the charge ID on each attempt, unique per provider, and match the reports by it. | MOD-03, MOD-10 |
-| 2 | How is a percentage coupon rounded: once on the order, or line by line? | Once on the order. The percentage applies to the sum of the eligible lines, and the discount is rounded down to the minor unit, so that a buyer never gets more than the stated percentage. | MOD-02, MOD-05 |
-
-Issues for the quality chain (excerpt):
-
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-| 1 | FR-03's acceptance criteria do not say how a percentage discount is rounded; question 2 decided it for the design | FR-03 | Add the rounding rule of question 2 as an acceptance criterion | 2 |
+| 2 | FR-03 does not say how a percentage coupon is rounded. Which rule should the quality chain add to it: once on the order, or line by line? | Once on the order. The percentage applies to the sum of the eligible lines, and the discount is rounded down to the minor unit, so that a buyer never gets more than the stated percentage. | MOD-02, MOD-05; QCR-06 |
 
 Open assumptions (excerpt):
 

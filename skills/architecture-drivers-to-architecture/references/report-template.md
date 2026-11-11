@@ -7,7 +7,7 @@
 
 Write the report in the working language. Translate the headings. Keep the IDs as they are, and write the basis marks, statuses, kinds and ratings with the glossary's terms for the working language.
 
-The report indexes the items and never restates what an item says. Refer to decisions and elements by ID and title, and leave their options, rationales, responsibilities, parameter values and other text to the YAML. Only the report holds the summary, the comparison tables of options, the design concerns, the threat model, the views, the walkthroughs, the cost check, the issues for the quality chain, the questions and their answers, the placeholders, the open gaps and what is out of scope.
+The report indexes the items and never restates what an item says. Refer to decisions and elements by ID and title, and leave their options, rationales, responsibilities, parameter values and other text to the YAML. Only the report holds the summary, the comparison tables of options, the design concerns, the threat model, the views, the walkthroughs, the cost check, the questions and their answers, the placeholders, the open gaps and what is out of scope. The requests to the quality chain are QCR items, which `quality-chain-requests.md` lists; the report does not.
 
 `scripts/tables.py` writes the tables between `<!-- generated: <name> -->` and `<!-- /generated -->` from the items ("Scripts" in `conventions.md`): the design decisions, the elements, the design parameters, the findings, the hand-offs and the open assumptions. Do not edit them by hand. In them, the report writes only these cells, which the script keeps: where each parameter was decided, and the breadth and severity of a quality-chain assumption as this stage rates it (the script starts them from the QAS's own). Every other table is written by hand.
 
@@ -92,15 +92,10 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 <!-- /generated -->
 <The hand-offs this stage wrote, and those addressed to it: the values of sensitive points that a later stage sets, the deferrals under "Debt and deferrals", and any other point left to a later stage that it would not take up otherwise. Decided in: the items whose `basis_note` cites the hand-off. The point, its bounds, its trigger and why one was passed on are in the HND file; one that this stage passed on is listed by the stage it went to.>
 
-## Issues for the quality chain
-| # | Issue | Chain items | Suggested change | Quality-chain stage |
-|---|---|---|---|---|
-<Include the answers to questions about the quality chain's assumptions (QAS), for the quality chain to apply on its next run.>
-
 ## Unanswered questions
 | # | Question | Why unsure | Options | Items | Answer |
 |---|---|---|---|---|---|
-<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. The next run moves each answered row to "Decisions".>
+<Only while rows wait: the questions this run could not ask because nobody could answer during the run, in the order it would ask them, and the corrections to assumptions that the user gave after such a run ("Draft first, ask afterwards", step 7, and "Finishing a run", step 1, in conventions.md). #: the number the row keeps under "Decisions". Options: 2 to 4, the drafted one first and marked as drafted; a multi-select question lists up to 4 items and the drafted choice. Answer: what the user answered, written by the user or by the agent that started the run; empty until then. A question about a request to the quality chain names the request among its items, and its answer may be written under the request in `quality-chain-requests.md` instead. The next run moves each answered row to "Decisions".>
 
 ## Decisions
 | # | Question | Answer | Items |
@@ -119,7 +114,7 @@ Status: draft | waiting for answers | answers applied · Updated: <date> · Inpu
 |---|---|---|
 
 ## Open gaps
-<Only what this stage could not close and no later stage will take up: a walkthrough gap that no decision closes, a value cut off at ` #` in a file another stage wrote, for that stage to fix. A point left to a later stage or to implementation is under "Hand-offs"; one that only a change in the quality chain would close is under "Issues for the quality chain".>
+<Only what this stage could not close and no later stage will take up: a walkthrough gap that no decision closes, a value cut off at ` #` in a file another stage wrote, for that stage to fix. A point left to a later stage or to implementation is under "Hand-offs"; one that only a change in the quality chain would close is a request to the quality chain, which `quality-chain-requests.md` lists.>
 
 ## Out of scope
 ## Next

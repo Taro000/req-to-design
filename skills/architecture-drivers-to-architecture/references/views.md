@@ -67,7 +67,7 @@ A driver walkthrough, one row per primary driver:
 |---|---|---|---|---|
 | DRV-02 | ELM-02's call to ELM-05 | DEC-02, DEC-05 | Yes, once failover ships, if it starts within the threshold | Until failover ships right after the spring sale, an outage of the provider stops checkout (DEC-02's debt); failover adds time to checkout (DRV-01) |
 
-A step or a driver that cannot be walked through is a gap: fix the design, or record it under "Open gaps" or as an issue for the quality chain.
+A step or a driver that cannot be walked through is a gap: fix the design, or record it under "Open gaps" or as a request to the quality chain.
 
 ## Threat model
 
