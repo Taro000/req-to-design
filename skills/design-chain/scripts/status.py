@@ -22,8 +22,8 @@ its review; then, for each component, its run of stage 4 and its review. A unit 
 
     not run yet  a stage with no report, or a review of a stage that has not run
     stale        a stage with something to process (the reasons are listed)
-    due          a review that "Findings between design stages" calls for, or one whose questions have answers
-    waiting      a report that waits for answers, none of which has come
+    due          a review that "Findings between design stages" calls for, or one that has answers to apply
+    waiting      a report with questions that wait for answers, none of which has come
     up to date   none of these
 
 What runs next is the first unit, from the top, that is stale, due or not run yet, when no unit above it is stale, due,
@@ -35,39 +35,51 @@ stage 4, the component's report); a review's, the last such commit of design-rev
 A stage is stale when, since its last run (uncommitted changes included):
     - an input changed: an item of the quality chain (a YAML file, or an entry of context.yaml); an item of an earlier
       design stage (an entry of design-context.yaml, DRV, DEC, ELM, POL, IFC, DAT, a spec); or, in an earlier stage's
-      report, a Mermaid diagram or a table written by hand, other than a table whose first column is '#' (questions
-      and decisions). For stage 1, a change to design-context.yaml counts too. In stage 4, only what concerns the
-      component counts (below);
-    - an open hand-off addressed to it was written, passed on to it or changed: its trigger is listed, for the stage
-      to judge whether it has come;
+      report, a Mermaid diagram (a view, a flow, a state diagram), or a table under a heading that names a view, a
+      flow, a budget, a state or a decision table. For stage 1, a change to design-context.yaml counts too. In stage
+      4, only what concerns the component counts (below);
+    - an open hand-off addressed to it was written, passed on to it or changed. A script cannot tell from its trigger
+      whether an event has come, so every such hand-off counts, with its trigger listed: the stage leaves one whose
+      trigger has not come open, and it does not count again;
     - an assumption (DAS) that it wrote, or that its items list in premises, was overturned;
 and whatever its last run:
-    - a critical or major finding addressed to it is open;
-    - a row under its report's "Unanswered questions" has an answer: in the row, or, for a row that names a request
-      to the quality chain, in the request or under it in quality-chain-requests.md.
+    - a critical or major finding addressed to it is open (in stage 4, one that concerns the component: by the report
+      it was raised in, or by the component of the items it targets);
+    - a row under its report's "Unanswered questions" has an answer: in the row; or, for a row that names a request
+      to the quality chain, in the request recorded since the stage's last run, or under the request in
+      quality-chain-requests.md;
+    - its report is still a draft: the run that wrote it did not finish, and its next run starts from what it left.
 Without git, or when a report has no commit of its skill, the changes since the last run cannot be found: the stage
 is stale when its report has no such commit, and the reasons that need no history are listed.
+
+The questions are the rows of the table under the heading "Unanswered questions" (in Japanese, 未回答の質問), or of
+any table whose header has six cells and starts with '#'. A report waits for answers when its status says so or when
+such a row has no answer.
 
 What concerns a component of stage 4: a technical policy (POL); the component's own items, which are its element, the
 interfaces it provides or consumes, the data entities it owns, its modules and its decisions; an item that names one
 of its own items, or that its own items or the drivers it carries name; a decision that names no element, interface
 or data entity, since it binds every component; a spec that one of its interfaces names; an item of the quality chain
 that its own items or the drivers they carry name, or that a request in their premises targets; and a diagram or a
-table that names one of its own items, or no element, interface or data entity at all.
+table that names one of its own items, or no element, interface or data entity at all. A finding addressed to stage 4
+that concerns no component this way is listed apart, for the user to name its component.
 
-A review is due after the first run of the stage it reviews, and again when, since the review's last run, the stage
-accepted a critical or major finding addressed to it, or ran after an earlier stage accepted a critical or major
-finding that this review raised. A review report that waits for answers is due once a row has an answer.
+A review is due after the first run of the stage it reviews; when its report is still a draft or has answers to
+apply; and when, since the review's last run, the stage accepted a critical or major finding addressed to it, or ran
+after an earlier stage accepted a critical or major finding that this review raised, and in either case the stage's
+own items changed since.
 
-With --since, oscillation is a field of an item (any field but basis, basis_note and premises; DAS and QCR are left
-out, since their statuses follow answers) or of an entry of design-context.yaml that goes back to a value it had
-earlier in those commits: a decision changed back, a finding opened again, a hand-off sent back to a stage, a retired
-item made active again. A field that goes back to no value (null, empty, or absent) does not count: something added
-and then dropped, such as a debt that an answer made moot, is no oscillation, and when it is added again, that
-counts. A finding raised in those commits, addressed to the same stage as one rejected earlier in them and targeting
-an item it targeted, is listed as a possible repeat, for the reader to compare.
+With --since, a field of an item (any field but basis, basis_note and premises; DAS and QCR are left out, since their
+statuses follow answers) or of an entry of design-context.yaml that goes back to a value it had earlier in those
+commits is listed: a decision changed back, a finding opened again, a hand-off sent back to a stage, a retired item
+made active again. A field that goes back to no value (null, empty, or absent) does not count: something added and
+then dropped, such as a debt that an answer made moot, is no oscillation, and when it is added again, that counts.
+It is an oscillation when nothing explains the change back; it is listed for the reader to judge instead when an input
+of the item's stage changed in between, or when the run that changed it back applied answers. A finding raised in
+those commits, addressed to the same stage as one rejected earlier in them and targeting an item it targeted, is
+listed as a possible repeat, for the reader to compare.
 
-Exit status: 0, or 2 when an argument is wrong.
+Exit status: 0, or 2 when an argument is wrong or neither the design nor the quality chain is found.
 """
 
 import json
@@ -88,6 +100,7 @@ REPORT_OF = {1: "1-architecture-drivers.md", 2: "2-architecture.md", "2b": "2b-t
 REVIEWED = (2, "2b", 3)
 SEVERE = ("critical", "major")
 QUESTION_HEADINGS = ("unanswered questions", "未回答の質問")
+INPUT_HEADINGS = ("view", "flow", "budget", "state", "decision table", "ビュー", "流れ", "予算", "状態", "判断表")
 EMPTY_CELLS = ("", "—", "–", "-")
 ITEM_DIRS = dict(lib.DESIGN_DIRS)  # directory -> prefix
 ITEM_STAGE = {"DRV": 1, "ELM": 2, "POL": "2b", "IFC": 3, "DAT": 3, "MOD": 4}
@@ -95,6 +108,7 @@ BOOKKEEPING = ("basis", "basis_note", "premises")
 NO_REVERTS = ("DAS", "QCR")  # their statuses and ratings follow answers, not the design
 RATING = {"high": 3, "medium": 2, "low": 1}
 FENCE_RE = re.compile(r"\s*(`{3,}|~{3,})\s*([A-Za-z0-9_-]*)")
+HEADING_RE = re.compile(r"(#{1,6})\s+(.*)")
 STRUCTURE = ("ELM", "IFC", "DAT")
 MISSING = "\x00missing"
 EMPTY_VALUES = (MISSING, "null", "[]", "{}", '""')
@@ -136,6 +150,10 @@ def one_line(value):
 
 def id_list(ids):
     return ", ".join(sorted(set(ids), key=lib.id_key))
+
+
+def norm(line):
+    return re.sub(r"\s+", " ", line.strip())
 
 
 class Git(object):
@@ -201,6 +219,14 @@ class Git(object):
             self.memo[key] = out
         return self.memo[key]
 
+    def changed_between(self, a, b, paths):
+        """The files under the paths that differ between two commits."""
+        key = ("between", a, b, tuple(paths))
+        if key not in self.memo:
+            out = self.run(["diff", "--name-only", "--no-renames", a, b, "--"] + paths)
+            self.memo[key] = set(l for l in (out or "").splitlines() if l)
+        return self.memo[key]
+
     def show(self, commit, path):
         key = ("show", commit, path)
         if key not in self.memo:
@@ -243,43 +269,52 @@ class Git(object):
 
 
 def question_rows(text):
-    """The rows of the table under the report's "Unanswered questions" heading, as lists of cells."""
-    rows, inside, header = [], False, None
+    """The rows of the questions table of a report, as lists of cells: the table under the heading "Unanswered
+    questions", or any table whose header has six cells and starts with '#' (the template's questions table, in any
+    language)."""
+    rows, under_heading, header, wanted = [], False, None, False
     for line in (text or "").split("\n"):
         s = line.strip()
-        m = re.match(r"(#{2,6})\s+(.*)", s)
+        m = HEADING_RE.match(s)
         if m:
-            inside = any(h in m.group(2).strip().lower() for h in QUESTION_HEADINGS)
-            header = None
+            under_heading = any(h in m.group(2).strip().lower() for h in QUESTION_HEADINGS)
+            header, wanted = None, False
             continue
-        if not inside:
+        if not s.startswith("|"):
+            header, wanted = None, False  # a line that is not a row ends the table
             continue
-        if s.startswith("|"):
-            if re.match(r"\|?\s*:?-{3,}", s):
-                continue
-            cells = tables_mod.split_row(s)
-            if header is None:
-                header = cells
-            elif len(cells) >= 3:
-                rows.append(cells)
-        elif header is not None and s:
-            inside = False
+        if re.match(r"\|?\s*:?-{3,}", s):
+            continue
+        cells = tables_mod.split_row(s)
+        if header is None:
+            header = cells
+            wanted = under_heading or (len(cells) == 6 and cells[0] in ("#", "＃"))
+        elif wanted and len(cells) >= 3:
+            rows.append(cells)
     return rows
 
 
 def report_blocks(text):
-    """The diagrams and the tables written by hand in a report: each Mermaid block, and each table outside the
-    generated blocks whose first header cell is not '#'."""
+    """The parts of a report that later stages read as inputs: each Mermaid block, and each table written by hand
+    under a heading that names a view, a flow, a budget, a state or a decision table. A table whose first header cell
+    is '#' (questions and decisions) is left out, and so are the generated tables."""
     lines = tables_mod.BLOCK_RE.sub("", text or "").split("\n")
     out, i = [], 0
+    headings = []  # (level, text) of the headings above the current line
     while i < len(lines):
+        m = HEADING_RE.match(lines[i].strip())
+        if m:
+            level = len(m.group(1))
+            headings = [h for h in headings if h[0] < level] + [(level, m.group(2).strip().lower())]
+            i += 1
+            continue
         m = FENCE_RE.match(lines[i])
         if m:
             j = i + 1
             while j < len(lines) and not lines[j].strip().startswith(m.group(1)):
                 j += 1
             if m.group(2).lower() == "mermaid":
-                out.append("\n".join(re.sub(r"\s+", " ", l.strip()) for l in lines[i + 1:j]))
+                out.append("\n".join(norm(l) for l in lines[i + 1:j]))
             i = j + 1
             continue
         if lines[i].strip().startswith("|"):
@@ -287,8 +322,9 @@ def report_blocks(text):
             while j < len(lines) and lines[j].strip().startswith("|"):
                 j += 1
             header = tables_mod.split_row(lines[i])
-            if header and header[0] not in ("#", "＃"):
-                out.append("\n".join(re.sub(r"\s+", " ", l.strip()) for l in lines[i:j]))
+            named = any(word in heading for _, heading in headings for word in INPUT_HEADINGS)
+            if header and header[0] not in ("#", "＃") and named:
+                out.append("\n".join(norm(l) for l in lines[i:j]))
             i = j
             continue
         i += 1
@@ -324,12 +360,23 @@ class Unit(object):
         self.blocked_by = None
         self.notes = []
 
-    def as_dict(self, git):
+    def questions(self):
+        names = ["number", "question", "why_unsure", "options", "items", "answer"]
+        out = []
+        for cells in self.rows:
+            row = dict(zip(names[:-1], cells[:-1]))
+            row["answer"] = cells[-1]
+            row["waiting"] = cells[0] in self.waiting_rows
+            out.append(row)
+        return out
+
+    def as_dict(self):
         return {"unit": self.key, "label": self.label, "skill": self.skill, "component": self.component,
                 "report": self.report, "report_status": self.status, "last_run": self.last_run,
                 "state": self.state, "reasons": self.reasons, "notes": self.notes,
                 "blocked_by": self.blocked_by.key if self.blocked_by else None,
-                "answered_questions": [n for n, _ in self.answered], "waiting_questions": self.waiting_rows}
+                "answered_questions": [n for n, _ in self.answered], "waiting_questions": self.waiting_rows,
+                "questions": self.questions()}
 
 
 class Chain(object):
@@ -347,14 +394,16 @@ class Chain(object):
             self.units.append(Unit("stage", stage))
             if stage in REVIEWED:
                 self.units.append(Unit("review", stage))
-        for c in project.components():
-            self.units += [Unit("stage", 4, c.id), Unit("review", 4, c.id)]
+        self.component_ids = [c.id for c in project.components()]
+        for c in self.component_ids:
+            self.units += [Unit("stage", 4, c), Unit("review", 4, c)]
         self.doc_answers = self.request_doc_answers()
         self.next = []
         self.waiting = []
         self.own = {}
         self.named = {}
         self.due_handoffs = set()
+        self.unplaced = []  # findings addressed to stage 4 that concern no component that can be named
 
     # paths
 
@@ -365,15 +414,24 @@ class Chain(object):
     def under(self, path, base):
         return base is not None and (base == "" or path == base or path.startswith(base + "/"))
 
+    def inputs(self):
+        return [self.design_rel or "."] + ([self.quality_rel or "."] if self.quality_rel is not None else [])
+
     def changed(self, commit):
-        paths = [self.design_rel or "."] + ([self.quality_rel or "."] if self.quality_rel is not None else [])
-        return self.git.changed_since(commit, paths)
+        return self.git.changed_since(commit, self.inputs())
 
     def current(self, rel):
         path = os.path.join(self.p.design_dir, rel)
         if not os.path.exists(path):
             return None
         with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    def read_root(self, path):
+        full = os.path.join(self.git.root, path)
+        if not os.path.exists(full):
+            return None
+        with open(full, "r", encoding="utf-8") as f:
             return f.read()
 
     # the units
@@ -385,14 +443,16 @@ class Chain(object):
         return None
 
     def evaluate(self):
+        self.place_findings()
         for u in self.units:
             u.text = self.current(u.report)
             u.exists = u.text is not None
             if u.exists:
                 u.status = tables_mod.report_status(u.text, self.g)
                 u.rows = question_rows(u.text)
-                if u.status == "draft":
-                    u.notes.append("its report is still a draft: the run that wrote it did not finish")
+                if u.status is None:
+                    u.notes.append("its status cannot be read (only English and Japanese are read): waiting for"
+                                   " answers is judged from its questions alone")
                 if self.history:
                     u.last_run = self.git.last_run(u.skill, self.drel(u.report))
         for u in self.units:
@@ -403,14 +463,25 @@ class Chain(object):
         self.order()
         return self
 
+    def own_reasons(self, u):
+        """The reasons that come from the unit's own report: an unfinished run, and answers to apply."""
+        self.questions(u)
+        out = []
+        if u.status == "draft":
+            out.append("its report is still a draft: the run that wrote it did not finish, and the next run starts"
+                       " from what it left")
+        if u.answered:
+            out.append("answers under Unanswered questions: %s" % self.answer_list(u))
+        return out
+
+    def waits(self, u):
+        return (u.status == "waiting for answers" or bool(u.waiting_rows)) and not u.answered
+
     def stage_state(self, u):
         if not u.exists:
             u.state = "not run yet"
             return
-        self.questions(u)
-        reasons = []
-        if u.answered:
-            reasons.append("answers under Unanswered questions: %s" % self.answer_list(u))
+        reasons = self.own_reasons(u)
         reasons += self.finding_reasons(u)
         if not self.git.root:
             u.notes.append("not under git: input changes, hand-offs and overturned assumptions are not checked")
@@ -422,7 +493,7 @@ class Chain(object):
             reasons += self.handoff_reasons(u)
             reasons += self.assumption_reasons(u)
         u.reasons = reasons
-        if u.status == "waiting for answers" and not u.answered:
+        if self.waits(u) and u.status != "draft":
             u.state = "waiting"
         else:
             u.state = "stale" if reasons else "up to date"
@@ -436,13 +507,10 @@ class Chain(object):
             u.state = "due"
             u.reasons = ["the first review of %s" % stage.label]
             return
-        self.questions(u)
-        if u.status == "waiting for answers" and not u.answered:
+        reasons = self.own_reasons(u)
+        if self.waits(u) and u.status != "draft":
             u.state = "waiting"
             return
-        reasons = []
-        if u.answered:
-            reasons.append("answers under Unanswered questions: %s" % self.answer_list(u))
         if not self.git.root:
             u.notes.append("not under git: whether a critical or major finding changed the stage since the review is"
                            " not checked")
@@ -480,16 +548,23 @@ class Chain(object):
     # questions
 
     def request_doc_answers(self):
-        """{QCR ID: answer} written by hand under the requests in quality-chain-requests.md."""
+        """{QCR ID: answer} written by hand under the requests in quality-chain-requests.md, and not recorded in the
+        request yet. A section as the script wrote it holds no such answer (its fingerprint says so)."""
         out = {}
         _, sections, prints = tables_mod.doc_parts(self.p.request_doc)
         for ident, _, lines in sections:
-            written = tables_mod.section_edits(lines)[0]
-            if tables_mod.answer_key(written):
+            if prints.get(ident) == tables_mod.fingerprint(lines):
+                continue
+            written = tables_mod.answer_key(tables_mod.section_edits(lines)[0])
+            item = self.p.get(ident)
+            recorded = tables_mod.answer_key(item.get("answer")) if item is not None else ""
+            if written and written != recorded:
                 out[ident] = written
         return out
 
     def questions(self, u):
+        u.answered, u.waiting_rows = [], []
+        changed = self.changed(u.last_run) if (self.git.root and u.last_run) else None
         for cells in u.rows:
             number = cells[0]
             if cells[-1].strip() not in EMPTY_CELLS:
@@ -498,7 +573,10 @@ class Chain(object):
             where = None
             for q in [x for x in lib.mentions(cells[-2]) if lib.prefix_of(x) == "QCR"]:
                 item = self.p.get(q)
-                if (item is not None and item.status != "open") or q in self.doc_answers:
+                # an answer the stage has not seen yet: written in the document, or recorded since its last run
+                recorded = item is not None and item.status != "open" and (
+                    changed is None or self.drel(item.path) in changed)
+                if recorded or q in self.doc_answers:
                     where = q
                     break
             if where:
@@ -509,11 +587,46 @@ class Chain(object):
     def answer_list(self, u):
         return ", ".join("question %s%s" % (n, " (answered in %s)" % w if w else "") for n, w in u.answered)
 
-    # reasons a stage is stale
+    # findings
+
+    def finding_components(self, finding):
+        """The components a finding addressed to stage 4 concerns: by the report it was raised in, or by the items it
+        targets (a module, a decision of the detailed design, the element, a hand-off, an interface, a data entity)."""
+        found = set()
+        raised_in = finding.get("raised_in")
+        m = re.search(r"(ELM-[0-9]{2,})\.md\Z", raised_in) if isinstance(raised_in, str) else None
+        if m:
+            found.add(m.group(1))
+        for t in lib.as_list(finding.get("targets")):
+            it = self.p.get(t) if isinstance(t, str) else None
+            if it is None:
+                continue
+            if it.prefix == "ELM":
+                found.add(it.id)
+            elif it.prefix in ("MOD", "HND") and isinstance(it.get("component"), str):
+                found.add(it.get("component"))
+            elif it.prefix == "DEC" and it.get("stage") == "detailed-design":
+                for c in self.component_ids:
+                    if it in self.p.stage4_decisions_of(c):
+                        found.add(c)
+            elif it.prefix == "IFC":
+                found.update(x for x in [it.get("provider")] + lib.as_list(it.get("consumers")) if isinstance(x, str))
+            elif it.prefix == "DAT" and isinstance(it.get("owner"), str):
+                found.add(it.get("owner"))
+        return found & set(self.component_ids)
+
+    def place_findings(self):
+        self.placed = {}
+        for f in self.p.of("FND", active_only=False):
+            if f.get("to") == lib.STAGE_SKILLS[4]:
+                self.placed[f.id] = self.finding_components(f)
+                if not self.placed[f.id] and f.status == "open" and f.get("severity") in SEVERE:
+                    self.unplaced.append(f.id)
 
     def concerns_finding(self, finding, component):
-        found = self.p.component_of_finding(finding)
-        return component in found or not found
+        return component in self.placed.get(finding.id, set())
+
+    # reasons a stage is stale
 
     def finding_reasons(self, u):
         found = []
@@ -575,24 +688,26 @@ class Chain(object):
             out.append("quality chain changed: %s" % id_list(quality))
         return out
 
+    def quality_ids(self, rel, path, commit):
+        """The IDs of the quality-chain items that a changed file holds; ["context.yaml"] when context.yaml changed
+        outside its entries; [] for a file that holds no item (a report)."""
+        parts = rel.split("/")
+        if rel == "context.yaml":
+            return self.entry_changes(path, commit, lib.QUALITY_CONTEXT_LISTS) or ["context.yaml"]
+        if len(parts) == 2 and parts[0] in dict(lib.QUALITY_DIRS) and parts[1].endswith(".yaml"):
+            return [parts[1][:-5]]
+        return []
+
     def quality_change(self, u, rel, path):
         """The IDs of the quality-chain items that a changed file holds and that count for the unit."""
-        parts = rel.split("/")
-        ids = []
-        if rel == "context.yaml":
-            ids = self.entry_changes(path, u.last_run, lib.QUALITY_CONTEXT_LISTS)
-            if ids is None:
-                return ["context.yaml"] if u.stage != 4 else []
-        elif len(parts) == 2 and parts[0] in dict(lib.QUALITY_DIRS) and parts[1].endswith(".yaml"):
-            ids = [parts[1][:-5]]
+        ids = self.quality_ids(rel, path, u.last_run)
         if u.stage == 4:
             named = self.named_ids(u.component)
             ids = [i for i in ids if i in named]
         return ids
 
     def entry_changes(self, path, commit, lists):
-        """The IDs of the entries that differ between the commit and the working tree; None when something other
-        than the entries changed (and no entry did)."""
+        """The IDs of the entries that differ between the commit and the working tree; None when no entry did."""
         new = parse(self.read_root(path))
         old = parse(self.git.show(commit, path))
 
@@ -603,16 +718,15 @@ class Chain(object):
                     if isinstance(e, dict) and isinstance(e.get("id"), str):
                         out[e["id"]] = json.dumps(e, sort_keys=True, ensure_ascii=False, default=str)
             return out
+
         a, b = entries(old), entries(new)
         ids = [i for i in set(a) | set(b) if a.get(i) != b.get(i)]
         return ids if ids else None
 
-    def read_root(self, path):
-        full = os.path.join(self.git.root, path)
-        if not os.path.exists(full):
-            return None
-        with open(full, "r", encoding="utf-8") as f:
-            return f.read()
+    def item_stage(self, prefix, data):
+        if prefix == "DEC":
+            return lib.DEC_STAGES.get((data or {}).get("stage"))
+        return ITEM_STAGE.get(prefix)
 
     def design_change(self, u, rel, path):
         """("item", [IDs]) or ("report", None) when a changed file under docs/design counts for the unit, else
@@ -634,11 +748,7 @@ class Chain(object):
             ident = parts[1][:-5]
             now = parse(self.read_root(path))
             then = parse(self.git.show(u.last_run, path))
-            data = now if now is not None else then
-            if prefix == "DEC":
-                stage = lib.DEC_STAGES.get((data or {}).get("stage"))
-            else:
-                stage = ITEM_STAGE.get(prefix)
+            stage = self.item_stage(prefix, now if now is not None else then)
             if stage is None or stage_index(stage) >= stage_index(u.stage):
                 return None, None
             if u.stage == 4 and not self.concerns(u.component, prefix, ident, [now, then]):
@@ -721,8 +831,14 @@ class Chain(object):
 
     # reviews
 
+    def own_paths(self, stage):
+        return [self.drel(i.path) for i in self.p.stage_own_items(stage.stage, stage.component) if not i.is_entry] + \
+            ([self.drel("design-context.yaml")] if stage.stage == 1 else [])
+
     def review_reasons(self, u, stage):
         changed = self.changed(u.last_run) if u.last_run else None
+        own = self.own_paths(stage)
+        own_changed = changed is None or bool(changed & set(own))
         accepted, followed = [], []
         for f in self.p.of("FND", active_only=False):
             if f.status != "accepted" or f.get("severity") not in SEVERE:
@@ -730,58 +846,117 @@ class Chain(object):
             if changed is not None and self.drel(f.path) not in changed:
                 continue
             if f.get("to") == stage.skill:
-                if u.stage != 4 or self.concerns_finding(f, u.component):
+                if (u.stage != 4 or self.concerns_finding(f, u.component)) and own_changed:
                     accepted.append("%s (%s)" % (f.id, f.get("severity")))
             elif f.get("raised_in") == u.report and stage.last_run and \
                     stage_index(lib.SKILL_STAGE.get(f.get("to"))) < stage_index(u.stage):
                 change = self.git.last_change(self.drel(f.path))
-                if change and change != stage.last_run and self.git.is_ancestor(change, stage.last_run):
+                if change and change != stage.last_run and self.git.is_ancestor(change, stage.last_run) and \
+                        self.git.changed_between(change, stage.last_run, own):
                     followed.append("%s (%s)" % (f.id, f.get("severity")))
         out = []
         if accepted:
             out.append("%s accepted findings addressed to it since this review: %s" % (stage.label,
                                                                                        ", ".join(accepted)))
         if followed:
-            out.append("%s ran after an earlier stage accepted findings that this review raised: %s"
+            out.append("%s changed its items after an earlier stage accepted findings that this review raised: %s"
                        % (stage.label, ", ".join(followed)))
         return out
 
     # since the start of an invocation
+
+    def owner_stage(self, rel, data):
+        """(stage, component) of the stage that writes a design file; (None, None) for one that no stage owns."""
+        parts = rel.split("/")
+        if rel == "design-context.yaml":
+            return 1, None
+        if len(parts) != 2 or parts[0] not in ITEM_DIRS:
+            return None, None
+        prefix = ITEM_DIRS[parts[0]]
+        stage = self.item_stage(prefix, data)
+        if stage != 4:
+            return stage, None
+        if prefix == "MOD":
+            return 4, (data or {}).get("component")
+        ident = parts[1][:-5]
+        for c in self.component_ids:
+            if any(d.id == ident for d in self.p.stage4_decisions_of(c)):
+                return 4, c
+        return 4, None
 
     def since(self, start):
         commits = self.git.commits_since(start)
         position = dict((c, n) for n, c in enumerate(commits))
         runs = dict((u.key, []) for u in self.units)
         changes = {}
+        inputs = {}  # commit -> the stages whose inputs it changed (ORDER indexes), as a set
         closed = {}  # commit -> the critical findings it closed, as Items
         for c in commits:
             subject = self.git.subject(c)
-            entries = self.git.diff_tree(c, [self.design_rel or "."])
             touched = set()
-            for old, new, status, path in entries:
+            reached = set()
+            for old, new, status, path in self.git.diff_tree(c, self.inputs()):
+                if self.quality_rel is not None and self.under(path, self.quality_rel):
+                    reached.update(range(len(ORDER)))
+                    continue
                 rel = path[len(self.design_rel) + 1:] if self.design_rel else path
                 touched.add(rel)
                 changes.setdefault(rel, []).append((c, old, new, status))
+                data = parse(self.git.blob(new)) or parse(self.git.blob(old))
+                stage, _ = self.owner_stage(rel, data)
+                if stage is not None:
+                    reached.update(range(stage_index(stage) + 1, len(ORDER)))
+                    if stage == 1 and rel == "design-context.yaml":
+                        reached.add(0)
                 if rel.startswith("fnd/"):
                     a, b = parse(self.git.blob(old)), parse(self.git.blob(new))
                     if a and b and b.get("severity") == "critical" and a.get("status") == "open" \
                             and b.get("status") in ("accepted", "rejected"):
                         closed.setdefault(c, []).append(lib.Item(str(b.get("id")), "design", rel, b))
+            inputs[c] = reached
             for u in self.units:
                 if starts_with_skill(subject, u.skill) and u.report in touched:
                     runs[u.key].append(c)
         rounds = {}
         for u in self.units:
             count = len([c for c in runs[u.key] if u.kind == "stage" and any(
-                f.get("to") == u.skill and (u.stage != 4 or self.concerns_finding(f, u.component))
+                f.get("to") == u.skill and (u.stage != 4 or u.component in self.finding_components(f))
                 for f in closed.get(c, []))])
             if count:
                 rounds[u.key] = count
+        oscillation, judge = [], []
+        for revert in self.reverts(changes, start):
+            why = self.explained(revert, commits, position, inputs)
+            if why:
+                revert["why"] = why
+                judge.append(revert)
+            else:
+                oscillation.append(revert)
         return {"start": start, "commits": commits,
                 "runs": dict((k, v) for k, v in runs.items() if v),
                 "critical_rounds": rounds,
-                "oscillation": self.reverts(changes, position, start),
+                "oscillation": oscillation,
+                "reverts_to_judge": judge,
                 "repeats": self.repeats(changes, position)}
+
+    def explained(self, revert, commits, position, inputs):
+        """Why a field may have gone back for a good reason, or None: an input of its stage changed in between, or
+        the run that changed it back applied answers."""
+        rel = revert["file"]
+        data = parse(self.read_root(self.drel(rel)))
+        stage, component = self.owner_stage(rel, data)
+        if stage is None or rel.startswith(("fnd/", "hnd/")):
+            return None
+        a, b = position.get(revert["changed_in"], -1), position.get(revert["back_in"], -1)
+        for c in commits[a + 1:b]:
+            if stage_index(stage) in inputs.get(c, set()):
+                return "an input of %s changed in %s" % (stage_name(stage), self.git.short(c))
+        unit = self.unit("stage", stage, component if stage == 4 else None)
+        if unit is not None and b > 0:
+            before = self.git.show(commits[b - 1], self.drel(unit.report))
+            if before is not None and tables_mod.report_status(before, self.g) == "waiting for answers":
+                return "the run that changed it back applied answers to the questions of %s" % unit.label
+        return None
 
     def versions(self, seq, start):
         """[(commit, data)] of a file: as it was before the first change, then after each change."""
@@ -790,7 +965,7 @@ class Chain(object):
             out.append((commit, None if status == "D" else parse(self.git.blob(new))))
         return out
 
-    def reverts(self, changes, position, start):
+    def reverts(self, changes, start):
         out = []
         for rel, seq in sorted(changes.items()):
             parts = rel.split("/")
@@ -858,19 +1033,17 @@ class Chain(object):
 
     # what makes a stage stale later
 
-    def unit_of_item(self, item):
-        owner = self.p.owner(item)
-        stage = lib.SKILL_STAGE.get(owner)
-        if stage is None or item.prefix in ("FND", "HND"):
-            return None
-        if stage == 4:
-            component = item.get("component") if item.prefix == "MOD" else None
-            if component is None:
-                for c in self.p.components():
-                    if item in self.p.stage4_decisions_of(c.id):
-                        component = c.id
-            return self.unit("stage", 4, component)
-        return self.unit("stage", stage)
+    def stale_when_applied(self, request):
+        """The stages that become stale once the quality chain applies a request: every stage that has run reads the
+        quality chain whole, and a component of stage 4 whose items name a target of the request or the request."""
+        targets = set(x for x in lib.as_list(request.get("targets")) if isinstance(x, str))
+        out = []
+        for u in self.units:
+            if u.kind != "stage" or not u.exists:
+                continue
+            if u.stage != 4 or (self.named_ids(u.component) & (targets | set([request.id]))):
+                out.append(u)
+        return out
 
     def later(self):
         requests = []
@@ -881,14 +1054,8 @@ class Chain(object):
             items = set()
             for name in names:
                 items.update(self.p.dependents(name))
-            units = []
-            for it in sorted(items, key=lambda i: lib.id_key(i.id)):
-                u = self.unit_of_item(it)
-                if u is not None and u not in units:
-                    units.append(u)
-            units.sort(key=self.units.index)
             requests.append({"id": q.id, "title": one_line(q.get("title")), "status": q.status,
-                             "impact": q.get("impact"), "stages": [u.label for u in units],
+                             "impact": q.get("impact"), "stages": [u.label for u in self.stale_when_applied(q)],
                              "items": sorted((i.id for i in items), key=lib.id_key)})
         handoffs = []
         for h in self.p.of("HND", active_only=False):
@@ -903,7 +1070,8 @@ class Chain(object):
             if f.status == "open" and f.get("severity") == "minor" and f.get("to") in lib.SKILL_STAGE:
                 stage = lib.SKILL_STAGE[f.get("to")]
                 minor.setdefault(stage_name(stage), []).append(f.id)
-        return {"requests": requests, "handoffs": handoffs, "minor_findings": minor}
+        return {"requests": requests, "handoffs": handoffs, "minor_findings": minor,
+                "unplaced_findings": list(self.unplaced)}
 
     def assumptions(self):
         out = []
@@ -927,9 +1095,10 @@ def text_output(chain, since=None, questions=False, summary=False):
     p, git = chain.p, chain.git
     lines = []
     quality = p.quality_dir if p.has_quality else "not found"
-    if git.root and git.head:
-        dirty = git.dirty([chain.design_rel or "."] + ([chain.quality_rel or "."]
-                                                       if chain.quality_rel is not None else []))
+    if not os.path.isdir(p.design_dir):
+        where = "does not exist yet"
+    elif git.root and git.head:
+        dirty = git.dirty(chain.inputs())
         where = "at %s%s" % (git.short(git.head), ", %d uncommitted change(s) under the design and the quality chain"
                              % dirty if dirty else "")
     elif git.root:
@@ -950,6 +1119,11 @@ def text_output(chain, since=None, questions=False, summary=False):
             lines.append("%-*s    - %s" % (width, "", reason))
         for note in u.notes:
             lines.append("%-*s    (%s)" % (width, "", note))
+    if chain.unplaced:
+        lines.append("")
+        lines.append("Findings addressed to stage 4 that name no component (by the report they were raised in, or"
+                     " the items they target), so no component's run takes them up: %s. Name the component in"
+                     " their targets." % ", ".join(chain.unplaced))
     lines.append("")
     if chain.next:
         first = chain.next[0]
@@ -982,6 +1156,9 @@ def text_output(chain, since=None, questions=False, summary=False):
                     o["id"], o["field"], git.short(o["changed_in"]), git.short(o["back_in"]), o["file"]))
         else:
             lines.append("  oscillation: none")
+        for o in since["reverts_to_judge"]:
+            lines.append("  went back, to judge: %s %s went back to its value before %s, in %s; %s" % (
+                o["id"], o["field"], git.short(o["changed_in"]), git.short(o["back_in"]), o["why"]))
         for r in since["repeats"]:
             lines.append("  possible repeat: %s (raised in %s) targets %s, as %s did, which was rejected in %s:"
                          " compare them" % (r["id"], git.short(r["raised_in"]), id_list(r["targets"]), r["like"],
@@ -991,13 +1168,12 @@ def text_output(chain, since=None, questions=False, summary=False):
         lines.append("Questions waiting for answers:")
         shown = False
         for u in chain.units:
-            for cells in u.rows:
-                if cells[0] in u.waiting_rows:
+            for row in u.questions():
+                if row["waiting"]:
                     shown = True
-                    lines.append("  %s, question %s (%s)" % (u.label, cells[0], u.report))
-                    names = ["question", "why unsure", "options", "items"]
-                    for name, cell in zip(names, cells[1:-1]):
-                        lines.append("    %s: %s" % (name, cell))
+                    lines.append("  %s, question %s (%s)" % (u.label, row["number"], u.report))
+                    for name in ("question", "why_unsure", "options", "items"):
+                        lines.append("    %s: %s" % (name.replace("_", " "), row.get(name, "")))
         if not shown:
             lines.append("  none")
     if summary:
@@ -1005,10 +1181,11 @@ def text_output(chain, since=None, questions=False, summary=False):
         lines.append("")
         lines.append("Requests to the quality chain, open or answered (quality-chain-requests.md):")
         for r in later["requests"] or []:
-            lines.append("  - %s %s (%s, impact %s)%s" % (r["id"], r["title"], r["status"], r["impact"], (
-                ": when the quality chain applies it, %s become%s stale (%s)" % (
-                    ", ".join(r["stages"]), "s" if len(r["stages"]) == 1 else "", id_list(r["items"])))
-                if r["stages"] else ""))
+            lines.append("  - %s %s (%s, impact %s): once the quality chain applies it, %s; items that depend on it:"
+                         " %s" % (r["id"], r["title"], r["status"], r["impact"],
+                                  ("%s become%s stale" % (", ".join(r["stages"]), "s" if len(r["stages"]) == 1 else ""))
+                                  if r["stages"] else "no stage has run to become stale",
+                                  id_list(r["items"]) or "none"))
         if not later["requests"]:
             lines.append("  none")
         lines.append("Hand-offs waiting for their trigger:")
@@ -1036,7 +1213,7 @@ def json_output(chain, since=None):
     git = chain.git
     out = {"design": chain.p.design_dir, "quality": chain.p.quality_dir if chain.p.has_quality else None,
            "git": bool(git.root), "head": git.head,
-           "units": [u.as_dict(git) for u in chain.units],
+           "units": [u.as_dict() for u in chain.units],
            "next": [u.key for u in chain.next], "waiting": [u.key for u in chain.waiting],
            "later": chain.later(), "assumptions": chain.assumptions()}
     if since is not None:
@@ -1057,8 +1234,13 @@ def main(argv):
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    # a design directory that does not exist yet is a chain whose stage 1 has not run
+    # a design directory that does not exist yet is a chain whose stage 1 has not run; with no quality chain either,
+    # the command runs in the wrong place
     quality = args.quality if args.quality is not None else lib.default_quality_dir(args.design)
+    if not os.path.isdir(args.design) and not (quality and os.path.isdir(quality)):
+        print("status.py: neither a design directory (%s) nor a quality chain was found: run it from the project's"
+              " root, or give --design and --quality" % args.design)
+        return 2
     project = lib.Project(args.design, quality)
     git = Git(args.design if os.path.isdir(args.design) else os.getcwd())
     chain = Chain(project, lib.Glossary(), git).evaluate()

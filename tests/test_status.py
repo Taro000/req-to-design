@@ -4,6 +4,7 @@ Run from the repository root:  python3 -m unittest discover -s tests
 """
 
 import io
+import json
 import os
 import shutil
 import subprocess
@@ -243,9 +244,15 @@ class StatusTest(unittest.TestCase):
                               (S3, "3-high-level-design.md")):
             self.touch(report, "c")
             self.commit("%s: follow" % skill, report)
+        # stage 3 ran after the change and kept its items as they were: nothing for the review
+        self.assertEqual(self.unit(self.chain(), "review 3").state, "up to date")
+        self.f.edit("ifc/IFC-01.yaml", "format: JSON", "format: JSON, UTF-8")
+        self.touch("3-high-level-design.md", "d")
+        self.commit("%s: follow DEC-01" % S3, "ifc", "3-high-level-design.md")
         chain = self.chain()
         self.assertEqual(self.unit(chain, "review 3").state, "due")
-        self.assertReason(chain, "review 3", "ran after an earlier stage accepted findings that this review raised")
+        self.assertReason(chain, "review 3",
+                          "changed its items after an earlier stage accepted findings that this review raised")
 
     def test_only_what_concerns_a_component_makes_it_stale(self):
         self.f.edit("ifc/IFC-02.yaml", "format: HTML", "format: HTML, server-rendered")
@@ -391,6 +398,99 @@ class StatusTest(unittest.TestCase):
         self.assertIn("DEC-01 chosen went back to its value before", text)
         self.assertIn("possible repeat: FND-04", text)
 
+    def test_a_run_that_did_not_finish(self):
+        # the run of stage 2 stopped half-way: its report is a draft and DEC-01 changed, nothing committed
+        self.f.edit("2-architecture.md", "Status: answers applied", "Status: draft")
+        self.f.edit("dec/DEC-01.yaml", "chosen: One application", "chosen: Services")
+        chain = self.chain()
+        self.assertEqual(self.unit(chain, "2").state, "stale")
+        self.assertReason(chain, "2", "its report is still a draft")
+        self.assertEqual([u.key for u in chain.next], ["2"])
+        self.assertIs(self.unit(chain, "2b").blocked_by, self.unit(chain, "2"))
+
+    def test_questions_in_another_language(self):
+        self.f.edit("2b-technical-policy.md", "Status: answers applied", "Status: wartet auf Antworten")
+        self.f.write(os.path.join(self.f.design, "2b-technical-policy.md"), self.f.read("2b-technical-policy.md") +
+                     "\n## Offene Fragen\n\n| # | Frage | Warum unsicher | Optionen | Elemente | Antwort |\n"
+                     "|---|---|---|---|---|---|\n| 3 | Welcher Testrunner? | Unklar | 1. Vitest 2. Jest | POL-01 |  |\n"
+                     "\n## Entscheidungen\n\n| # | Frage | Antwort | Elemente |\n|---|---|---|---|\n"
+                     "| 1 | Q | A | POL-01 |\n")
+        self.commit("architecture-to-technical-policy: wartet auf Antworten", "2b-technical-policy.md")
+        chain = self.chain()
+        self.assertEqual(self.unit(chain, "2b").state, "waiting")
+        self.assertEqual(self.unit(chain, "2b").waiting_rows, ["3"])
+        self.assertIn("its status cannot be read", " ".join(self.unit(chain, "2b").notes))
+
+    def test_a_finding_to_stage_4_concerns_the_components_its_targets_name(self):
+        self.write("fnd/FND-02.yaml", finding("FND-02", S4, "major", "implementation", "src/checkout.ts", ["IFC-02"]))
+        chain = self.chain()
+        self.assertEqual(self.unit(chain, "4 ELM-05").state, "stale")  # it provides IFC-02
+        self.assertEqual(self.unit(chain, "4 ELM-01").state, "up to date")
+        self.write("fnd/FND-02.yaml", finding("FND-02", S4, "major", "implementation", "src/checkout.ts",
+                                              ["DRV-01"]))
+        chain = self.chain()
+        self.assertEqual(self.unit(chain, "4 ELM-01").state, "up to date")
+        self.assertEqual(self.unit(chain, "4 ELM-05").state, "up to date")
+        self.assertEqual(chain.unplaced, ["FND-02"])
+        self.assertIn("name no component", status.text_output(chain))
+
+    def test_a_row_that_names_a_request_answered_before_the_last_run(self):
+        # QCR-01 was answered before stage 3 ran: a row that names it is not answered by it
+        self.f.edit("3-high-level-design.md", "Status: answers applied", "Status: waiting for answers")
+        self.f.write(os.path.join(self.f.design, "3-high-level-design.md"),
+                     self.f.read("3-high-level-design.md") + QUESTIONS % ("QCR-01, IFC-01", ""))
+        self.commit("architecture-to-high-level-design: waiting for answers to question 3", "3-high-level-design.md")
+        chain = self.chain()
+        self.assertEqual(self.unit(chain, "3").state, "waiting")
+
+    def test_reverts_that_an_input_or_an_answer_explains(self):
+        start = self.git("rev-parse", "HEAD").strip()
+        self.f.edit("dec/DEC-01.yaml", "costs: [One deployable]", "costs: [One deployable, A second region]")
+        self.touch("2-architecture.md", "a")
+        self.commit("architecture-drivers-to-architecture: add a cost", "dec", "2-architecture.md")
+        self.f.edit("drv/DRV-02.yaml", "basis_note: null", "basis_note: Narrowed")
+        self.touch("1-architecture-drivers.md", "b")
+        self.commit("requirements-to-architecture-drivers: change DRV-02", "drv", "1-architecture-drivers.md")
+        self.f.edit("dec/DEC-01.yaml", "costs: [One deployable, A second region]", "costs: [One deployable]")
+        self.touch("2-architecture.md", "c")
+        self.commit("architecture-drivers-to-architecture: follow DRV-02", "dec", "2-architecture.md")
+        chain = self.chain()
+        since = chain.since(start)
+        self.assertEqual(since["oscillation"], [])
+        self.assertEqual([(o["id"], o["field"]) for o in since["reverts_to_judge"]], [("DEC-01", "costs")])
+        self.assertIn("an input of stage 2 changed", since["reverts_to_judge"][0]["why"])
+        # a run that ends waiting for answers, then applies an answer that takes the draft back
+        start = self.git("rev-parse", "HEAD").strip()
+        self.f.edit("dec/DEC-01.yaml", "chosen: One application", "chosen: Services")
+        self.f.edit("2-architecture.md", "Status: answers applied", "Status: waiting for answers")
+        self.commit("architecture-drivers-to-architecture: waiting for answers", "dec", "2-architecture.md")
+        self.f.edit("dec/DEC-01.yaml", "chosen: Services", "chosen: One application")
+        self.commit("architecture-drivers-to-architecture: back to one application", "dec")
+        self.f.edit("dec/DEC-01.yaml", "chosen: One application", "chosen: Services")
+        self.f.edit("2-architecture.md", "Status: waiting for answers", "Status: answers applied")
+        self.commit("architecture-drivers-to-architecture: apply question 3", "dec", "2-architecture.md")
+        since = self.chain().since(start)
+        self.assertEqual(since["oscillation"], [])
+        self.assertIn("applied answers", since["reverts_to_judge"][0]["why"])
+
+    def test_the_stages_a_request_makes_stale(self):
+        chain = self.chain()
+        request = next(r for r in chain.later()["requests"] if r["id"] == "QCR-02")
+        # FR-02, its target, is a function of both components; every stage reads the quality chain whole
+        self.assertEqual(request["stages"], ["stage 1", "stage 2", "stage 2b", "stage 3", "stage 4 ELM-01",
+                                             "stage 4 ELM-05"])
+        self.assertEqual(request["items"], ["IFC-02"])
+
+    def test_which_tables_of_an_earlier_report_count(self):
+        self.write("1-architecture-drivers.md", self.f.read("1-architecture-drivers.md") +
+                   "\n## Placeholders\n\n| Name | Stands for | Used in |\n|---|---|---|\n| T_x | A time | DRV-01 |\n")
+        self.commit("requirements-to-architecture-drivers: a placeholder", "1-architecture-drivers.md")
+        self.assertEqual(self.unit(self.chain(), "2").state, "up to date")
+        self.write("2-architecture.md", self.f.read("2-architecture.md") +
+                   "\n## End-to-end flows\n\n### Checkout\n\n| Step | Budget |\n|---|---|\n| Charge | 1.0 s |\n")
+        self.commit("architecture-drivers-to-architecture: budget the checkout", "2-architecture.md")
+        self.assertReason(self.chain(), "2b", "diagrams or tables changed in 2-architecture.md")
+
     def test_the_command_line(self):
         out = io.StringIO()
         cwd = os.getcwd()
@@ -408,6 +508,23 @@ class StatusTest(unittest.TestCase):
                      "DAS-01 (stage 2, judgment; breadth low, severity medium)", "QCR-02 An empty order history",
                      "Questions waiting for answers:\n  none", "runs: 0"):
             self.assertIn(part, text)
+        os.chdir(os.path.join(self.f.root, "docs"))
+        try:
+            with redirect_stdout(io.StringIO()):
+                lost = status.main([])
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(lost, 2)  # neither docs/design nor docs/quality below the directory it ran in
+
+    def test_json_holds_the_questions(self):
+        self.f.edit("2b-technical-policy.md", "Status: answers applied", "Status: waiting for answers")
+        self.f.write(os.path.join(self.f.design, "2b-technical-policy.md"),
+                     self.f.read("2b-technical-policy.md") + QUESTIONS % ("POL-01", ""))
+        data = json.loads(status.json_output(self.chain()))
+        unit = next(u for u in data["units"] if u["unit"] == "2b")
+        self.assertEqual(unit["questions"][0]["question"], "Which test runner?")
+        self.assertTrue(unit["questions"][0]["waiting"])
+        self.assertEqual(data["waiting"], ["2b"])
 
 
 class StatusWithoutGitTest(unittest.TestCase):

@@ -371,8 +371,8 @@ class Project(object):
     def component_of_finding(self, finding):
         """The components a finding addressed to stage 4 concerns."""
         out = set()
-        raised_in = finding.get("raised_in") or ""
-        m = re.search(r"(ELM-[0-9]{2,})\.md\Z", raised_in)
+        raised_in = finding.get("raised_in")
+        m = re.search(r"(ELM-[0-9]{2,})\.md\Z", raised_in) if isinstance(raised_in, str) else None
         if m:
             out.add(m.group(1))
         for t in as_list(finding.get("targets")):

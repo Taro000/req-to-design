@@ -14,7 +14,7 @@ Every invocation ends with one summary, in the working language, with the glossa
 - **The questions asked**: each question that this invocation asked, with the answer the user gave, by unit and number.
 - **The open assumptions**: from `scripts/status.py --summary`, one line each with its ratings, highest first. No answer is needed; a correction is applied like an answer ("Corrections to assumptions" in `questions.md`). When there are more than fifteen, list those rated high or medium on either scale, and say how many others there are and that each report lists its own.
 - **The requests to the quality chain** that are open or answered, with the stages that become stale once the quality chain applies each one; they wait in `docs/design/quality-chain-requests.md` for the user to answer and to hand to the quality chain.
-- **What else will make a stage stale later**: the hand-offs that wait for their trigger, the minor findings that wait for the next run of their stage, and the problems that `check.py` left for other stages, as the runs named them.
+- **What else will make a stage stale later**: the hand-offs that wait for their trigger, the minor findings that wait for the next run of their stage, and the problems that `check.py` left for other stages, as the runs named them. Also, when there are any: the findings addressed to stage 4 that name no component, which no run takes up until their targets name one; the fields that went back to an earlier value and that you judged no oscillation, with why; and the files that a run which did not finish left uncommitted, which its stage's next run starts from unless the user discards them.
 - **Next**: what the user can do, and that invoking this skill again continues from here.
 
 Leave out a part that has nothing in it, except why the chain stopped and the runs.
@@ -98,5 +98,5 @@ When the chain stops early, the first line says why, with what shows it:
 ```markdown
 ## Design chain: stopped; DEC-02 went back and forth
 
-DEC-02 `chosen` changed to "One provider, retries with back-off" in 51c7e88 (stage 2, accepting FND-14 from the review of stage 2) and back to "Fail over to a second provider" in 8d20a4b (stage 2, accepting FND-17 from the next review). Tell design-chain which one holds: it gives your decision to stage 2 when it continues.
+DEC-02 `chosen` changed to "One provider, retries with back-off" in 51c7e88 (stage 2, accepting FND-14 from the review of stage 2) and back to "Fail over to a second provider" in 8d20a4b (stage 2, accepting FND-17 from the next review). Tell design-chain which one holds: it writes your decision as an answered question in the report of stage 2, which applies it when the chain continues.
 ```

@@ -39,7 +39,7 @@ When you have finished, reply with only the lines below.
 Fill in "Why this run" with what applies:
 
 - A stale stage: the reasons under its line in the output of `scripts/status.py`, word for word. They say where to start; the stage still reads everything that changed since its last run, as "Re-running a stage" says.
-- A first run: "This is the first run of the stage; the stages above it have run." For stage 1, add the design context that the user gave, as the user wrote it: "The user gave this design context: ...". When the user gave none, say so: stage 1 then writes its request for that input down ("Draft first, ask afterwards", step 2), and this skill asks it.
+- A first run: "This is the first run of the stage; the stages above it have run." For stage 1, add the design context that the user gave, as the user wrote it: "The user gave this design context: ...". When the user gave none, say so. The design context is not an essential input of stage 1: it drafts the whole stage, rates each missing part of it as an uncertain point, and writes down the questions about those that rate high, such as a missing budget or deadline; this skill then asks them. Only missing functional or quality requirements stop it before drafting ("Draft first, ask afterwards", step 2).
 - A run the user asked for: the user's words, such as the event that a hand-off waited for ("The user says that the vendor contract is signed: HND-07 may have come due").
 
 ## The request for a review
@@ -81,9 +81,9 @@ next, as the skill says: <one line>
 
 ## Resuming with answers
 
-Once the answers are written in the report ("Writing the answers" in `questions.md`), resume each unit that got them, from the top of the chain down.
+Once the answers are written in the reports ("Writing the answers" in `questions.md`), read the state again, and run what `scripts/status.py` names next, as always. A unit with answers is stale (a review, due) and runs in its turn: resuming one unit can change what another reads, so units are not resumed in the order their questions were asked.
 
-When the subagent that wrote the questions can still be continued (Claude Code's SendMessage, to the agent's ID, in the same session), continue it, so that it keeps what it read and drafted:
+When the unit to run next is one whose questions this invocation asked, and the subagent that wrote them can still be continued (Claude Code's SendMessage, to the agent's ID, in the same session), continue it, so that it keeps what it read and drafted:
 
 ```text
 The user answered questions <numbers>: the answers are in the Answer column of "Unanswered questions" in
@@ -100,7 +100,7 @@ A resumed run counts as a run of the unit.
 ## After a run
 
 1. Read the state again with `scripts/status.py --since <start commit>`.
-2. Check that the unit has a new last run: the commit its reply names, whose first line starts with the unit's skill. When it has none, or the reply says `none`, the run failed: stop, and give its reply in the summary. Do not run it again in this invocation.
+2. Check that the unit has a new last run: the commit its reply names, whose first line starts with the unit's skill. When it has none, or the reply says `none`, the run failed: stop, and give its reply in the summary. Do not run it again in this invocation. The one exception is a diff review whose reply says that nothing changed since the last review: `design-review` stops there without a commit, and the last review still holds. Note it, go on, and do not run that review again in this invocation.
 3. Note for the summary: the unit, the commit and its first line, the report's status, the questions written, the findings raised and processed, the hand-offs, the requests to the quality chain, and the problems left for other stages.
 4. When the reply's "next" names a unit that `scripts/status.py` does not show as ready, follow `scripts/status.py`, which applies the conventions to what is committed, and mention the difference in the summary.
 
