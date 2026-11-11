@@ -550,6 +550,11 @@ class StatusWithoutGitTest(unittest.TestCase):
     def unit(self, chain, key):
         return next(u for u in chain.units if u.key == key)
 
+    def test_runs_of_ids_are_ranges(self):
+        self.assertEqual(status.id_list(["DRV-03", "DRV-01", "DRV-02", "DRV-05", "DEC-07", "DEC-08", "TC-13",
+                                         "design-context.yaml"]),
+                         "DEC-07, DEC-08, DRV-01 to DRV-03, DRV-05, TC-13, design-context.yaml")
+
 
 if __name__ == "__main__":
     unittest.main()

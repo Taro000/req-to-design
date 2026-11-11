@@ -149,7 +149,21 @@ def one_line(value):
 
 
 def id_list(ids):
-    return ", ".join(sorted(set(ids), key=lib.id_key))
+    """IDs in order, with a run of three or more consecutive numbers of one kind written as 'DRV-01 to DRV-05'."""
+    out, run = [], []
+
+    def flush():
+        out.extend(["%s to %s" % (run[0], run[-1])] if len(run) >= 3 else run)
+
+    for ident in sorted(set(ids), key=lib.id_key):
+        if run and lib.is_id(ident) and lib.is_id(run[-1]) and lib.id_key(run[-1])[0] == lib.id_key(ident)[0] \
+                and lib.id_key(run[-1])[1] + 1 == lib.id_key(ident)[1]:
+            run.append(ident)
+            continue
+        flush()
+        run = [ident]
+    flush()
+    return ", ".join(out)
 
 
 def norm(line):
