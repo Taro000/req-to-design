@@ -3,7 +3,7 @@ name: design-review
 description: Reviews the output of stage 2, 2b, 3 or 4 of the design chain in a fresh context and writes findings addressed to the stage that must decide. Every check is an activity with a recorded result - walking drivers and CUJs through the design for risks, sensitive points and trade-offs; judging whether it fits its use, survives planned changes, can be built for its cost and is clear; checking views, allocations, decisions and platforms; checking stacks, repositories against the deployment, dependency rules, gate bindings and spec rules; tracing acceptance criteria, recomputing latency budgets, checking data ownership, error contracts, unknown outcomes and SLI bindings; checking module depths, states, decision tables and verifiability; and, at every stage, premises, assumptions that should have been asked, and points left for the design to confirm. Never edits the design. Use it after any design stage, or when asked to review or evaluate an architecture, a technical policy, a high-level design or a detailed design.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Design review

@@ -3,7 +3,7 @@ name: architecture-to-technical-policy
 description: Stage 2b of the design chain, between the architecture and the high-level design. Decides once for the whole system the technical policy that later stages and the code follow - the language, framework and main libraries of each kind of component; the repositories, directory layout and dependency rules that CI enforces; test layers, test doubles for external services, clock and IDs, environments and test data; where and by what each gate of the quality chain is checked, and where each audit is held; the pipeline, static checks and conventions inside the code (errors, logs, settings, secrets, texts for people); which specs are hand-written or generated from code; and how coding agents find the design and raise findings. Needs only the architecture. Drafts first, asks only about points of high breadth or severity, records the rest as assumptions. Use it for a tech stack, repository layout, test strategy, CI/CD or coding conventions. Next, review it with design-review, then run architecture-to-high-level-design.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Architecture → technical policy

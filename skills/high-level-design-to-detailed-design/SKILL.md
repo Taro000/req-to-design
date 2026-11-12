@@ -3,7 +3,7 @@ name: high-level-design-to-detailed-design
 description: Stage 4 of 4 in the design chain. Designs the inside of one component of the high-level design from architecture-to-high-level-design, in detail only where a mistake in the code is costly. Modules that move money, settle an unknown outcome, share state with concurrent work, apply rules with several conditions or migrate data get full contracts, state diagrams, decision tables, concurrency and the constraints keeping their data's invariants; every other module goes to implementation with its responsibility, a contract summary, its acceptance criteria and its checks. An index tracks each component's status and module depths, and tells coding agents what the code decides and how to raise findings. Writes documents only, never code. Drafts first, then asks only about points of high breadth or severity and records the rest as assumptions. Use it when someone wants a detailed design, module design, state machines or decision tables for a component whose interfaces are designed. Review it with design-review.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # High-level design → detailed design

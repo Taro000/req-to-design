@@ -3,7 +3,7 @@ name: requirements-to-architecture-drivers
 description: Stage 1 of 4 in the design chain. Reads the quality chain's artifacts in docs/quality/ (users, CUJs, shared facts, design inputs, functional requirements, quality requirements, NFRs, SLIs), what the user knows of the solution side (technology constraints; budget, deadline and team; team structure; anticipated changes) and any existing code, and writes architecture drivers - quality and change scenarios with a measurable response, constraints, functional, observability and security drivers, and principles. Ranks them by business priority and design difficulty, records conflicts, and checks early whether the budget, the deadline and the team can meet them. Drafts first, then asks only about points of high breadth or severity and records the rest as assumptions. Use it when someone wants to start an architecture or system design from requirements, NFRs or SLOs, or asks which requirements should shape the architecture. Writes docs/design/. Next stage is architecture-drivers-to-architecture.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Requirements → architecture drivers

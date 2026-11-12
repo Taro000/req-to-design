@@ -3,7 +3,7 @@ name: architecture-to-high-level-design
 description: Stage 3 of 4 in the design chain. Turns the architecture and the technical policy into the high-level design of the whole system in one run - every interface between elements and with the outside (HTTP, events, files, screens, batch) with its error contract, idempotency, timing and versioning, and OpenAPI and AsyncAPI documents where the technical policy wants hand-written specs; where each SLI's events come from; sequence diagrams for every CUJ and primary driver, with failure paths and latency budgets checked against the SLOs; screen flows; the logical data model with one owner per entity; states that span elements; and shared conventions. Drafts first, asks only about points of high breadth or severity, and records the rest as assumptions. Use it when someone wants API or event design, interface specifications, SLI instrumentation, sequence diagrams, a data model, latency budgets or interface conventions. Next, review it with design-review, then run high-level-design-to-detailed-design for each component.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Architecture → high-level design
