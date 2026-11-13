@@ -3,7 +3,7 @@ name: design-chain
 description: Runs the design chain for you in Claude Code. Finds the stages that are stale - something they read changed, a critical or major finding or a hand-off came, an assumption was overturned, a question was answered - and runs each one with its skill as a subagent, one at a time from the top of the chain down, with design-review only after a stage's first run and after a critical or major finding changed it. Keeps the stages below one that waits for answers stopped while it runs the others, then asks the questions the runs wrote, grouped by stage, writes the answers into the reports and resumes those stages. Stops only for those questions, an item that goes back to an earlier value, its limits on runs, or critical findings left after two rounds, and ends with the runs, the questions, the open assumptions and the requests to the quality chain. In other agents, shows the next stage to run and what to ask it. Use it to start, continue or check the design chain, or to ask which design stage to run next.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Design chain

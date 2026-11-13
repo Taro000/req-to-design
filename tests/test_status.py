@@ -398,6 +398,22 @@ class StatusTest(unittest.TestCase):
         self.assertIn("DEC-01 chosen went back to its value before", text)
         self.assertIn("possible repeat: FND-04", text)
 
+    def test_a_run_that_rewrites_only_the_generated_tables_of_another_report(self):
+        """A review of stage 3 that rewrites a generated table of the review of stage 2 is no run of that review, as
+        in the re-run of the demo for 0.3.0 (tables.py --skill design-review writes every review report)."""
+        before = self.unit(self.chain(), "review 2").last_run
+        start = self.git("rev-parse", "HEAD").strip()
+        self.f.edit("reviews/2-architecture.md", "<!-- generated: assumptions -->\n",
+                    "<!-- generated: assumptions -->\n| DAS-01 | An assumption | IFC-17 |\n")
+        self.touch("reviews/3-high-level-design.md", "a")
+        after = self.commit("design-review: stage 3 again", "reviews/2-architecture.md",
+                            "reviews/3-high-level-design.md")
+        chain = self.chain()
+        self.assertEqual(self.unit(chain, "review 2").last_run, before)
+        self.assertEqual(self.unit(chain, "review 3").last_run, after)
+        since = chain.since(status.Git(self.f.design).resolve(start))
+        self.assertEqual(dict((k, len(v)) for k, v in since["runs"].items()), {"review 3": 1})
+
     def test_a_run_that_did_not_finish(self):
         # the run of stage 2 stopped half-way: its report is a draft and DEC-01 changed, nothing committed
         self.f.edit("2-architecture.md", "Status: answers applied", "Status: draft")

@@ -3,7 +3,7 @@ name: architecture-drivers-to-architecture
 description: Stage 2 of 4 in the design chain. Designs the architecture from the ranked drivers of requirements-to-architecture-drivers - the overall structure and the platforms first, then decisions and mechanisms from the top of the ranking down, each with real options, the rejected ones and why, gains, costs, sensitive points, trade-offs, debts and deferrals. Walks eight design concerns, draws a threat model, defines the elements (components, data stores, external systems, nodes) with their functions, drivers, owning team and runtime, draws four Mermaid views (context, runtime, deployment, information), and walks every CUJ and primary driver through the design. Drafts first, then asks only about points of high breadth or severity and records the rest as assumptions. Use it when someone wants an architecture, a system design, component boundaries, platform choices, a deployment design or design decisions with their rationale. Next, review it with design-review, then run architecture-to-technical-policy.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Architecture drivers → architecture

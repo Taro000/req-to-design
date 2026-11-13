@@ -8,7 +8,7 @@ English | [日本語](README.ja.md)
 
 Agent skills that turn a system's requirements into its design: first the drivers that should shape the architecture, then the architecture, the technical policy, the high-level design and the detailed design, with a review after each design stage. They start from the artifacts of [cuj-to-slo](https://github.com/Taro000/cuj-to-slo) (users, CUJs, functional requirements, quality requirements, NFRs and SLOs), so every design decision can be followed back to the requirement and the user it serves.
 
-> **Status: experimental (0.2.0).** The skills have been used once on a real demo project. Version 0.2.0 changes how they ask questions, record assumptions and keep history, and takes over the design decisions that the requirements no longer make (platforms, mechanisms, where SLI events come from); it has not been run end to end yet, so check its first results closely.
+> **Status: experimental (0.3.0).** Version 0.3.0 has been run once end to end on a demo project with `design-chain`, and compared with the first run of 0.1.0 on the same project ("Results on the demo" below). On the same scope it wrote 30% of the lines, and the findings of each review were no more than those of the review before it. It did not keep each stage to two runs, its reviews still found copies that had drifted, and it stopped at its limit with one major finding open in the server's money paths. Nobody answered its questions: each one took its drafted option. Check the results of your first runs closely.
 
 ## The stages
 
@@ -112,6 +112,32 @@ YAML keys and IDs are fixed in English, so every stage can read every other stag
 - Write code. The detailed design stops where coding starts, and uses a language-neutral notation.
 - Decide business priorities for you. The driver ranking, accepted risks and debts, deferring what a stage would otherwise decide in full, and design parameters are business decisions: the ones with high breadth or severity are asked, and the rest are adopted provisionally and recorded as assumptions, never presented as decided.
 - Write runbooks, business procedures or training. The design of the infrastructure is in scope; operating it is not.
+
+## Results on the demo
+
+Version 0.3.0 was run on [ride-hailing-app-demo](https://github.com/Taro000/ride-hailing-app-demo) (branch `design/trial-0.3.0`), from stage 1 to the detailed design of two of its three components, with `design-chain` running each stage and review as a subagent: 41 runs, about 23 hours. The baseline is the first run of 0.1.0 on the same project, made by hand over six days (branch `design/trial-1`).
+
+| Measure | 0.1.0 | 0.3.0 | Target |
+|---|---|---|---|
+| Runs of one stage | Stage 1: 4, stage 2: 5, stage 3: 2 | Stage 1: 3, stage 2: 6, stage 2b: 2, stage 3: 5, stage 4: 4 for each component. 4 of the 41 runs only applied answers, in 3 to 5 minutes each | At most 2: not met |
+| Findings of the successive reviews of a stage | Stage 2: 14, 9, 17. Stage 3: 20, 9 | Stage 2: 8, 1, 1. Stage 2b: 7, 3. Stage 3: 13, 5, 1, 1, 1. Stage 4: 6, 3, 0 (admin screens) and 13, 2, 2 (server) | Fewer each time: met in that no review found more than the one before it, though major findings rose once in stage 3 and stayed at one in the server |
+| Findings about a copy that drifted or a wrong reference | 25 of 80 | 21 of 78 | None: not met |
+| Lines on the same scope (stages 1 to 3, the admin screens' detailed design, reviews) | 42,961 | 12,932 (30%) | Half or less: met. Without 0.1.0's 21,925 lines of hand-written OpenAPI and AsyncAPI, 61% |
+| Decisions handed to a later stage or to implementation | None of 66 | 22 hand-offs | — |
+| Primary drivers | 16 | 12 | — |
+| Modules of stage 4 designed in detail | 20 of 20 (admin screens) | 2 of 19 (admin screens), 25 of 49 (server) | — |
+| Questions for a person | 58 in the runs, and 16 issues for the quality chain | 15 in the runs, and 10 requests to the quality chain | — |
+
+Where it fell short, and what to try next:
+
+- **Runs of one stage.** Three things added runs. Each stop for questions takes a short run to apply the answers. Findings came back from later stages: an answer in stage 2 added a constraint to stage 1, and the server's detailed design sent two major findings to stage 3, which made the finished admin screens stale again. And in the server's money paths (holds, captures, re-holds), each major finding that was fixed led the next review to a new one, until the limit stopped the chain with one open. Next: count the runs that only apply answers apart from the others; run first the component with the most modules at full depth, so that its findings reach stage 3 before the others build on it; have a stage that fixes a major finding in a module at full depth walk that module's decision tables again before it commits.
+- **Copies that drifted.** The same kinds of review found them as often as in 0.1.0 (in stage 3, 43% of the findings against 41%). The kinds left: stage 4's allocation of acceptance criteria to modules, written by hand, disagreed with the modules' functions in three reviews; stage 3's flows restate what the interfaces carry; items rely on an assumption or a constraint that their premises leave out. Next: write stage 4's allocation table from the modules, or check it with `check.py`, and check that an item citing a DAS, a QAS or a TC lists it in its premises.
+
+What the comparison does not show:
+
+- What a person would answer. The 15 questions took their drafted options. The input was the quality chain 0.3.0's replay of the demo, whose answers came from the 0.1.0 trial's records, so it already held choices (Stripe, Google Maps, iOS Safari) that 0.1.0 had to find. Both flatter 0.3.0's questions, and two drafts went another way than the person did in 0.1.0: the system is designed for deployment but runs only on a local machine, and the fare counts a base fare and distance only.
+- How much one run differs from another: this is one run. The server's detailed design, which 0.1.0 never reached, has no baseline, and one component, the passengers' and drivers' web app, has no detailed design.
+- The fixes of this version. The run found two defects that this version fixes after it: a commit that only rewrote the generated tables of another report counted as a run of that report's unit, which made the chain stop at its limits early, and a re-run that stopped on the way did not show as stale.
 
 ## Maintaining
 
