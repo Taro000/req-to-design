@@ -32,6 +32,8 @@ never for another component, and its review waits for it.
 
 A stage's last run is the last commit whose first line starts with its skill's name and that changed its report (in
 stage 4, the component's report); a review's, the last such commit of design-review that changed its review report.
+The change must reach outside the report's generated tables, as every run's does: a run of one review, or of one
+component of stage 4, may rewrite the generated tables of another report of its skill, and is no run of that one.
 A stage is stale when, since its last run (uncommitted changes included):
     - an input changed: an item of the quality chain (a YAML file, or an entry of context.yaml); an item of an earlier
       design stage (an entry of design-context.yaml, DRV, DEC, ELM, POL, IFC, DAT, a spec); or, in an earlier stage's
@@ -116,6 +118,16 @@ EMPTY_VALUES = (MISSING, "null", "[]", "{}", '""')
 
 def starts_with_skill(subject, skill):
     return re.match(re.escape(skill) + r"(?![A-Za-z0-9-])", subject or "") is not None
+
+
+def outside_generated(text):
+    """A report's text with what its generated tables hold left out."""
+    return tables_mod.BLOCK_RE.sub(lambda m: m.group(1) + m.group(4), text or "")
+
+
+def changed_outside_generated(old, new):
+    """Whether a change to a report reached outside its generated tables; a report added or removed did."""
+    return old is None or new is None or outside_generated(old) != outside_generated(new)
 
 
 def stage_index(stage):
@@ -209,11 +221,13 @@ class Git(object):
         return sha[:7] if sha else "—"
 
     def last_run(self, skill, path):
-        """The last commit whose first line starts with the skill's name and that changed the path."""
+        """The last commit whose first line starts with the skill's name and that changed the path outside its
+        generated tables."""
         out = self.run(["log", "--format=%H%x09%s", "--", path]) if self.head else None
         for line in (out or "").splitlines():
             sha, _, subject = line.partition("\t")
-            if starts_with_skill(subject, skill):
+            if starts_with_skill(subject, skill) and \
+                    changed_outside_generated(self.show(sha + "^", path), self.show(sha, path)):
                 return sha
         return None
 
@@ -929,7 +943,9 @@ class Chain(object):
                         closed.setdefault(c, []).append(lib.Item(str(b.get("id")), "design", rel, b))
             inputs[c] = reached
             for u in self.units:
-                if starts_with_skill(subject, u.skill) and u.report in touched:
+                if starts_with_skill(subject, u.skill) and u.report in touched and any(
+                        changed_outside_generated(self.git.blob(old), self.git.blob(new))
+                        for commit, old, new, _ in changes[u.report] if commit == c):
                     runs[u.key].append(c)
         rounds = {}
         for u in self.units:

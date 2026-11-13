@@ -23,7 +23,7 @@ The chain runs in units. A unit is a run of one stage, or a review of one stage;
 | 8 | stage 4 ELM-xx, for each component | `high-level-design-to-detailed-design` | `4-detailed-design/ELM-xx.md` |
 | 9 | review of stage 4 ELM-xx | `design-review` | `reviews/4-detailed-design-ELM-xx.md` |
 
-A unit's last run is the last commit whose first line starts with its skill's name and that changed its report. Each run of a stage ends with such a commit ("Finishing a run" in `conventions.md`), and each review with one that changes its review report.
+A unit's last run is the last commit whose first line starts with its skill's name and that changed its report outside its generated tables. A run of one review, or of one component of stage 4, may rewrite the generated tables of another report of its skill, and is no run of that unit. Each run of a stage ends with such a commit ("Finishing a run" in `conventions.md`), and each review with one that changes its review report.
 
 ## Reading the state
 
